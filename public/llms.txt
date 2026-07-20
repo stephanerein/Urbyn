@@ -1,0 +1,50 @@
+# Urbyn by Atelier Urbanize — Portail client
+
+## Qui sommes-nous ?
+
+Urbyn by Atelier Urbanize est une entreprise française spécialisée dans la conception,
+la fabrication et la location de mobilier urbain temporaire pour chantiers et événements :
+totems de communication, palissades, massifs béton, façades d'échafaudage.
+
+Site web principal : https://www.urbanize.site
+Portail client / configurateur : https://plateform.urbanize.site
+Contact : info@urbanize.site
+
+## Produits et services
+
+### Totems de communication
+- **Totem Caisson Bois** (formats 80, 120, 160, 200 cm) — acquisition à partir de 2 650 € HT
+- **Totem Caisson Bois 120** — location à partir de 320 € HT
+- **Totem Sign-IZ** — acquisition à partir de 1 980 € HT / location à partir de 290 € HT
+  - Dimensions : L 811 mm × H 2 000 mm × P 811 mm · Poids : 153 kg · Résistance vent : 85 km/h
+  - Modèle déposé INPI réf. 20213357-3 · Fabriqué en France
+- **Totem Gabion** — acquisition à partir de 1 800 € HT
+- **Totem LIZ** — acquisition à partir de 2 600 € HT
+
+### Palissades de chantier
+Conception, habillage graphique et montage de palissades urbaines.
+
+### Massifs béton
+Massifs temporaires (cubique, lego, cylindrique) pour lestage et sécurisation.
+
+### Services associés
+Installation, transport, conception graphique, production graphique, note de calcul,
+reportage photo, survey, conformité vent (Eurocode EN 1991-1-4).
+
+## Configurateur en ligne
+
+L'application Urbyn permet de :
+1. Définir son besoin (palissade, totem, massif, BET)
+2. Sélectionner les services souhaités
+3. Obtenir une estimation de prix en ligne
+4. Échanger avec un spécialiste
+
+## Implantation géographique
+
+France, Belgique, Luxembourg, Suisse, Allemagne, Italie, Espagne, Monaco, Andorre.
+
+## Certifications et normes
+
+- Conformité vent : Eurocode EN 1991-1-4
+- Matériaux : acier thermolaqué, bois traité autoclave Classe 4, fonte, aluminium
+- Fabriqué en France
