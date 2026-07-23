@@ -21,6 +21,7 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | `public/robots.txt` | Règles d'accès crawlers | Ajout d'une section privée ou publique |
 | `public/llms.txt` | Fiche entité pour IA (ChatGPT, Claude, Perplexity, Gemini, Copilot) | Nouveau produit, changement de prix, nouveau service, nouvelle zone géo |
 | `src/app/components/SEOMeta.tsx` | Composant centralisé meta + JSON-LD | Changement de domaine, nouveau type de schéma Schema.org |
+| `prerender.mjs` (tableau `ROUTES`) | Liste des pages pré-rendues en HTML statique au build | Ajout / suppression d'une page **indexable** — doit rester synchro avec `sitemap.xml` |
 | `SEO_GOVERNANCE.md` (ce fichier) | Tableau de couverture + checklist | Après chaque ajout ou modification de page |
 
 ---
@@ -188,12 +189,15 @@ Standard émergent lu par les crawlers IA. Contient actuellement :
 
 | Priorité | Action | Impact SEO/GEO |
 |---|---|---|
-| 🔴 Haute | Créer `/public/og-image.jpg` (1200×630px) | Aperçus riches sur réseaux sociaux et IA |
+| ✅ Fait (2026-07-23) | Retirer `<meta name="robots" content="noindex, nofollow">` codé en dur dans `index.html` (reliquat protection preview Figma Make) | **Bloquait l'indexation de tout le site**, indépendamment du travail SEO par page |
+| ✅ Fait (2026-07-23) | Remplacer title/description génériques (placeholder anglais) dans `index.html` par le contenu de marque + Open Graph | Fallback correct pour les crawlers n'exécutant pas le JS |
+| ✅ Fait (2026-07-23) | Ajouter `lastmod` aux URLs du sitemap.xml | Priorité de recrawl Google |
+| ✅ Déjà en place | `<html lang="fr-fr">` dans l'entrypoint | Signal linguistique pour Google |
+| 🔴 Haute | Créer `/public/og-image.jpg` (1200×630px) — référencé mais fichier absent | Aperçus riches sur réseaux sociaux et IA |
+| ✅ Fait (2026-07-23) | **Pré-rendu HTML des pages indexables** — `npm run build` génère maintenant un fichier HTML statique par route indexable (`src/entry-server.tsx` + `prerender.mjs`), avec le vrai title/description/JSON-LD de la page injecté directement dans le HTML livré au crawler | Les crawlers sans exécution JS (plusieurs crawlers IA, certains bots de prévisualisation de liens) voient désormais le bon contenu par page, plus un fallback générique |
 | 🔴 Haute | Soumettre sitemap dans Google Search Console | Indexation Google accélérée |
 | 🔴 Haute | Enregistrer dans Bing Webmaster Tools | Indexation Bing/Copilot |
 | 🟡 Moyenne | Ajouter `FAQPage` schema sur la page d'accueil | Snippets enrichis Google + réponses IA |
 | 🟡 Moyenne | Ajouter `LocalBusiness` schema (si adresse physique dispo) | Référencement local Google Maps |
-| 🟡 Moyenne | Ajouter `lastmod` aux URLs du sitemap.xml | Priorité de recrawl Google |
-| 🟢 Faible | Ajouter balise `<html lang="fr">` dans l'entrypoint Vite | Signal linguistique pour Google |
 | 🟢 Faible | Générer sitemap dynamiquement via plugin Vite | Maintenance automatique |
 | 🟢 Faible | Ajouter `hreflang` si version multilingue | SEO international |

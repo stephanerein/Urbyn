@@ -4,8 +4,11 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node prerender.mjs && rm -rf dist-server",
+    "build:client": "vite build",
+    "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-server",
+    "prerender": "node prerender.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

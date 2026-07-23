@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider, type HelmetServerState } from 'react-helmet-async';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ChatWidget } from './components/ChatWidget';
@@ -125,16 +125,32 @@ export * from './types';
 
 const isFigmaEnv = typeof window !== 'undefined' && window.location.hostname.includes('figma');
 
-export default function App() {
+interface AppShellProps {
+  // Passed by the server prerender script to collect the head tags react-helmet-async
+  // renders for the given route; left undefined on the client, where HelmetProvider
+  // manages document.head directly.
+  helmetContext?: { helmet?: HelmetServerState };
+}
+
+// Router-agnostic app tree, shared by the client entry (BrowserRouter, see App() below)
+// and the server prerender entry (StaticRouter, see entry-server.tsx).
+export function AppShell({ helmetContext }: AppShellProps) {
   const Wrapper = isFigmaEnv ? ({ children }: { children: React.ReactNode }) => <>{children}</> : HelmetProvider;
+  const wrapperProps = isFigmaEnv ? {} : { context: helmetContext ?? {} };
   return (
-    <Wrapper>
-      <BrowserRouter>
-        <CartProvider>
-          <ScrollToTop />
-          <AppContent />
-        </CartProvider>
-      </BrowserRouter>
+    <Wrapper {...wrapperProps}>
+      <CartProvider>
+        <ScrollToTop />
+        <AppContent />
+      </CartProvider>
     </Wrapper>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
+    </BrowserRouter>
   );
 }
