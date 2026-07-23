@@ -55,8 +55,21 @@ for (const url of ROUTES) {
     );
   }
 
-  const outDir = url === '/' ? distDir : path.join(distDir, url);
+  if (url === '/') {
+    fs.writeFileSync(path.join(distDir, 'index.html'), page);
+    console.log(`Prerendered / -> dist/index.html`);
+    continue;
+  }
+
+  // Write both dist/<route>/index.html (works on hosts that serve directory
+  // indexes) and dist/<route>.html (works on hosts that check "path.html"
+  // before falling back to the SPA catch-all rewrite for extensionless
+  // paths). Which one actually gets served for a bare "/route" request (no
+  // trailing slash) depends on the static host's routing rules — covering
+  // both is the portable option since we don't control that config here.
+  const outDir = path.join(distDir, url);
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'index.html'), page);
-  console.log(`Prerendered ${url} -> ${path.relative(process.cwd(), path.join(outDir, 'index.html'))}`);
+  fs.writeFileSync(`${path.join(distDir, url)}.html`, page);
+  console.log(`Prerendered ${url} -> ${path.relative(process.cwd(), outDir)}/index.html + .html`);
 }

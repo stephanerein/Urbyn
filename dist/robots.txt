@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://plateform.urbanize.site/sitemap.xml
+
+# Crawl-delay (politesse)
+Crawl-delay: 1
+
+# Bloquer les pages transactionnelles / tunnels
+Disallow: /panier
+Disallow: /livraison
+Disallow: /paiement
+Disallow: /login
+Disallow: /partner/
+Disallow: /totem/resultats
+Disallow: /totem/conformite/resultats
+Disallow: /massif/resultats
+Disallow: /bet/resultats
+Disallow: /palissade/resultats

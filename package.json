@@ -8,7 +8,8 @@
     "build": "vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node prerender.mjs && rm -rf dist-server",
     "build:client": "vite build",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-server",
-    "prerender": "node prerender.mjs"
+    "prerender": "node prerender.mjs",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
