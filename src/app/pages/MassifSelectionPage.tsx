@@ -14,7 +14,7 @@ import {
   type MassifType,
   type MassifOption,
 } from '../components/MassifCalculator';
-import massifImg from 'figma:asset/1e6a3eb50a7bcc897639b57c16806ba7a3ff933c.png';
+import massifImg from 'figma:asset/massif-beton-cubique.png';
 
 type WizardStep = 'weight' | 'family' | 'dimension';
 

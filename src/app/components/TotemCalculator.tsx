@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { ArrowRight, Check, Info, Package } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import totemCaissonBoisImg from '../../imports/totem-caisson-bois.png';
+import totemCaissonBoisImg from '../../imports/totem-caisson-bois.jpg';
 
 export type TotemType = 'caisson_bois' | 'gabion' | 'liz';
 export type CaissonBoisFormat = '80' | '120' | '160' | '200';

@@ -19,9 +19,9 @@ import { SiretLookup } from './SiretLookup';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MassifConfig, MassifDimension, MassifOption, MassifType } from './MassifCalculator';
 
-import liftingEyeImg from 'figma:asset/ece84e9997294fe261a6c4f3eb263467f6b0d470.png';
-import massifImg from 'figma:asset/1e6a3eb50a7bcc897639b57c16806ba7a3ff933c.png';
-import massifLegoImg from 'figma:asset/5d4ea46dca142d9fec102df672dc9c3145286b66.png';
+import liftingEyeImg from 'figma:asset/anneau-levage-massif.png';
+import massifImg from 'figma:asset/massif-beton-cubique.png';
+import massifLegoImg from 'figma:asset/massif-beton-lego.png';
 
 interface MassifResultsProps {
   config: MassifConfig;
@@ -416,7 +416,7 @@ export function MassifResults({ config, onReset }: MassifResultsProps) {
                   <div key={idx} className="p-6 border-b border-slate-100 flex justify-between items-center hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-200">
-                         <ImageWithFallback src={item.type === 'cubique' ? massifImg : massifLegoImg} alt="Massif" className="w-full h-full object-cover" />
+                         <ImageWithFallback src={item.type === 'cubique' ? massifImg : massifLegoImg} alt={item.type === 'cubique' ? 'Massif béton cubique' : 'Massif béton Lego'} className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight">{item.type === 'cubique' ? 'Massif Cubique' : 'Massif Lego'}</h4>
