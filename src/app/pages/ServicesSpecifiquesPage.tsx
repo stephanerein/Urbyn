@@ -167,16 +167,16 @@ const servicesParProduit: Record<string, Service[]> = {
       description: 'Livraison des massifs sur site'
     },
     {
-      id: 'enlevement',
-      name: 'Enlèvement',
-      icon: PackageOpen,
-      description: 'Enlèvement de la marchandise sur site'
-    },
-    {
       id: 'installation',
       name: 'Installation',
       icon: HardHat,
       description: 'Mise en place des massifs béton'
+    },
+    {
+      id: 'enlevement',
+      name: 'Enlèvement',
+      icon: PackageOpen,
+      description: 'Enlèvement de la marchandise sur site'
     }
   ]
 };
