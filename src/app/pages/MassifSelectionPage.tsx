@@ -1,7 +1,7 @@
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ArrowRight, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ArrowLeft, ArrowRight, Check, Loader2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { cn } from '../components/ui/utils';
@@ -87,6 +87,57 @@ function formatDim(val: number | null, unit = 'cm') {
   return `${val} ${unit}`;
 }
 
+// ── Aide au dimensionnement (usage "mât") ───────────────────────────────────
+// Ceci couvre un usage parmi d'autres (installation d'un mât) — les autres
+// usages ne sont pas couverts par cette aide, l'utilisateur choisit alors
+// directement son poids dans la grille ci-dessus.
+type HelperHeight = '2' | '3' | '4' | '5-10';
+type HelperTypology = 'temporaire' | 'enterre';
+
+const HEIGHT_OPTIONS: { id: HelperHeight; label: string }[] = [
+  { id: '2', label: '2 m ou moins' },
+  { id: '3', label: '3 m ou moins' },
+  { id: '4', label: '4 m ou moins' },
+  { id: '5-10', label: '5 m à 10 m' },
+];
+
+const TYPOLOGY_OPTIONS: { id: HelperTypology; label: string; description: string }[] = [
+  { id: 'temporaire', label: 'Massif temporaire', description: 'Posé au sol, non enterré' },
+  { id: 'enterre', label: 'Massif enterré (candélabre)', description: 'Enfoui dans le sol' },
+];
+
+interface MassifRecommendation {
+  bandId: string;
+  family?: MassifType;
+  weightLabel: string;
+  note?: string;
+}
+
+function getMassifRecommendation(height: HelperHeight, typology: HelperTypology): MassifRecommendation {
+  if (typology === 'enterre') {
+    if (height === '5-10') {
+      return {
+        bandId: 'w2',
+        family: 'candelabre',
+        weightLabel: '≈ 500 kg (socle 60 × 60 × 60 cm)',
+        note: 'Adapté jusqu\'à 8 m de haut. Au-delà, une étude spécifique est nécessaire.',
+      };
+    }
+    return {
+      bandId: 'w1',
+      family: 'candelabre',
+      weightLabel: '≈ 250 kg (socle 50 × 50 × 50 cm)',
+      note: 'Adapté jusqu\'à 6 m de haut.',
+    };
+  }
+  switch (height) {
+    case '2': return { bandId: 'w1', weightLabel: '≈ 250 kg' };
+    case '3': return { bandId: 'w2', weightLabel: '≈ 500 kg' };
+    case '4': return { bandId: 'w3', weightLabel: '1 à 1,5 tonne' };
+    case '5-10': return { bandId: 'w4', weightLabel: '≈ 2 tonnes' };
+  }
+}
+
 // ── Composant ─────────────────────────────────────────────────────────────────
 export function MassifSelectionPage() {
   const navigate = useNavigate();
@@ -102,26 +153,47 @@ export function MassifSelectionPage() {
   const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
   const [lastPayload, setLastPayload] = useState<object | null>(null);
 
+  // Aide au dimensionnement
+  const [helperOpen, setHelperOpen] = useState(false);
+  const [helperHeight, setHelperHeight] = useState<HelperHeight | null>(null);
+  const [helperTypology, setHelperTypology] = useState<HelperTypology | null>(null);
+
   const selectedBand = WEIGHT_BANDS.find(b => b.id === selectedBandId) ?? null;
 
-  const handleFamilySelect = async (family: MassifType) => {
-    if (!selectedBand) return;
+  const handleFamilySelect = async (family: MassifType, bandOverride?: WeightBand) => {
+    const band = bandOverride ?? selectedBand;
+    if (!band) return;
     setSelectedFamily(family);
     setSelectedProduct(null);
     setApiError(null);
     setApiProducts([]);
     setStep('dimension');
 
-    const payload = buildPayload(family, selectedBand);
+    const payload = buildPayload(family, band);
     setLastPayload(payload);
     setApiLoading(true);
     try {
-      const data = await fetchProducts(family, selectedBand);
+      const data = await fetchProducts(family, band);
       setApiProducts(data.products ?? []);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setApiLoading(false);
+    }
+  };
+
+  const applyRecommendation = (reco: MassifRecommendation) => {
+    setSelectedBandId(reco.bandId);
+    setHelperOpen(false);
+    setHelperHeight(null);
+    setHelperTypology(null);
+    if (reco.family) {
+      const band = WEIGHT_BANDS.find(b => b.id === reco.bandId);
+      if (band) handleFamilySelect(reco.family, band);
+    } else {
+      setSelectedFamily(null);
+      setSelectedProduct(null);
+      setStep('family');
     }
   };
 
@@ -175,6 +247,17 @@ export function MassifSelectionPage() {
 
       <div className="max-w-2xl mx-auto px-6 pt-12 pb-20">
 
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/services-specifiques/massif-beton')}
+            className="border border-gray-300 hover:bg-gray-100"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour aux services
+          </Button>
+        </div>
+
         {/* Hero */}
         <div className="relative h-40 overflow-hidden rounded-xl mb-8 bg-gray-100">
           <ImageWithFallback
@@ -190,7 +273,7 @@ export function MassifSelectionPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-black mb-1">Configurer votre massif</h1>
+        <h1 className="text-2xl font-bold text-black mb-1">Sélectionner votre massif</h1>
         <p className="text-sm text-gray-500 mb-8">Sélectionnez le poids, la famille et les dimensions souhaitées.</p>
 
         <StepBreadcrumb />
@@ -227,6 +310,92 @@ export function MassifSelectionPage() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Aide au dimensionnement */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              {!helperOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setHelperOpen(true)}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-black transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Besoin d'une recommandation pour le choix d'un massif pour un mât
+                </button>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="font-bold text-black text-sm">Aide au dimensionnement — installation d'un mât</h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Ceci ne couvre qu'un exemple d'usage parmi d'autres. Si vous connaissez déjà le poids recherché, sélectionnez-le directement ci-dessus.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setHelperOpen(false); setHelperHeight(null); setHelperTypology(null); }}
+                      className="text-xs text-gray-400 hover:text-black shrink-0"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+
+                  <p className="text-xs font-bold text-gray-700 mb-2">Quelle est la hauteur du mât ?</p>
+                  <div className="grid grid-cols-2 gap-2 mb-5">
+                    {HEIGHT_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setHelperHeight(opt.id)}
+                        className={cn(
+                          'text-xs font-semibold px-3 py-2 rounded-lg border transition-all',
+                          helperHeight === opt.id ? 'border-black bg-black text-white' : 'border-gray-200 bg-white hover:border-black'
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="text-xs font-bold text-gray-700 mb-2">Quel type d'installation ?</p>
+                  <div className="grid grid-cols-1 gap-2 mb-5">
+                    {TYPOLOGY_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setHelperTypology(opt.id)}
+                        className={cn(
+                          'text-left px-3 py-2 rounded-lg border transition-all',
+                          helperTypology === opt.id ? 'border-black bg-black text-white' : 'border-gray-200 bg-white hover:border-black'
+                        )}
+                      >
+                        <span className="text-xs font-semibold block">{opt.label}</span>
+                        <span className={cn('text-[11px] block mt-0.5', helperTypology === opt.id ? 'text-gray-300' : 'text-gray-500')}>
+                          {opt.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {helperHeight && helperTypology && (() => {
+                    const reco = getMassifRecommendation(helperHeight, helperTypology);
+                    return (
+                      <div className="bg-white border border-black rounded-lg p-4">
+                        <p className="text-xs text-gray-500 mb-1">Massif recommandé</p>
+                        <p className="font-bold text-black mb-1">{reco.weightLabel}</p>
+                        {reco.note && <p className="text-[11px] text-gray-500 mb-3">{reco.note}</p>}
+                        <Button
+                          onClick={() => applyRecommendation(reco)}
+                          className="w-full bg-black hover:bg-gray-800 text-white"
+                        >
+                          Utiliser cette recommandation <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </div>
         )}
