@@ -237,6 +237,9 @@ export function ServicesSpecifiquesPage() {
     // Installation bloquée si Transport non sélectionné ou si Enlèvement actif
     if (serviceId === 'installation' && (!selectedServices.includes('transport') || selectedServices.includes('enlevement'))) return;
 
+    // Transport bloqué si Enlèvement actif
+    if (serviceId === 'transport' && selectedServices.includes('enlevement')) return;
+
     // Acquisition / Location : comportement radio — exactement un doit être sélectionné
     if (product === 'massif-beton' && (serviceId === 'acquisition' || serviceId === 'location')) {
       // Si déjà sélectionné → ne rien faire (impossible de tout désélectionner)
@@ -613,9 +616,11 @@ export function ServicesSpecifiquesPage() {
                   {services.filter(s => ['transport', 'enlevement', 'installation'].includes(s.id)).map((service) => {
                     const Icon = service.icon;
                     const isSelected = selectedServices.includes(service.id);
-                    const isDisabled = service.id === 'installation' && (
-                      !selectedServices.includes('transport') || selectedServices.includes('enlevement')
-                    );
+                    const isDisabled =
+                      (service.id === 'installation' && (
+                        !selectedServices.includes('transport') || selectedServices.includes('enlevement')
+                      )) ||
+                      (service.id === 'transport' && selectedServices.includes('enlevement'));
                     return (
                       <Card
                         key={service.id}
@@ -629,7 +634,7 @@ export function ServicesSpecifiquesPage() {
                         }`}
                       >
                         <CardContent className="p-6 relative">
-                          {isDisabled && service.id === 'installation' && (
+                          {isDisabled && (service.id === 'installation' || service.id === 'transport') && (
                             <div className="absolute top-4 right-4 bg-slate-200 text-slate-500 text-xs font-bold px-3 py-1 rounded-full">
                               {selectedServices.includes('enlevement') ? 'Non disponible avec Enlèvement' : 'Nécessite Transport'}
                             </div>
