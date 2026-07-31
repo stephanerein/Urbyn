@@ -9,8 +9,8 @@ import { Trash2, ArrowRight, Info, ChevronLeft, ChevronRight, Check, ShoppingCar
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { cn } from './ui/utils';
 import { useCart } from '../context/CartContext';
-import massifImg from 'figma:asset/1e6a3eb50a7bcc897639b57c16806ba7a3ff933c.png';
-import massifLegoImg from 'figma:asset/5d4ea46dca142d9fec102df672dc9c3145286b66.png';
+import massifImg from 'figma:asset/massif-beton-cubique.png';
+import massifLegoImg from 'figma:asset/massif-beton-lego.png';
 
 const TRUCK_CAPACITY = 24000;
 

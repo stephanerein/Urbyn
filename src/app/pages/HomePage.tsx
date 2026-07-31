@@ -71,6 +71,10 @@ export function HomePage() {
               Définir votre besoin
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
+            <p className="flex items-center justify-center gap-2 text-sm text-gray-600 mt-4">
+              <Clock className="w-4 h-4" />
+              Obtenez une estimation de votre projet en moins de 5 minutes
+            </p>
           </div>
         </div>
       </section>

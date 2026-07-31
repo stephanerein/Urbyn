@@ -167,16 +167,16 @@ const servicesParProduit: Record<string, Service[]> = {
       description: 'Livraison des massifs sur site'
     },
     {
-      id: 'enlevement',
-      name: 'Enlèvement',
-      icon: PackageOpen,
-      description: 'Enlèvement de la marchandise sur site'
-    },
-    {
       id: 'installation',
       name: 'Installation',
       icon: HardHat,
       description: 'Mise en place des massifs béton'
+    },
+    {
+      id: 'enlevement',
+      name: 'Enlèvement',
+      icon: PackageOpen,
+      description: 'Enlèvement de la marchandise sur site'
     }
   ]
 };
@@ -237,6 +237,12 @@ export function ServicesSpecifiquesPage() {
     // Installation bloquée si Transport non sélectionné ou si Enlèvement actif
     if (serviceId === 'installation' && (!selectedServices.includes('transport') || selectedServices.includes('enlevement'))) return;
 
+    // Transport bloqué si Enlèvement actif
+    if (serviceId === 'transport' && selectedServices.includes('enlevement')) return;
+
+    // Enlèvement bloqué si Transport actif
+    if (serviceId === 'enlevement' && selectedServices.includes('transport')) return;
+
     // Acquisition / Location : comportement radio — exactement un doit être sélectionné
     if (product === 'massif-beton' && (serviceId === 'acquisition' || serviceId === 'location')) {
       // Si déjà sélectionné → ne rien faire (impossible de tout désélectionner)
@@ -252,14 +258,7 @@ export function ServicesSpecifiquesPage() {
 
     setSelectedServices(prev => {
       const isSelected = prev.includes(serviceId);
-      let next = isSelected ? prev.filter(id => id !== serviceId) : [...prev, serviceId];
-      // Transport et Enlèvement sont mutuellement exclusifs
-      if (serviceId === 'enlevement' && !isSelected) {
-        next = next.filter(id => id !== 'transport' && id !== 'installation');
-      }
-      if (serviceId === 'transport' && !isSelected) {
-        next = next.filter(id => id !== 'enlevement');
-      }
+      const next = isSelected ? prev.filter(id => id !== serviceId) : [...prev, serviceId];
       saveServices(next);
       return next;
     });
@@ -613,9 +612,18 @@ export function ServicesSpecifiquesPage() {
                   {services.filter(s => ['transport', 'enlevement', 'installation'].includes(s.id)).map((service) => {
                     const Icon = service.icon;
                     const isSelected = selectedServices.includes(service.id);
-                    const isDisabled = service.id === 'installation' && (
-                      !selectedServices.includes('transport') || selectedServices.includes('enlevement')
-                    );
+                    const isDisabled =
+                      (service.id === 'installation' && (
+                        !selectedServices.includes('transport') || selectedServices.includes('enlevement')
+                      )) ||
+                      (service.id === 'transport' && selectedServices.includes('enlevement')) ||
+                      (service.id === 'enlevement' && selectedServices.includes('transport'));
+                    const disabledLabel =
+                      service.id === 'installation'
+                        ? (selectedServices.includes('enlevement') ? 'Non disponible avec Enlèvement' : 'Nécessite Transport')
+                        : service.id === 'transport'
+                        ? 'Non disponible avec Enlèvement'
+                        : 'Non disponible avec Transport';
                     return (
                       <Card
                         key={service.id}
@@ -629,9 +637,9 @@ export function ServicesSpecifiquesPage() {
                         }`}
                       >
                         <CardContent className="p-6 relative">
-                          {isDisabled && service.id === 'installation' && (
+                          {isDisabled && (
                             <div className="absolute top-4 right-4 bg-slate-200 text-slate-500 text-xs font-bold px-3 py-1 rounded-full">
-                              {selectedServices.includes('enlevement') ? 'Non disponible avec Enlèvement' : 'Nécessite Transport'}
+                              {disabledLabel}
                             </div>
                           )}
                           {isSelected && !isDisabled && (

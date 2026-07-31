@@ -2,9 +2,9 @@ import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 import { useNavigate } from 'react-router-dom';
 import { PalissadeSubTypeSelector } from '../components/PalissadeSubTypeSelector';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import woodenHoardingImage from 'figma:asset/bc5db02dc136e0f6f2acb6bdcfd5000cf7768a25.png';
-import dibondHoardingImage from 'figma:asset/4dfdb929f7d24f1065879acdb595e36733917e27.png';
-import metalHoardingImage from 'figma:asset/d65771a457b9ec888e1035e7cbd2a5b302f778fa.png';
+import woodenHoardingImage from 'figma:asset/palissade-bois.png';
+import dibondHoardingImage from 'figma:asset/palissade-dibond.png';
+import metalHoardingImage from 'figma:asset/palissade-metallique.png';
 
 export function PalissadeSubTypePage() {
   const navigate = useNavigate();
