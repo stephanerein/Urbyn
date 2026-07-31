@@ -4,6 +4,12 @@ import { loadAdminToken } from '../lib/adminSession'
 export interface AdminAttributeDefinition {
   id: number
   attribute_name: string
+  default_value?: string
+}
+
+export interface AdminCatalogAttributeIn {
+  attribute_name: string
+  default_value: string
 }
 
 export interface AdminCatalogNode {
@@ -47,6 +53,9 @@ export interface AdminCatalogProductEntry {
 export interface AdminProductAttribute {
   name: string
   value: string | null
+  catalog_id?: number | null
+  catalog_name?: string | null
+  definition_id?: number | null
 }
 
 export interface AdminProductDetail {
@@ -100,6 +109,7 @@ export function createAdminCatalog(body: {
   description: string
   is_active: boolean
   parent_id?: number | null
+  attributes?: AdminCatalogAttributeIn[]
   attribute_names?: string[]
 }) {
   return adminFetch<AdminCatalogDetail>('/api/v1/admin/catalogs', {
@@ -122,6 +132,7 @@ export function updateAdminCatalog(
     name: string
     description: string
     is_active: boolean
+    attributes?: AdminCatalogAttributeIn[]
     attribute_names?: string[]
   },
 ) {

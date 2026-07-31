@@ -6,6 +6,7 @@ import {
   fetchAdminCatalogProducts,
   fetchAdminCatalogTree,
   updateAdminCatalog,
+  type AdminCatalogAttributeIn,
   type AdminCatalogNode,
   type AdminCatalogProductEntry,
 } from '../../api/admin'
@@ -121,8 +122,9 @@ export function AdminCatalogPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isActive, setIsActive] = useState(true)
-  const [attributeNames, setAttributeNames] = useState<string[]>([])
+  const [attributes, setAttributes] = useState<AdminCatalogAttributeIn[]>([])
   const [newAttributeName, setNewAttributeName] = useState('')
+  const [newAttributeDefault, setNewAttributeDefault] = useState('')
 
   const [catalogProducts, setCatalogProducts] = useState<AdminCatalogProductEntry[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
@@ -172,10 +174,13 @@ export function AdminCatalogPage() {
     setName(detail.name ?? '')
     setDescription(detail.description ?? '')
     setIsActive(detail.is_active)
-    setAttributeNames(
+    setAttributes(
       detail.attribute_definitions
-        .map((a) => a.attribute_name)
-        .sort((a, b) => a.localeCompare(b, 'fr')),
+        .map((a) => ({
+          attribute_name: a.attribute_name,
+          default_value: a.default_value?.trim() || '',
+        }))
+        .sort((a, b) => a.attribute_name.localeCompare(b.attribute_name, 'fr')),
     )
     setBreadcrumb(detail.breadcrumb)
     setChildCount(detail.child_count)
@@ -192,8 +197,9 @@ export function AdminCatalogPage() {
     setName('')
     setDescription('')
     setIsActive(true)
-    setAttributeNames([])
+    setAttributes([])
     setNewAttributeName('')
+    setNewAttributeDefault('')
     setBreadcrumb([])
     setChildCount(0)
     setProductCount(0)
@@ -209,8 +215,9 @@ export function AdminCatalogPage() {
     setName('')
     setDescription('')
     setIsActive(true)
-    setAttributeNames([])
+    setAttributes([])
     setNewAttributeName('')
+    setNewAttributeDefault('')
     setError(null)
     setSuccess(null)
   }
@@ -226,25 +233,46 @@ export function AdminCatalogPage() {
 
   function addAttributeName() {
     const trimmed = newAttributeName.trim()
-    if (!trimmed) return
-    if (attributeNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())) {
+    const defaultVal = newAttributeDefault.trim()
+    if (!trimmed) {
+      setError('Indiquez un nom d’attribut.')
+      return
+    }
+    if (!defaultVal) {
+      setError('Indiquez une valeur par défaut (appliquée à tous les produits du catalogue).')
+      return
+    }
+    if (attributes.some((a) => a.attribute_name.toLowerCase() === trimmed.toLowerCase())) {
       setError('Cet attribut existe déjà pour ce catalogue.')
       return
     }
-    setAttributeNames((list) =>
-      [...list, trimmed].sort((a, b) => a.localeCompare(b, 'fr')),
+    setAttributes((list) =>
+      [...list, { attribute_name: trimmed, default_value: defaultVal }].sort((a, b) =>
+        a.attribute_name.localeCompare(b.attribute_name, 'fr'),
+      ),
     )
     setNewAttributeName('')
+    setNewAttributeDefault('')
     setError(null)
   }
 
   function removeAttributeName(index: number) {
-    setAttributeNames((list) => list.filter((_, i) => i !== index))
+    setAttributes((list) => list.filter((_, i) => i !== index))
+  }
+
+  function updateAttributeDefault(index: number, value: string) {
+    setAttributes((list) =>
+      list.map((a, i) => (i === index ? { ...a, default_value: value } : a)),
+    )
   }
 
   async function handleSave() {
     if (!name.trim() || !description.trim()) {
       setError('Nom et description sont obligatoires.')
+      return
+    }
+    if (attributes.some((a) => !a.default_value.trim())) {
+      setError('Chaque attribut obligatoire doit avoir une valeur par défaut.')
       return
     }
     setSaving(true)
@@ -255,7 +283,10 @@ export function AdminCatalogPage() {
         name: name.trim(),
         description: description.trim(),
         is_active: isActive,
-        attribute_names: attributeNames,
+        attributes: attributes.map((a) => ({
+          attribute_name: a.attribute_name.trim(),
+          default_value: a.default_value.trim(),
+        })),
       }
       if (mode === 'edit' && selectedId) {
         await updateAdminCatalog(selectedId, body)
@@ -292,7 +323,10 @@ export function AdminCatalogPage() {
         name: name.trim(),
         description: description.trim(),
         is_active: next,
-        attribute_names: attributeNames,
+        attributes: attributes.map((a) => ({
+          attribute_name: a.attribute_name.trim(),
+          default_value: a.default_value.trim(),
+        })),
       })
       setSuccess(next ? 'Catalogue activé.' : 'Catalogue désactivé.')
       await reloadTree()
@@ -410,15 +444,28 @@ export function AdminCatalogPage() {
                 <div className="admin-attr-section">
                   <h3>Attributs obligatoires produit</h3>
                   <p className="admin-catalog__hint">
-                    Champs que le partenaire devra remplir pour tout produit de ce catalogue.
+                    Schéma commun à tous les produits de ce catalogue. À l&apos;ajout, la valeur par
+                    défaut est appliquée automatiquement aux produits déjà présents. Au retrait,
+                    l&apos;attribut disparaît de tous les produits du catalogue.
                   </p>
-                  {attributeNames.length === 0 ? (
+                  {attributes.length === 0 ? (
                     <p className="admin-catalog__hint">Aucun attribut défini.</p>
                   ) : (
                     <ul className="admin-attr-list">
-                      {attributeNames.map((attr, idx) => (
-                        <li key={`${attr}-${idx}`} className="admin-attr-list__item">
-                          <span>{attr}</span>
+                      {attributes.map((attr, idx) => (
+                        <li key={`${attr.attribute_name}-${idx}`} className="admin-attr-list__item">
+                          <div className="admin-attr-list__meta">
+                            <strong>{attr.attribute_name}</strong>
+                            <label className="admin-attr-list__default">
+                              <span>Défaut</span>
+                              <input
+                                type="text"
+                                value={attr.default_value}
+                                onChange={(e) => updateAttributeDefault(idx, e.target.value)}
+                                placeholder="valeur par défaut"
+                              />
+                            </label>
+                          </div>
                           <button
                             type="button"
                             className="admin-btn admin-btn--ghost"
@@ -430,12 +477,24 @@ export function AdminCatalogPage() {
                       ))}
                     </ul>
                   )}
-                  <div className="admin-attr-add">
+                  <div className="admin-attr-add admin-attr-add--with-default">
                     <input
                       type="text"
-                      placeholder="ex. poids, hauteur, largeur…"
+                      placeholder="Nom (ex. Entraxe)"
                       value={newAttributeName}
                       onChange={(e) => setNewAttributeName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addAttributeName()
+                        }
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Valeur par défaut *"
+                      value={newAttributeDefault}
+                      onChange={(e) => setNewAttributeDefault(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()

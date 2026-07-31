@@ -31,18 +31,18 @@ function formatDim(val: number | null, unit = 'cm') {
   return `${val} ${unit}`;
 }
 
-function productAttributes(product: MassifProduct): Array<{ label: string; value: string }> {
+function productAttributes(
+  product: MassifProduct,
+  catalogId: number,
+): Array<{ label: string; value: string }> {
   const rows: Array<{ label: string; value: string }> = [];
   for (const attr of product.mandatory_attributes ?? []) {
+    if (attr.catalog_id !== catalogId) continue;
     if (attr.value?.trim()) {
       rows.push({ label: attr.attribute_name, value: attr.value });
     }
   }
-  for (const attr of product.free_attributes ?? []) {
-    if (attr.value?.trim()) {
-      rows.push({ label: attr.name, value: attr.value });
-    }
-  }
+  // Pas d'attributs libres ici : on reste sur le schéma du catalogue feuille choisi.
   return rows;
 }
 
@@ -231,7 +231,7 @@ export function MassifSelectionPage() {
           product: selectedProduct,
           catalogId: selectedCatalog.id,
           catalogName: selectedCatalog.name,
-          attributes: productAttributes(selectedProduct),
+          attributes: productAttributes(selectedProduct, selectedCatalog.id),
           fromApi: true,
         },
       ],
