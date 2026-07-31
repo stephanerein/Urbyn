@@ -404,7 +404,7 @@ export function PartnerDashboard() {
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="shrink-0 space-y-4">
                     <div className="w-32 h-32 rounded-2xl bg-white p-1 shadow-2xl border-2 border-white overflow-hidden">
-                      <img src={profile.logo} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                      <img src={profile.logo} alt={`Logo ${profile.company}`} className="w-full h-full object-cover rounded-xl" />
                     </div>
                     <Button variant="outline" className="w-full font-bold text-xs uppercase">Changer le logo</Button>
                   </div>

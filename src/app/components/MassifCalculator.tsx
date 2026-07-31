@@ -9,8 +9,8 @@ import { Trash2, ArrowRight, Info, ChevronLeft, ChevronRight, Check, ShoppingCar
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { cn } from './ui/utils';
 import { useCart } from '../context/CartContext';
-import massifImg from 'figma:asset/1e6a3eb50a7bcc897639b57c16806ba7a3ff933c.png';
-import massifLegoImg from 'figma:asset/5d4ea46dca142d9fec102df672dc9c3145286b66.png';
+import massifImg from 'figma:asset/massif-beton-cubique.png';
+import massifLegoImg from 'figma:asset/massif-beton-lego.png';
 
 const TRUCK_CAPACITY = 24000;
 
@@ -30,12 +30,36 @@ export type MassifType = 'cubique' | 'lego' | 'cylindrique' | 'stabilize' | 'can
 export type MassifDimension = string;
 export type MassifOption = 'reservation' | 'tiges' | 'tiges-300' | 'aucun';
 
+export type MassifProductAttr = { label: string; value: string };
+
+/** Produit issu de l’API Massif Type (sélection → config). */
+export type MassifApiProduct = {
+  product_id: number;
+  product_name: string;
+  admin_sku: string;
+  poids: number;
+  price: number;
+  currency: string;
+  company_name?: string | null;
+  dimensions?: {
+    longueur: number | null;
+    largeur: number | null;
+    hauteur: number | null;
+    volume: number | null;
+  };
+};
+
 export type MassifItem = {
   id: string;
   type: MassifType;
   dimension: MassifDimension;
   option: MassifOption;
   quantity: number;
+  fromApi?: boolean;
+  product?: MassifApiProduct;
+  catalogId?: number;
+  catalogName?: string | null;
+  attributes?: MassifProductAttr[];
 };
 
 export interface MassifConfig {
@@ -148,6 +172,53 @@ export function familyImage(type: MassifType): any {
   return type === 'lego' ? massifLegoImg : massifImg;
 }
 
+/** Estimation livraison (modèle fictif — à remplacer par le vrai moteur plus tard). */
+export function estimateMassifDelivery(opts: {
+  totalWeightKg: number;
+  trucksCount: number;
+  country: string;
+  postalCode: string;
+}): number {
+  const BASE: Record<string, number> = {
+    France: 95,
+    Belgique: 145,
+    Luxembourg: 155,
+    Allemagne: 175,
+    Suisse: 210,
+    Italie: 195,
+    Monaco: 110,
+    Andorre: 160,
+    Espagne: 185,
+  };
+  const base = BASE[opts.country] ?? 150;
+  const digits = opts.postalCode.replace(/\D/g, '');
+  const dept = parseInt(digits.slice(0, 2) || '75', 10);
+  const distanceFactor =
+    opts.country === 'France'
+      ? 1 + Math.min(Math.abs(dept - 75) / 50, 1.2) * 0.45
+      : 1.18;
+  const perTruck = 220;
+  const weightSurcharge =
+    opts.totalWeightKg > 5000
+      ? Math.ceil((opts.totalWeightKg - 5000) / 1000) * 35
+      : 0;
+  const raw = base * distanceFactor + perTruck * Math.max(1, opts.trucksCount) + weightSurcharge;
+  return Math.round(raw * 100) / 100;
+}
+
+function formatEuro(value: number, currency = 'EUR') {
+  return value.toLocaleString('fr-FR', {
+    style: 'currency',
+    currency: currency === 'EUR' ? 'EUR' : currency,
+    minimumFractionDigits: 2,
+  });
+}
+
+function formatDimCm(val: number | null | undefined) {
+  if (val == null) return null;
+  return `${val} cm`;
+}
+
 type ItemStep = 1 | 2 | 3;
 
 interface ItemState {
@@ -158,6 +229,23 @@ interface ItemState {
   dimension: MassifDimension | null;
   option: MassifOption;
   quantity: number;
+  fromApi?: boolean;
+  product?: MassifApiProduct;
+  catalogId?: number;
+  catalogName?: string | null;
+  attributes?: MassifProductAttr[];
+}
+
+function itemUnitWeight(it: ItemState): number {
+  if (it.fromApi && it.product) return it.product.poids ?? 0;
+  if (!it.type || !it.dimension) return 0;
+  return getDataSet(it.type)[it.dimension]?.weight ?? 0;
+}
+
+function itemUnitPrice(it: ItemState): number {
+  if (it.fromApi && it.product) return it.product.price ?? 0;
+  if (!it.type || !it.dimension) return 0;
+  return getDataSet(it.type)[it.dimension]?.prices[it.option] ?? 0;
 }
 
 export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculatorProps) {
@@ -187,46 +275,99 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
   const buildInitialItems = (): ItemState[] => {
     if (initialConfig?.items?.length) {
-      return initialConfig.items.map(item => {
+      return initialConfig.items.map((item) => {
+        if (item.fromApi && item.product) {
+          const weight = item.product.poids ?? 0;
+          const band = WEIGHT_BANDS.find((b) => weight >= b.min && weight <= b.max) ?? null;
+          return {
+            id: item.id,
+            step: 3 as ItemStep,
+            weightBandId: band?.id ?? null,
+            type: item.type,
+            dimension: item.dimension,
+            option: item.option,
+            quantity: item.quantity || 1,
+            fromApi: true,
+            product: item.product,
+            catalogId: item.catalogId,
+            catalogName: item.catalogName,
+            attributes: item.attributes ?? [],
+          };
+        }
         const data = getDataSet(item.type)[item.dimension];
-        const band = data ? WEIGHT_BANDS.find(b => data.weight >= b.min && data.weight <= b.max) : null;
-        return { id: item.id, step: 3 as ItemStep, weightBandId: band?.id ?? null, type: item.type, dimension: item.dimension, option: item.option, quantity: item.quantity };
+        const band = data
+          ? WEIGHT_BANDS.find((b) => data.weight >= b.min && data.weight <= b.max)
+          : null;
+        return {
+          id: item.id,
+          step: 3 as ItemStep,
+          weightBandId: band?.id ?? null,
+          type: item.type,
+          dimension: item.dimension,
+          option: item.option,
+          quantity: item.quantity,
+        };
       });
     }
-    return [{ id: '1', step: 1, weightBandId: null, type: null, dimension: null, option: 'reservation', quantity: 1 }];
+    return [
+      {
+        id: '1',
+        step: 1,
+        weightBandId: null,
+        type: null,
+        dimension: null,
+        option: 'reservation',
+        quantity: 1,
+      },
+    ];
   };
 
   const [items, setItems] = useState<ItemState[]>(buildInitialItems);
 
   const update = (id: string, patch: Partial<ItemState>) =>
-    setItems(prev => prev.map(it => it.id === id ? { ...it, ...patch } : it));
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
 
-  const addItem = () => setItems(prev => [...prev, {
-    id: Date.now().toString(), step: 1, weightBandId: null, type: null, dimension: null, option: 'reservation', quantity: 1,
-  }]);
+  const addItem = () =>
+    setItems((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        step: 1,
+        weightBandId: null,
+        type: null,
+        dimension: null,
+        option: 'reservation',
+        quantity: 1,
+      },
+    ]);
 
   const removeItem = (id: string) => {
-    if (items.length > 1) setItems(prev => prev.filter(it => it.id !== id));
+    if (items.length > 1) setItems((prev) => prev.filter((it) => it.id !== id));
   };
 
-  const completedItems = items.filter(it => it.step === 3 && it.type && it.dimension);
+  const completedItems = items.filter(
+    (it) =>
+      it.step === 3 &&
+      it.type &&
+      (it.fromApi ? !!it.product : !!it.dimension),
+  );
 
   // Première famille configurée (pour le hero)
   const firstCompleted = completedItems[0];
-  const heroType = firstCompleted?.type ?? items.find(it => it.type)?.type ?? null;
+  const heroType = firstCompleted?.type ?? items.find((it) => it.type)?.type ?? null;
+  const primaryApiItem = completedItems.find((it) => it.fromApi && it.product) ?? null;
 
-  const totalWeight = useMemo(() =>
-    completedItems.reduce((sum, it) => {
-      const data = getDataSet(it.type!)[it.dimension!];
-      return data ? sum + data.weight * it.quantity : sum;
-    }, 0), [completedItems]);
+  const totalWeight = useMemo(
+    () =>
+      completedItems.reduce((sum, it) => sum + itemUnitWeight(it) * it.quantity, 0),
+    [completedItems],
+  );
 
-  const totalPrice = useMemo(() =>
-    completedItems.reduce((sum, it) => {
-      const data = getDataSet(it.type!)[it.dimension!];
-      const price = data?.prices[it.option] ?? 0;
-      return sum + price * it.quantity;
-    }, 0), [completedItems]);
+  const totalPrice = useMemo(
+    () =>
+      completedItems.reduce((sum, it) => sum + itemUnitPrice(it) * it.quantity, 0),
+    [completedItems],
+  );
 
   const trucksCount = useMemo(() => {
     if (totalWeight === 0) return 1;
@@ -240,32 +381,90 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
     let remaining = totalWeight;
     for (let i = 0; i < trucksCount; i++) {
       const currentLoad = Math.min(remaining, TRUCK_CAPACITY);
-      const displayLoad = (trucksCount === 1 && totalWeight > TRUCK_CAPACITY) ? totalWeight : currentLoad;
+      const displayLoad =
+        trucksCount === 1 && totalWeight > TRUCK_CAPACITY ? totalWeight : currentLoad;
       fills.push(Math.round((displayLoad / TRUCK_CAPACITY) * 100));
       remaining -= currentLoad;
     }
     return fills;
   }, [totalWeight, trucksCount]);
 
+  const deliveryEstimate = useMemo(() => {
+    if (!deliveryInfoValidated || totalWeight <= 0) return null;
+    return estimateMassifDelivery({
+      totalWeightKg: totalWeight,
+      trucksCount,
+      country: deliveryCountry,
+      postalCode: deliveryPostalCode,
+    });
+  }, [
+    deliveryInfoValidated,
+    totalWeight,
+    trucksCount,
+    deliveryCountry,
+    deliveryPostalCode,
+  ]);
+
+  const grandTotal =
+    totalPrice + (deliveryEstimate != null ? deliveryEstimate : 0);
+
   const handleAddToCart = () => {
     if (!completedItems.length) return;
 
-    // Synchronise l'adresse de livraison avec le code postal saisi sur cette page,
-    // en préservant rue/ville si une adresse complète existait déjà.
     const existingAddressRaw = localStorage.getItem('deliveryAddress');
     const existingAddress = existingAddressRaw ? JSON.parse(existingAddressRaw) : {};
-    localStorage.setItem('deliveryAddress', JSON.stringify({
-      ...existingAddress,
-      postalCode: deliveryPostalCode,
-      country: deliveryCountry,
-    }));
-    localStorage.setItem('deliveryInfo', JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }));
+    localStorage.setItem(
+      'deliveryAddress',
+      JSON.stringify({
+        ...existingAddress,
+        postalCode: deliveryPostalCode,
+        country: deliveryCountry,
+      }),
+    );
+    localStorage.setItem(
+      'deliveryInfo',
+      JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }),
+    );
 
-    const cartItems = completedItems.map(it => {
+    const cartItems = completedItems.map((it) => {
+      if (it.fromApi && it.product) {
+        const unit = itemUnitPrice(it);
+        return {
+          id: `massif-api-${it.product.product_id}`,
+          type: 'massif' as const,
+          name: it.product.product_name,
+          price: unit,
+          quantity: it.quantity,
+          details: {
+            itemType: 'massif',
+            fromApi: true,
+            family: it.type,
+            catalogId: it.catalogId,
+            catalogName: it.catalogName,
+            productId: it.product.product_id,
+            sku: it.product.admin_sku,
+            weight: it.product.poids,
+            attributes: it.attributes ?? [],
+            dimensions: it.product.dimensions,
+            currency: it.product.currency,
+            totalWeight,
+            deliveryEstimate,
+            deliveryPostalCode,
+            deliveryCountry,
+          },
+        };
+      }
       const data = getDataSet(it.type!)[it.dimension!];
-      const familyMeta = ALL_FAMILIES.find(f => f.type === it.type)!;
+      const familyMeta = ALL_FAMILIES.find((f) => f.type === it.type)!;
       const price = data?.prices[it.option] ?? 0;
-      const optionLabel = it.option === 'reservation' ? 'Avec réservation' : it.option === 'tiges' ? 'Tiges filetées — Entraxe 200 mm' : it.option === 'tiges-300' ? 'Tiges filetées — Entraxe 300 mm' : '';
+      const optionLabel =
+        it.option === 'reservation'
+          ? 'Avec réservation'
+          : it.option === 'tiges'
+            ? 'Tiges filetées — Entraxe 200 mm'
+            : it.option === 'tiges-300'
+              ? 'Tiges filetées — Entraxe 300 mm'
+              : '';
       return {
         id: `massif-${it.type}-${it.dimension}-${it.option}`,
         type: 'massif' as const,
@@ -279,6 +478,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
           option: it.option,
           weight: data?.weight ?? 0,
           totalWeight,
+          deliveryEstimate,
         },
       };
     });
@@ -316,36 +516,107 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
             {/* ── COLONNE GAUCHE : Description & Caractéristiques ── */}
             <div>
-              <p className="text-sm text-gray-700 leading-relaxed mb-6">
-                Lestage béton permettant de stabiliser des dispositifs extérieurs. Disponible en 5 familles —
-                Cubique, Lego, Cylindrique, Stabilize et Candélabre — pour répondre à toutes les configurations de chantier.
-                Livraison par camion de 24 tonnes, installation possible sur devis.
-              </p>
+              {primaryApiItem?.product ? (
+                <>
+                  <p className="text-sm text-gray-700 leading-relaxed mb-2">
+                    {primaryApiItem.catalogName
+                      ? `Produit sélectionné dans le catalogue « ${primaryApiItem.catalogName} ».`
+                      : 'Produit sélectionné depuis le catalogue Massif Type.'}
+                  </p>
+                  <h2 className="text-xl font-bold text-black mb-1">
+                    {primaryApiItem.product.product_name}
+                  </h2>
+                  <p className="text-xs text-gray-400 font-mono mb-6">
+                    {primaryApiItem.product.admin_sku}
+                    {primaryApiItem.product.company_name
+                      ? ` · ${primaryApiItem.product.company_name}`
+                      : ''}
+                  </p>
 
-              <h4 className="font-bold mb-4 text-black text-lg">Caractéristiques</h4>
-              <div className="space-y-3 mb-6 text-sm">
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-600 font-medium">Familles disponibles</span>
-                  <span className="text-black font-semibold">5 gammes</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-600 font-medium">Plage de poids</span>
-                  <span className="text-black font-semibold">280 kg – 2 765 kg</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-600 font-medium">Transport</span>
-                  <span className="text-black font-semibold">Camion 24 T</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-100 pb-2">
-                  <span className="text-gray-600 font-medium">Options cubique</span>
-                  <span className="text-black font-semibold">Réservation / Tiges filetées</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 font-medium">Délai</span>
-                  <span className="text-black font-semibold">À confirmer selon stock</span>
-                </div>
-              </div>
+                  <h4 className="font-bold mb-4 text-black text-lg">Caractéristiques</h4>
+                  <div className="space-y-3 mb-6 text-sm">
+                    <div className="flex justify-between border-b border-gray-100 pb-2 gap-4">
+                      <span className="text-gray-600 font-medium">Poids unitaire</span>
+                      <span className="text-black font-semibold text-right">
+                        {primaryApiItem.product.poids} kg
+                      </span>
+                    </div>
+                    {(() => {
+                      const d = primaryApiItem.product.dimensions;
+                      if (!d) return null;
+                      const rows = [
+                        { label: 'Longueur', value: formatDimCm(d.longueur) },
+                        { label: 'Largeur', value: formatDimCm(d.largeur) },
+                        { label: 'Hauteur', value: formatDimCm(d.hauteur) },
+                        {
+                          label: 'Volume',
+                          value: d.volume != null ? String(d.volume) : null,
+                        },
+                      ].filter((r) => r.value);
+                      return rows.map((r) => (
+                        <div
+                          key={r.label}
+                          className="flex justify-between border-b border-gray-100 pb-2 gap-4"
+                        >
+                          <span className="text-gray-600 font-medium">{r.label}</span>
+                          <span className="text-black font-semibold text-right">{r.value}</span>
+                        </div>
+                      ));
+                    })()}
+                    {(primaryApiItem.attributes ?? []).map((attr) => (
+                      <div
+                        key={`${attr.label}-${attr.value}`}
+                        className="flex justify-between border-b border-gray-100 pb-2 gap-4"
+                      >
+                        <span className="text-gray-600 font-medium">{attr.label}</span>
+                        <span className="text-black font-semibold text-right">{attr.value}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between pt-1 gap-4">
+                      <span className="text-gray-600 font-medium">Prix unitaire HT</span>
+                      <span className="text-black font-bold text-right text-base">
+                        {formatEuro(
+                          primaryApiItem.product.price,
+                          primaryApiItem.product.currency || 'EUR',
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-700 leading-relaxed mb-6">
+                    Lestage béton permettant de stabiliser des dispositifs extérieurs. Disponible en 5
+                    familles — Cubique, Lego, Cylindrique, Stabilize et Candélabre — pour répondre à
+                    toutes les configurations de chantier. Livraison par camion de 24 tonnes,
+                    installation possible sur devis.
+                  </p>
 
+                  <h4 className="font-bold mb-4 text-black text-lg">Caractéristiques</h4>
+                  <div className="space-y-3 mb-6 text-sm">
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-600 font-medium">Familles disponibles</span>
+                      <span className="text-black font-semibold">5 gammes</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-600 font-medium">Plage de poids</span>
+                      <span className="text-black font-semibold">280 kg – 2 765 kg</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-600 font-medium">Transport</span>
+                      <span className="text-black font-semibold">Camion 24 T</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-600 font-medium">Options cubique</span>
+                      <span className="text-black font-semibold">Réservation / Tiges filetées</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 font-medium">Délai</span>
+                      <span className="text-black font-semibold">À confirmer selon stock</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* ── COLONNE DROITE : Configuration ── */}
@@ -356,67 +627,187 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
               <div className="space-y-4">
                 {items.map((item, idx) => {
-                  const band = item.weightBandId ? WEIGHT_BANDS.find(b => b.id === item.weightBandId) : null;
+                  const band = item.weightBandId
+                    ? WEIGHT_BANDS.find((b) => b.id === item.weightBandId)
+                    : null;
                   const dataSet = item.type ? getDataSet(item.type) : MASSIF_DATA_CUBIQUE;
-                  const data = item.dimension ? dataSet[item.dimension] : null;
-                  const price = data && item.option ? (data.prices[item.option] ?? 0) : 0;
-                  const spec = data && item.option ? (data.specs[item.option] ?? '') : '';
-                  const familyMeta = item.type ? ALL_FAMILIES.find(f => f.type === item.type) : null;
+                  const data =
+                    !item.fromApi && item.dimension ? dataSet[item.dimension] : null;
+                  const price = itemUnitPrice(item);
+                  const weight = itemUnitWeight(item);
+                  const spec =
+                    data && item.option ? (data.specs[item.option] ?? '') : '';
+                  const familyMeta = item.type
+                    ? ALL_FAMILIES.find((f) => f.type === item.type)
+                    : null;
+                  const lineTotal = price * item.quantity;
+                  const currency = item.product?.currency || 'EUR';
 
                   return (
                     <Card key={item.id} className="border border-gray-300 bg-gray-50">
                       <CardContent className="p-4">
                         {/* En-tête ligne */}
                         <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold shrink-0">{idx + 1}</div>
-                            <span className="font-semibold text-sm text-gray-800">
-                              {item.step === 3 && familyMeta && data
-                                ? `${familyMeta.label} — ${data.label}`
-                                : item.step === 2 ? 'Famille de massif'
-                                : 'Poids recherché'}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold shrink-0">
+                              {idx + 1}
+                            </div>
+                            <span className="font-semibold text-sm text-gray-800 truncate">
+                              {item.fromApi && item.product
+                                ? item.product.product_name
+                                : item.step === 3 && familyMeta && data
+                                  ? `${familyMeta.label} — ${data.label}`
+                                  : item.step === 2
+                                    ? 'Famille de massif'
+                                    : 'Poids recherché'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            {[1, 2, 3].map(s => (
-                              <div key={s} className={cn(
-                                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all',
-                                item.step > s ? 'bg-black border-black text-white'
-                                  : item.step === s ? 'bg-white border-black text-black'
-                                  : 'bg-white border-gray-300 text-gray-400'
-                              )}>
-                                {item.step > s ? <Check className="w-2.5 h-2.5" /> : s}
-                              </div>
-                            ))}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {!item.fromApi &&
+                              [1, 2, 3].map((s) => (
+                                <div
+                                  key={s}
+                                  className={cn(
+                                    'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all',
+                                    item.step > s
+                                      ? 'bg-black border-black text-white'
+                                      : item.step === s
+                                        ? 'bg-white border-black text-black'
+                                        : 'bg-white border-gray-300 text-gray-400',
+                                  )}
+                                >
+                                  {item.step > s ? <Check className="w-2.5 h-2.5" /> : s}
+                                </div>
+                              ))}
                             {items.length > 1 && (
-                              <button type="button" onClick={() => removeItem(item.id)} className="ml-1 text-gray-400 hover:text-red-500 transition-colors">
+                              <button
+                                type="button"
+                                onClick={() => removeItem(item.id)}
+                                className="ml-1 text-gray-400 hover:text-red-500 transition-colors"
+                              >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
 
+                        {/* Mode API : produit déjà choisi → qty + total */}
+                        {item.fromApi && item.product && (
+                          <div className="space-y-4">
+                            <button
+                              type="button"
+                              onClick={() => navigate('/massif/selection')}
+                              className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                            >
+                              <ChevronLeft className="w-3 h-3" /> Changer de produit
+                            </button>
+
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 text-sm space-y-1">
+                              <p className="font-bold text-black">{item.product.product_name}</p>
+                              <p className="text-xs text-gray-500">
+                                {item.product.poids} kg ·{' '}
+                                {formatEuro(item.product.price, currency)} / unité
+                              </p>
+                              {item.catalogName ? (
+                                <p className="text-xs text-gray-400">{item.catalogName}</p>
+                              ) : null}
+                            </div>
+
+                            <div className="pt-1">
+                              <Label className="text-xs font-bold text-gray-700 mb-2 block">
+                                Quantité
+                              </Label>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden">
+                                  <button
+                                    type="button"
+                                    aria-label="Diminuer"
+                                    onClick={() =>
+                                      update(item.id, {
+                                        quantity: Math.max(1, item.quantity - 1),
+                                      })
+                                    }
+                                    className="w-10 h-10 text-lg font-bold hover:bg-gray-100"
+                                  >
+                                    −
+                                  </button>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    value={item.quantity}
+                                    onChange={(e) =>
+                                      update(item.id, {
+                                        quantity: Math.max(1, parseInt(e.target.value) || 1),
+                                      })
+                                    }
+                                    className="w-14 h-10 border-0 text-center font-bold shadow-none focus-visible:ring-0"
+                                  />
+                                  <button
+                                    type="button"
+                                    aria-label="Augmenter"
+                                    onClick={() =>
+                                      update(item.id, { quantity: item.quantity + 1 })
+                                    }
+                                    className="w-10 h-10 text-lg font-bold hover:bg-gray-100"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <div className="text-sm text-gray-600 leading-tight">
+                                  <p>
+                                    {item.quantity} × {formatEuro(price, currency)}
+                                  </p>
+                                  <p className="font-bold text-black">
+                                    = {formatEuro(lineTotal, currency)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-0.5">
+                                    {(weight * item.quantity / 1000).toFixed(2)} t
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* ÉTAPE 1 : Poids */}
-                        {item.step === 1 && (
+                        {!item.fromApi && item.step === 1 && (
                           <div className="grid grid-cols-2 gap-2">
-                            {WEIGHT_BANDS.map(wb => {
-                              const available = ALL_FAMILIES.filter(f => familyHasItems(f.type, wb));
+                            {WEIGHT_BANDS.map((wb) => {
+                              const available = ALL_FAMILIES.filter((f) =>
+                                familyHasItems(f.type, wb),
+                              );
                               const hasAny = available.length > 0;
                               return (
                                 <button
                                   key={wb.id}
                                   type="button"
-                                  onClick={() => hasAny && update(item.id, { weightBandId: wb.id, step: 2, type: null, dimension: null })}
+                                  onClick={() =>
+                                    hasAny &&
+                                    update(item.id, {
+                                      weightBandId: wb.id,
+                                      step: 2,
+                                      type: null,
+                                      dimension: null,
+                                    })
+                                  }
                                   className={cn(
                                     'flex flex-col items-start p-3 border rounded-lg transition-all text-left',
                                     hasAny
                                       ? 'border-gray-200 bg-white hover:border-black hover:shadow-sm cursor-pointer'
-                                      : 'border-dashed border-gray-200 bg-white opacity-50 cursor-not-allowed'
+                                      : 'border-dashed border-gray-200 bg-white opacity-50 cursor-not-allowed',
                                   )}
                                 >
-                                  <span className="font-bold text-sm text-gray-900">{wb.label}</span>
-                                  <span className="text-xs text-gray-500 mt-0.5">{wb.sublabel}</span>
-                                  {!hasAny && <span className="text-[10px] text-gray-400 mt-1 italic">Bientôt disponible</span>}
+                                  <span className="font-bold text-sm text-gray-900">
+                                    {wb.label}
+                                  </span>
+                                  <span className="text-xs text-gray-500 mt-0.5">
+                                    {wb.sublabel}
+                                  </span>
+                                  {!hasAny && (
+                                    <span className="text-[10px] text-gray-400 mt-1 italic">
+                                      Bientôt disponible
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
@@ -424,12 +815,20 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                         )}
 
                         {/* ÉTAPE 2 : Famille */}
-                        {item.step === 2 && band && (
+                        {!item.fromApi && item.step === 2 && band && (
                           <div>
-                            <button type="button" onClick={() => update(item.id, { step: 1, type: null, dimension: null })} className="flex items-center gap-1 text-xs text-gray-500 hover:text-black mb-3 transition-colors">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                update(item.id, { step: 1, type: null, dimension: null })
+                              }
+                              className="flex items-center gap-1 text-xs text-gray-500 hover:text-black mb-3 transition-colors"
+                            >
                               <ChevronLeft className="w-3 h-3" /> Retour au poids
                             </button>
-                            <p className="text-xs text-gray-500 mb-3">Pour <strong className="text-gray-900">{band.label}</strong></p>
+                            <p className="text-xs text-gray-500 mb-3">
+                              Pour <strong className="text-gray-900">{band.label}</strong>
+                            </p>
                             <div className="space-y-2">
                               {ALL_FAMILIES.map(({ type: fam, label: famLabel, description: famDesc }) => {
                                 const dims = getFilteredDimensions(fam, band);
@@ -439,16 +838,29 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                                   <button
                                     key={fam}
                                     type="button"
-                                    onClick={() => update(item.id, { type: fam, dimension: dims[0], option: fam === 'cubique' ? 'reservation' : 'aucun', step: 3 })}
+                                    onClick={() =>
+                                      update(item.id, {
+                                        type: fam,
+                                        dimension: dims[0],
+                                        option: fam === 'cubique' ? 'reservation' : 'aucun',
+                                        step: 3,
+                                      })
+                                    }
                                     className="flex items-center gap-3 p-3 border border-gray-200 bg-white rounded-lg hover:border-black hover:shadow-sm transition-all text-left w-full"
                                   >
                                     <div className="w-10 h-10 rounded overflow-hidden border border-gray-100 shrink-0">
-                                      <ImageWithFallback src={familyImage(fam)} alt={famLabel} className="w-full h-full object-cover" />
+                                      <ImageWithFallback
+                                        src={familyImage(fam)}
+                                        alt={famLabel}
+                                        className="w-full h-full object-cover"
+                                      />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <p className="font-bold text-gray-900 text-sm">{famLabel}</p>
                                       <p className="text-xs text-gray-500">{famDesc}</p>
-                                      <p className="text-xs text-gray-400 mt-0.5 truncate">{dims.map(d => ds[d].weight + ' kg').join(' · ')}</p>
+                                      <p className="text-xs text-gray-400 mt-0.5 truncate">
+                                        {dims.map((d) => ds[d].weight + ' kg').join(' · ')}
+                                      </p>
                                     </div>
                                     <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
                                   </button>
@@ -458,18 +870,27 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                           </div>
                         )}
 
-                        {/* ÉTAPE 3 : Options + quantité */}
-                        {item.step === 3 && item.type && item.dimension && band && (
+                        {/* ÉTAPE 3 : Options + quantité (catalogue local) */}
+                        {!item.fromApi &&
+                          item.step === 3 &&
+                          item.type &&
+                          item.dimension &&
+                          band && (
                           <div className="space-y-4">
-                            <button type="button" onClick={() => update(item.id, { step: 2, dimension: null })} className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => update(item.id, { step: 2, dimension: null })}
+                              className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                            >
                               <ChevronLeft className="w-3 h-3" /> Retour à la famille
                             </button>
 
-                            {/* Dimensions */}
                             <div>
-                              <Label className="text-xs font-bold text-gray-700 mb-2 block">Dimensions</Label>
+                              <Label className="text-xs font-bold text-gray-700 mb-2 block">
+                                Dimensions
+                              </Label>
                               <div className="flex flex-wrap gap-1.5">
-                                {getFilteredDimensions(item.type, band).map(dimKey => {
+                                {getFilteredDimensions(item.type, band).map((dimKey) => {
                                   const ds = getDataSet(item.type!);
                                   return (
                                     <button
@@ -478,45 +899,81 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                                       onClick={() => update(item.id, { dimension: dimKey })}
                                       className={cn(
                                         'flex flex-col items-start px-3 py-2 rounded-lg border text-xs transition-all',
-                                        item.dimension === dimKey ? 'bg-black border-black text-white' : 'border-gray-300 bg-white hover:border-black text-gray-700'
+                                        item.dimension === dimKey
+                                          ? 'bg-black border-black text-white'
+                                          : 'border-gray-300 bg-white hover:border-black text-gray-700',
                                       )}
                                     >
                                       <span className="font-semibold">{ds[dimKey].label}</span>
-                                      <span className={cn('mt-0.5', item.dimension === dimKey ? 'text-gray-300' : 'text-gray-500')}>{ds[dimKey].weight} kg</span>
+                                      <span
+                                        className={cn(
+                                          'mt-0.5',
+                                          item.dimension === dimKey
+                                            ? 'text-gray-300'
+                                            : 'text-gray-500',
+                                        )}
+                                      >
+                                        {ds[dimKey].weight} kg
+                                      </span>
                                     </button>
                                   );
                                 })}
                               </div>
                             </div>
 
-                            {/* Option technique (cubique uniquement) */}
                             {item.type === 'cubique' && (
                               <div>
-                                <Label className="text-xs font-bold text-gray-700 mb-2 block">Option technique</Label>
+                                <Label className="text-xs font-bold text-gray-700 mb-2 block">
+                                  Option technique
+                                </Label>
                                 <div className="grid grid-cols-1 gap-2">
-                                  {([
-                                    { value: 'reservation' as MassifOption, label: 'Avec réservation', sub: 'Ouverture dans le massif' },
-                                    { value: 'tiges' as MassifOption, label: 'Avec tiges filetées', sub: 'Entraxe 200 mm' },
-                                    { value: 'tiges-300' as MassifOption, label: 'Avec tiges filetées', sub: 'Entraxe 300 mm' },
-                                  ]).map(opt => (
+                                  {(
+                                    [
+                                      {
+                                        value: 'reservation' as MassifOption,
+                                        label: 'Avec réservation',
+                                        sub: 'Ouverture dans le massif',
+                                      },
+                                      {
+                                        value: 'tiges' as MassifOption,
+                                        label: 'Avec tiges filetées',
+                                        sub: 'Entraxe 200 mm',
+                                      },
+                                      {
+                                        value: 'tiges-300' as MassifOption,
+                                        label: 'Avec tiges filetées',
+                                        sub: 'Entraxe 300 mm',
+                                      },
+                                    ] as const
+                                  ).map((opt) => (
                                     <button
                                       key={opt.value}
                                       type="button"
                                       onClick={() => update(item.id, { option: opt.value })}
                                       className={cn(
                                         'flex items-center justify-between p-3 rounded-lg border text-left transition-all',
-                                        item.option === opt.value ? 'bg-black border-black text-white' : 'border-gray-300 bg-white hover:border-black text-gray-700'
+                                        item.option === opt.value
+                                          ? 'bg-black border-black text-white'
+                                          : 'border-gray-300 bg-white hover:border-black text-gray-700',
                                       )}
                                     >
                                       <span className="font-semibold text-xs">{opt.label}</span>
-                                      <span className={cn('text-[10px]', item.option === opt.value ? 'text-gray-300' : 'text-gray-500')}>{opt.sub}</span>
+                                      <span
+                                        className={cn(
+                                          'text-[10px]',
+                                          item.option === opt.value
+                                            ? 'text-gray-300'
+                                            : 'text-gray-500',
+                                        )}
+                                      >
+                                        {opt.sub}
+                                      </span>
                                     </button>
                                   ))}
                                 </div>
                               </div>
                             )}
 
-                            {/* Spec */}
                             {spec && (
                               <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
                                 <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
@@ -524,20 +981,54 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                               </div>
                             )}
 
-                            {/* Quantité */}
                             <div className="pt-2 border-t border-gray-100">
-                              <Label className="text-xs font-bold text-gray-700 mb-1.5 block">Quantité</Label>
+                              <Label className="text-xs font-bold text-gray-700 mb-1.5 block">
+                                Quantité
+                              </Label>
                               <div className="flex items-center gap-3">
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={item.quantity}
-                                  onChange={e => update(item.id, { quantity: parseInt(e.target.value) || 1 })}
-                                  className="w-20 h-10 border-gray-300 font-bold text-center"
-                                />
-                                {data && (
-                                  <span className="text-xs text-gray-500">{(data.weight * item.quantity / 1000).toFixed(2)} t</span>
-                                )}
+                                <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      update(item.id, {
+                                        quantity: Math.max(1, item.quantity - 1),
+                                      })
+                                    }
+                                    className="w-10 h-10 text-lg font-bold hover:bg-gray-100"
+                                  >
+                                    −
+                                  </button>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) =>
+                                      update(item.id, {
+                                        quantity: Math.max(1, parseInt(e.target.value) || 1),
+                                      })
+                                    }
+                                    className="w-14 h-10 border-0 text-center font-bold shadow-none focus-visible:ring-0"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      update(item.id, { quantity: item.quantity + 1 })
+                                    }
+                                    className="w-10 h-10 text-lg font-bold hover:bg-gray-100"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  <p className="font-bold text-black">
+                                    {formatEuro(lineTotal)}
+                                  </p>
+                                  {data && (
+                                    <p className="text-xs text-gray-500">
+                                      {(data.weight * item.quantity / 1000).toFixed(2)} t
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -660,8 +1151,42 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
               {!deliveryInfoValidated && (
                 <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-center">
-                  Veuillez renseigner votre code postal et votre pays dans la section <strong>Localisation de livraison</strong> avant d'ajouter au panier.
+                  Veuillez renseigner votre code postal et votre pays dans la section{' '}
+                  <strong>Localisation de livraison</strong> avant d&apos;ajouter au panier.
                 </p>
+              )}
+
+              {/* Récap prix + livraison (estimation) */}
+              {completedItems.length > 0 && (
+                <Card className="border-2 border-black bg-white">
+                  <CardContent className="p-4 space-y-2 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-600">
+                        Produits ({completedItems.reduce((n, it) => n + it.quantity, 0)} unit.)
+                      </span>
+                      <span className="font-semibold text-black">{formatEuro(totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-600 flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5" />
+                        Livraison estimée
+                      </span>
+                      <span className="font-semibold text-black">
+                        {deliveryEstimate != null ? formatEuro(deliveryEstimate) : '—'}
+                      </span>
+                    </div>
+                    {deliveryInfoValidated && deliveryEstimate != null && (
+                      <p className="text-[11px] text-gray-400 leading-snug">
+                        Estimation indicative (pays, CP, poids, nb camions). Le tarif définitif sera
+                        confirmé à la commande.
+                      </p>
+                    )}
+                    <div className="flex justify-between gap-3 pt-2 border-t border-gray-200 text-base">
+                      <span className="font-bold text-black">Total estimé HT</span>
+                      <span className="font-black text-black">{formatEuro(grandTotal)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Bouton Ajouter au panier */}
@@ -672,6 +1197,9 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Ajouter au panier
+                {completedItems.length > 0
+                  ? ` · ${formatEuro(totalPrice)}`
+                  : ''}
               </Button>
             </div>
           </div>

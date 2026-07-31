@@ -5,7 +5,7 @@ import { ProgressSteps } from '../components/ProgressSteps';
 import { Button } from '../components/ui/button';
 import { ArrowRight, Trash2, ShoppingBag, MapPin, Plus, Minus, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import totemCaissonBoisImg from '../../imports/totem-caisson-bois.png';
+import totemCaissonBoisImg from '../../imports/totem-caisson-bois.jpg';
 
 const IMG: Record<string, string> = {
   totem:        'https://images.unsplash.com/photo-1663249226183-2d1052137f86?w=120&h=120&fit=crop&auto=format',

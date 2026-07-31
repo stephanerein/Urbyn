@@ -5,10 +5,10 @@ import { ProgressSteps } from '../components/ProgressSteps';
 import { Card, CardContent } from '../components/ui/card';
 import { Signpost, HardHat, Box, Wind, FileText, Building2, LayoutGrid } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import palissadeImg from 'figma:asset/bc5db02dc136e0f6f2acb6bdcfd5000cf7768a25.png';
-import totemImg from 'figma:asset/e2fcd681d60aa3d6f1a0a1e46302e95888ec11db.png';
-import massifImg from 'figma:asset/1e6a3eb50a7bcc897639b57c16806ba7a3ff933c.png';
-import echafaudageImg from 'figma:asset/7be7315ce92388a709e6e81e468bd53334a3f1a8.png';
+import palissadeImg from 'figma:asset/palissade-bois.png';
+import totemImg from 'figma:asset/totem-urbain.png';
+import massifImg from 'figma:asset/massif-beton-cubique.png';
+import echafaudageImg from 'figma:asset/echafaudage.png';
 
 export function DefinirBesoinPage() {
   const navigate = useNavigate();
