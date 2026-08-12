@@ -47,6 +47,9 @@ function calcShipping(distanceKm: number, hasPanels: boolean): number {
   return hasPanels ? base + PANEL_SURCHARGE : base;
 }
 
+/** v1 : le module de calcul reste disponible, mais les frais ne rentrent pas dans le total. */
+const V1_INCLUDE_SHIPPING_IN_TOTAL = false;
+
 export function DeliveryPage() {
   const navigate = useNavigate();
   const { items, getTotalPrice } = useCart();
@@ -89,8 +92,9 @@ export function DeliveryPage() {
     getRoadDistanceKm(deliveryAddress.coordinates)
       .then(km => {
         const cost = calcShipping(km, hasPanels);
-        setShippingCost(cost);
-        localStorage.setItem('shippingCost', String(cost));
+        const applied = V1_INCLUDE_SHIPPING_IN_TOTAL ? cost : 0;
+        setShippingCost(applied);
+        localStorage.setItem('shippingCost', String(applied));
       })
       .finally(() => setShippingLoading(false));
   }, [deliveryAddress.coordinates, items]);
@@ -161,7 +165,9 @@ export function DeliveryPage() {
               {/* Livraison */}
               <div className="flex justify-between text-sm pb-4 border-b border-gray-200">
                 <span className="text-black">Frais de livraison</span>
-                {shippingLoading ? (
+                {!V1_INCLUDE_SHIPPING_IN_TOTAL ? (
+                  <span className="text-gray-500 text-xs italic">Non facturés (v1)</span>
+                ) : shippingLoading ? (
                   <span className="flex items-center gap-1 text-gray-400 text-xs">
                     <Loader2 className="w-3 h-3 animate-spin" /> Calcul en cours…
                   </span>
