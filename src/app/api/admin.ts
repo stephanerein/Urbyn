@@ -1,4 +1,5 @@
-import { apiFetch } from './client'
+import { getApiBase } from './apiBase'
+import { apiFetch, ApiError } from './client'
 import { loadAdminToken } from '../lib/adminSession'
 
 export interface AdminAttributeDefinition {
@@ -140,4 +141,81 @@ export function updateAdminCatalog(
     method: 'PUT',
     body: JSON.stringify(body),
   })
+}
+
+export type CatalogCsvImportMode = 'additive' | 'destructive'
+
+export interface CatalogCsvImportResult {
+  mode: CatalogCsvImportMode
+  products_created: number
+  products_updated: number
+  catalogs_created: number
+  catalogs_cleared: number
+  links_created: number
+  rows_processed: number
+  errors: { line: number; message: string }[]
+}
+
+export interface CatalogProductAttribute {
+  attribute_name: string
+  product_count: number
+  is_mandatory: boolean
+  definition_id: number | null
+}
+
+export function fetchAdminCatalogProductAttributes(catalogId: number) {
+  return adminFetch<CatalogProductAttribute[]>(
+    `/api/v1/admin/catalogs/${catalogId}/product-attributes`,
+  )
+}
+
+export function setAdminCatalogAttributeMandatory(
+  catalogId: number,
+  attributeName: string,
+  isMandatory: boolean,
+) {
+  return adminFetch<CatalogProductAttribute>(
+    `/api/v1/admin/catalogs/${catalogId}/product-attributes/${encodeURIComponent(attributeName)}/mandatory`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ is_mandatory: isMandatory }),
+    },
+  )
+}
+
+export async function importAdminCatalogCsv(params: {
+  file: File
+  mode: CatalogCsvImportMode
+  companyTva: string
+}): Promise<CatalogCsvImportResult> {
+  const token = loadAdminToken()
+  const form = new FormData()
+  form.append('file', params.file)
+  form.append('mode', params.mode)
+  form.append('company_tva_intra_com', params.companyTva)
+
+  const response = await fetch(`${getApiBase()}/api/v1/admin/catalogs/import-csv`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  })
+
+  if (!response.ok) {
+    let message = response.statusText
+    let code: string | undefined
+    try {
+      const body = await response.json()
+      if (body.detail?.message) {
+        message = body.detail.message
+        code = body.detail.code
+      } else if (typeof body.detail === 'string') {
+        message = body.detail
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(message, response.status, code)
+  }
+
+  return response.json() as Promise<CatalogCsvImportResult>
 }

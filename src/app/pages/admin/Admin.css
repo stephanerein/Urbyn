@@ -777,3 +777,103 @@
 .admin-identity--readonly .admin-identity__head {
   margin-bottom: 1rem;
 }
+
+/* --- Import CSV catalogues --- */
+.admin-catalog-import-bar {
+  padding: 0.75rem 1.25rem 0;
+}
+
+.admin-csv-import {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-csv-import__controls {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr);
+}
+
+.admin-csv-import__modes {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.admin-csv-import__modes legend {
+  padding: 0 0.25rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.admin-csv-dropzone {
+  position: relative;
+  border: 1.5px dashed #94a3b8;
+  background: #fff;
+  padding: 1.25rem;
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.admin-csv-dropzone.is-dragover,
+.admin-csv-dropzone.has-file {
+  border-color: #4338ca;
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.admin-csv-dropzone input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.admin-csv-import__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-attr-list__item--switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-attr-list__meta {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
+.admin-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.admin-switch input {
+  accent-color: #4338ca;
+}
+
+@media (max-width: 900px) {
+  .admin-csv-import__controls {
+    grid-template-columns: 1fr;
+  }
+}

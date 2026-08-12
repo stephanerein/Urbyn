@@ -3,13 +3,22 @@ import { Link } from 'react-router-dom'
 import {
   createAdminCatalog,
   fetchAdminCatalog,
+  fetchAdminCatalogProductAttributes,
   fetchAdminCatalogProducts,
   fetchAdminCatalogTree,
+  importAdminCatalogCsv,
+  setAdminCatalogAttributeMandatory,
   updateAdminCatalog,
-  type AdminCatalogAttributeIn,
   type AdminCatalogNode,
   type AdminCatalogProductEntry,
+  type CatalogCsvImportMode,
+  type CatalogCsvImportResult,
+  type CatalogProductAttribute,
 } from '../../api/admin'
+import {
+  fetchAdminCompanies,
+  type AdminCompanyListItem,
+} from '../../api/adminAccounts'
 import { AdminTopBar } from './AdminDashboardPage'
 import './Admin.css'
 
@@ -122,9 +131,10 @@ export function AdminCatalogPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isActive, setIsActive] = useState(true)
-  const [attributes, setAttributes] = useState<AdminCatalogAttributeIn[]>([])
-  const [newAttributeName, setNewAttributeName] = useState('')
-  const [newAttributeDefault, setNewAttributeDefault] = useState('')
+
+  const [productAttrs, setProductAttrs] = useState<CatalogProductAttribute[]>([])
+  const [attrsLoading, setAttrsLoading] = useState(false)
+  const [togglingAttr, setTogglingAttr] = useState<string | null>(null)
 
   const [catalogProducts, setCatalogProducts] = useState<AdminCatalogProductEntry[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
@@ -133,6 +143,16 @@ export function AdminCatalogPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Import CSV
+  const [importOpen, setImportOpen] = useState(false)
+  const [importMode, setImportMode] = useState<CatalogCsvImportMode>('additive')
+  const [importCompanyTva, setImportCompanyTva] = useState('')
+  const [companies, setCompanies] = useState<AdminCompanyListItem[]>([])
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<CatalogCsvImportResult | null>(null)
 
   const q = search.trim().toLowerCase()
   const displayTree = useMemo(() => filterTree(roots, q), [roots, q])
@@ -148,6 +168,25 @@ export function AdminCatalogPage() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
   }, [reloadTree])
+
+  useEffect(() => {
+    if (!importOpen) return
+    fetchAdminCompanies()
+      .then((data) => {
+        const all = [...data.suppliers, ...data.clients].sort((a, b) =>
+          a.company_name.localeCompare(b.company_name, 'fr'),
+        )
+        setCompanies(all)
+        setImportCompanyTva((prev) => {
+          if (prev) return prev
+          const urbanize = all.find((c) =>
+            /urbanize/i.test(c.company_name),
+          )
+          return urbanize?.tva_intra_com || ''
+        })
+      })
+      .catch(() => setCompanies([]))
+  }, [importOpen])
 
   useEffect(() => {
     if (!q) return
@@ -167,6 +206,17 @@ export function AdminCatalogPage() {
     }
   }
 
+  async function loadProductAttributes(id: number) {
+    setAttrsLoading(true)
+    try {
+      setProductAttrs(await fetchAdminCatalogProductAttributes(id))
+    } catch {
+      setProductAttrs([])
+    } finally {
+      setAttrsLoading(false)
+    }
+  }
+
   async function loadDetail(id: number) {
     const detail = await fetchAdminCatalog(id)
     setSelectedId(id)
@@ -174,20 +224,13 @@ export function AdminCatalogPage() {
     setName(detail.name ?? '')
     setDescription(detail.description ?? '')
     setIsActive(detail.is_active)
-    setAttributes(
-      detail.attribute_definitions
-        .map((a) => ({
-          attribute_name: a.attribute_name,
-          default_value: a.default_value?.trim() || '',
-        }))
-        .sort((a, b) => a.attribute_name.localeCompare(b.attribute_name, 'fr')),
-    )
     setBreadcrumb(detail.breadcrumb)
     setChildCount(detail.child_count)
     setProductCount(detail.product_count)
     setCreateParentId(null)
     setError(null)
     void loadCatalogProducts(id)
+    void loadProductAttributes(id)
   }
 
   function startCreateRoot() {
@@ -197,9 +240,7 @@ export function AdminCatalogPage() {
     setName('')
     setDescription('')
     setIsActive(true)
-    setAttributes([])
-    setNewAttributeName('')
-    setNewAttributeDefault('')
+    setProductAttrs([])
     setBreadcrumb([])
     setChildCount(0)
     setProductCount(0)
@@ -215,9 +256,7 @@ export function AdminCatalogPage() {
     setName('')
     setDescription('')
     setIsActive(true)
-    setAttributes([])
-    setNewAttributeName('')
-    setNewAttributeDefault('')
+    setProductAttrs([])
     setError(null)
     setSuccess(null)
   }
@@ -231,48 +270,36 @@ export function AdminCatalogPage() {
     })
   }
 
-  function addAttributeName() {
-    const trimmed = newAttributeName.trim()
-    const defaultVal = newAttributeDefault.trim()
-    if (!trimmed) {
-      setError('Indiquez un nom d’attribut.')
-      return
-    }
-    if (!defaultVal) {
-      setError('Indiquez une valeur par défaut (appliquée à tous les produits du catalogue).')
-      return
-    }
-    if (attributes.some((a) => a.attribute_name.toLowerCase() === trimmed.toLowerCase())) {
-      setError('Cet attribut existe déjà pour ce catalogue.')
-      return
-    }
-    setAttributes((list) =>
-      [...list, { attribute_name: trimmed, default_value: defaultVal }].sort((a, b) =>
-        a.attribute_name.localeCompare(b.attribute_name, 'fr'),
-      ),
-    )
-    setNewAttributeName('')
-    setNewAttributeDefault('')
+  async function handleToggleMandatory(attr: CatalogProductAttribute) {
+    if (!selectedId) return
+    setTogglingAttr(attr.attribute_name)
     setError(null)
-  }
-
-  function removeAttributeName(index: number) {
-    setAttributes((list) => list.filter((_, i) => i !== index))
-  }
-
-  function updateAttributeDefault(index: number, value: string) {
-    setAttributes((list) =>
-      list.map((a, i) => (i === index ? { ...a, default_value: value } : a)),
-    )
+    try {
+      const updated = await setAdminCatalogAttributeMandatory(
+        selectedId,
+        attr.attribute_name,
+        !attr.is_mandatory,
+      )
+      setProductAttrs((list) =>
+        list
+          .map((a) => (a.attribute_name === attr.attribute_name ? updated : a))
+          .sort((a, b) => a.attribute_name.localeCompare(b.attribute_name, 'fr')),
+      )
+      setSuccess(
+        updated.is_mandatory
+          ? `« ${updated.attribute_name} » rendu obligatoire.`
+          : `« ${updated.attribute_name} » rendu facultatif.`,
+      )
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur')
+    } finally {
+      setTogglingAttr(null)
+    }
   }
 
   async function handleSave() {
     if (!name.trim() || !description.trim()) {
       setError('Nom et description sont obligatoires.')
-      return
-    }
-    if (attributes.some((a) => !a.default_value.trim())) {
-      setError('Chaque attribut obligatoire doit avoir une valeur par défaut.')
       return
     }
     setSaving(true)
@@ -283,10 +310,6 @@ export function AdminCatalogPage() {
         name: name.trim(),
         description: description.trim(),
         is_active: isActive,
-        attributes: attributes.map((a) => ({
-          attribute_name: a.attribute_name.trim(),
-          default_value: a.default_value.trim(),
-        })),
       }
       if (mode === 'edit' && selectedId) {
         await updateAdminCatalog(selectedId, body)
@@ -323,10 +346,6 @@ export function AdminCatalogPage() {
         name: name.trim(),
         description: description.trim(),
         is_active: next,
-        attributes: attributes.map((a) => ({
-          attribute_name: a.attribute_name.trim(),
-          default_value: a.default_value.trim(),
-        })),
       })
       setSuccess(next ? 'Catalogue activé.' : 'Catalogue désactivé.')
       await reloadTree()
@@ -338,18 +357,156 @@ export function AdminCatalogPage() {
     }
   }
 
+  function acceptCsvFile(file: File | null | undefined) {
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      setError('Veuillez déposer un fichier .csv')
+      return
+    }
+    setImportFile(file)
+    setImportResult(null)
+    setError(null)
+  }
+
+  async function handleImport() {
+    if (!importFile) {
+      setError('Choisissez un fichier CSV.')
+      return
+    }
+    setImporting(true)
+    setError(null)
+    setSuccess(null)
+    setImportResult(null)
+    try {
+      const result = await importAdminCatalogCsv({
+        file: importFile,
+        mode: importMode,
+        companyTva: importCompanyTva,
+      })
+      setImportResult(result)
+      setSuccess(
+        `Import terminé : ${result.products_created} créés, ${result.products_updated} mis à jour, ${result.catalogs_created} catalogues créés.`,
+      )
+      await reloadTree()
+      if (selectedId) await loadDetail(selectedId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur import')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const panelTitle =
     mode === 'create-root'
       ? 'Nouveau catalogue racine'
       : mode === 'create-child'
         ? 'Nouveau sous-catalogue'
         : mode === 'edit'
-          ? (name || 'Catalogue')
+          ? name || 'Catalogue'
           : 'Sélectionnez un catalogue'
 
   return (
     <div className="admin-page admin-page--catalog">
       <AdminTopBar title="Catalogues" />
+      <div className="admin-catalog-import-bar">
+        <button
+          type="button"
+          className="admin-btn admin-btn--soft"
+          onClick={() => setImportOpen((v) => !v)}
+        >
+          {importOpen ? 'Fermer l’import CSV' : 'Import CSV (gros volume)'}
+        </button>
+        {importOpen ? (
+          <div className="admin-csv-import">
+            <div className="admin-csv-import__controls">
+              <label className="admin-field">
+                <span>Société propriétaire (tous les produits du CSV)</span>
+                <select
+                  value={importCompanyTva}
+                  onChange={(e) => setImportCompanyTva(e.target.value)}
+                >
+                  <option value="">Urbanize (défaut)</option>
+                  {companies.map((c) => (
+                    <option key={c.tva_intra_com} value={c.tva_intra_com}>
+                      {c.company_name} ({c.tva_intra_com})
+                    </option>
+                  ))}
+                </select>
+                <small className="admin-catalog__hint">
+                  Cette valeur prime sur la colonne Fournisseur du CSV et s’applique à
+                  toutes les lignes importées. Change-la ici pour forcer une autre société.
+                </small>
+              </label>
+              <fieldset className="admin-csv-import__modes">
+                <legend>Mode d’intégration</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="import-mode"
+                    checked={importMode === 'additive'}
+                    onChange={() => setImportMode('additive')}
+                  />
+                  Additive — ajoute aux catalogues existants
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="import-mode"
+                    checked={importMode === 'destructive'}
+                    onChange={() => setImportMode('destructive')}
+                  />
+                  Destructive — vide les catalogues cibles existants avant import
+                </label>
+              </fieldset>
+            </div>
+            <div
+              className={`admin-csv-dropzone ${dragOver ? 'is-dragover' : ''} ${importFile ? 'has-file' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOver(true)
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDragOver(false)
+                acceptCsvFile(e.dataTransfer.files?.[0])
+              }}
+            >
+              <p>
+                {importFile
+                  ? `Fichier : ${importFile.name}`
+                  : 'Glissez-déposez un CSV ici, ou cliquez pour parcourir'}
+              </p>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => acceptCsvFile(e.target.files?.[0])}
+              />
+            </div>
+            <div className="admin-csv-import__actions">
+              <button
+                type="button"
+                className="admin-btn admin-btn--primary"
+                disabled={importing || !importFile}
+                onClick={() => void handleImport()}
+              >
+                {importing ? 'Import en cours…' : 'Lancer l’import'}
+              </button>
+              {importResult ? (
+                <p className="admin-catalog__hint">
+                  {importResult.rows_processed} lignes · {importResult.links_created} liaisons
+                  {importResult.catalogs_cleared > 0
+                    ? ` · ${importResult.catalogs_cleared} catalogues vidés`
+                    : ''}
+                  {importResult.errors.length > 0
+                    ? ` · ${importResult.errors.length} avertissement(s)`
+                    : ''}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
       <main className="admin-catalog">
         <aside className="admin-catalog__tree-panel">
           <div className="admin-catalog__tree-head">
@@ -411,6 +568,9 @@ export function AdminCatalogPage() {
           {mode === 'empty' ? (
             <div className="admin-catalog__empty">
               <p>Choisissez un nœud dans l&apos;arborescence ou créez un catalogue racine.</p>
+              <p className="admin-catalog__hint">
+                Pour les massifs béton, utilisez l’import CSV en haut de page.
+              </p>
             </div>
           ) : (
             <>
@@ -441,72 +601,44 @@ export function AdminCatalogPage() {
                   />
                 </label>
 
-                <div className="admin-attr-section">
-                  <h3>Attributs obligatoires produit</h3>
-                  <p className="admin-catalog__hint">
-                    Schéma commun à tous les produits de ce catalogue. À l&apos;ajout, la valeur par
-                    défaut est appliquée automatiquement aux produits déjà présents. Au retrait,
-                    l&apos;attribut disparaît de tous les produits du catalogue.
-                  </p>
-                  {attributes.length === 0 ? (
-                    <p className="admin-catalog__hint">Aucun attribut défini.</p>
-                  ) : (
-                    <ul className="admin-attr-list">
-                      {attributes.map((attr, idx) => (
-                        <li key={`${attr.attribute_name}-${idx}`} className="admin-attr-list__item">
-                          <div className="admin-attr-list__meta">
-                            <strong>{attr.attribute_name}</strong>
-                            <label className="admin-attr-list__default">
-                              <span>Défaut</span>
+                {mode === 'edit' && selectedId ? (
+                  <div className="admin-attr-section">
+                    <h3>Attributs des produits</h3>
+                    <p className="admin-catalog__hint">
+                      Attributs présents sur les produits de ce catalogue. Par défaut facultatifs —
+                      activez le switch pour les rendre obligatoires.
+                    </p>
+                    {attrsLoading ? (
+                      <p className="admin-catalog__hint">Chargement…</p>
+                    ) : productAttrs.length === 0 ? (
+                      <p className="admin-catalog__hint">
+                        Aucun attribut détecté (importez un CSV ou ajoutez des attributs aux produits).
+                      </p>
+                    ) : (
+                      <ul className="admin-attr-list">
+                        {productAttrs.map((attr) => (
+                          <li key={attr.attribute_name} className="admin-attr-list__item admin-attr-list__item--switch">
+                            <div>
+                              <span>{attr.attribute_name}</span>
+                              <small className="admin-attr-list__meta">
+                                {attr.product_count} produit(s)
+                              </small>
+                            </div>
+                            <label className="admin-switch">
                               <input
-                                type="text"
-                                value={attr.default_value}
-                                onChange={(e) => updateAttributeDefault(idx, e.target.value)}
-                                placeholder="valeur par défaut"
+                                type="checkbox"
+                                checked={attr.is_mandatory}
+                                disabled={togglingAttr === attr.attribute_name}
+                                onChange={() => void handleToggleMandatory(attr)}
                               />
+                              <span>{attr.is_mandatory ? 'Obligatoire' : 'Facultatif'}</span>
                             </label>
-                          </div>
-                          <button
-                            type="button"
-                            className="admin-btn admin-btn--ghost"
-                            onClick={() => removeAttributeName(idx)}
-                          >
-                            Retirer
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="admin-attr-add admin-attr-add--with-default">
-                    <input
-                      type="text"
-                      placeholder="Nom (ex. Entraxe)"
-                      value={newAttributeName}
-                      onChange={(e) => setNewAttributeName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          addAttributeName()
-                        }
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Valeur par défaut *"
-                      value={newAttributeDefault}
-                      onChange={(e) => setNewAttributeDefault(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          addAttributeName()
-                        }
-                      }}
-                    />
-                    <button type="button" className="admin-btn admin-btn--soft" onClick={addAttributeName}>
-                      + Attribut
-                    </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                </div>
+                ) : null}
               </div>
 
               <div className="admin-form__actions">

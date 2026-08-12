@@ -39,7 +39,8 @@ export function PaymentPage() {
     .reduce((s, i) => s + i.quantity, 0);
   const totemDiscount = totalTotemQty >= 5 ? totemSubtotal * 0.1 : 0;
   const totalHT = getTotalPrice() - totemDiscount;
-  const shippingCost = Number(localStorage.getItem('shippingCost') ?? 0);
+  // v1 : frais de livraison exclus du paiement
+  const shippingCost = 0;
   const totalTTC = (totalHT + shippingCost) * 1.2;
 
   // Écran de confirmation

@@ -133,8 +133,9 @@ export function ChiffrageFinalPage() {
   useEffect(() => {
     const addr = localStorage.getItem('deliveryAddress');
     if (addr) setDeliveryAddress(JSON.parse(addr));
-    const shipping = localStorage.getItem('shippingCost');
-    if (shipping) setShippingCost(parseFloat(shipping));
+    // v1 : frais de livraison exclus du total (module conservé ailleurs)
+    setShippingCost(0);
+    localStorage.setItem('shippingCost', '0');
     const services = sessionStorage.getItem('servicesSpecifiques');
     if (services) {
       const parsed = JSON.parse(services);
