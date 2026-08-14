@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
@@ -39,6 +39,33 @@ import { DeliveryPage } from './pages/DeliveryPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { ChiffrageFinalPage } from './pages/ChiffrageFinalPage';
 import { SitemapPage } from './pages/SitemapPage';
+import { SupplierLayout } from './pages/supplier/SupplierLayout';
+import {
+  SupplierCatalogRoute,
+  SupplierDashboardRoute,
+  SupplierPaymentBankCreateRoute,
+  SupplierPaymentBankEditRoute,
+  SupplierPaymentMethodCreateRoute,
+  SupplierPaymentMethodEditRoute,
+  SupplierPaymentPickRoute,
+  SupplierProductRoute,
+  SupplierShippingPickRoute,
+  SupplierShippingPricingCreateRoute,
+  SupplierShippingPricingEditRoute,
+  SupplierShippingZoneCreateRoute,
+  SupplierShippingZoneEditRoute,
+} from './pages/supplier/supplierRouteElements';
+import { PaymentHub } from './pages/supplier/payment/PaymentHub';
+import { ShippingHub } from './pages/supplier/shipping/ShippingHub';
+import { AdminGuard, AdminLayout } from './pages/admin/AdminLayout';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminCatalogPage } from './pages/admin/AdminCatalogPage';
+import { AdminProductDetailPage } from './pages/admin/AdminProductDetailPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminUserDetailPage } from './pages/admin/AdminUserDetailPage';
+import { AdminCompaniesPage } from './pages/admin/AdminCompaniesPage';
+import { AdminCompanyDetailPage } from './pages/admin/AdminCompanyDetailPage';
 
 export function AppRoutes() {
   return (
@@ -55,7 +82,7 @@ export function AppRoutes() {
       <Route path="/palissade/montage" element={<PalissadeMontagePage />} />
       <Route path="/palissade/resultats" element={<PalissadeResultsPage />} />
 
-      {/* Totem Routes - New multi-step flow */}
+      {/* Totem Routes */}
       <Route path="/totem" element={<TotemModelPage />} />
       <Route path="/totem/acquisition" element={<TotemAcquisitionPage />} />
       <Route path="/totem/location" element={<TotemLocationPage />} />
@@ -83,9 +110,9 @@ export function AppRoutes() {
 
       {/* Cart */}
       <Route path="/panier" element={<CartPage />} />
-      <Route path="/cart" element={<CartPage />} /> {/* Alias */}
+      <Route path="/cart" element={<CartPage />} />
 
-      {/* Delivery and Payment */}
+      {/* Delivery and Payment (client) */}
       <Route path="/livraison" element={<DeliveryPage />} />
       <Route path="/chiffrage-final" element={<ChiffrageFinalPage />} />
       <Route path="/paiement" element={<PaymentPage />} />
@@ -93,6 +120,47 @@ export function AppRoutes() {
       {/* Authentication */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/partner/login" element={<PartnerLoginPage />} />
+
+      {/* Admin (mêmes URLs que frontend) */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route
+        path="/admin"
+        element={
+          <AdminGuard>
+            <AdminLayout />
+          </AdminGuard>
+        }
+      >
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="catalogues" element={<AdminCatalogPage />} />
+        <Route path="produits/:id" element={<AdminProductDetailPage />} />
+        <Route path="utilisateurs" element={<AdminUsersPage />} />
+        <Route path="utilisateurs/:id" element={<AdminUserDetailPage />} />
+        <Route path="societes" element={<AdminCompaniesPage />} />
+        <Route path="societes/:tva" element={<AdminCompanyDetailPage />} />
+      </Route>
+
+      {/* Portail fournisseur */}
+      <Route path="/fournisseur" element={<SupplierLayout />}>
+        <Route index element={<SupplierDashboardRoute />} />
+        <Route path="offres/catalogue" element={<SupplierCatalogRoute />} />
+        <Route path="offres/produit" element={<SupplierProductRoute />} />
+        <Route path="offres/service" element={<Navigate to="/fournisseur/offres/catalogue" replace />} />
+        <Route path="offres/liaison" element={<Navigate to="/fournisseur/offres/catalogue" replace />} />
+        <Route path="offres/prix" element={<Navigate to="/fournisseur/offres/produit" replace />} />
+        <Route path="expedition" element={<ShippingHub />} />
+        <Route path="expedition/creer/zones" element={<SupplierShippingZoneCreateRoute />} />
+        <Route path="expedition/creer/tarifs" element={<SupplierShippingPricingCreateRoute />} />
+        <Route path="expedition/modifier/choix" element={<SupplierShippingPickRoute />} />
+        <Route path="expedition/modifier/zones" element={<SupplierShippingZoneEditRoute />} />
+        <Route path="expedition/modifier/tarifs" element={<SupplierShippingPricingEditRoute />} />
+        <Route path="paiement" element={<PaymentHub />} />
+        <Route path="paiement/creer/methode" element={<SupplierPaymentMethodCreateRoute />} />
+        <Route path="paiement/creer/banque" element={<SupplierPaymentBankCreateRoute />} />
+        <Route path="paiement/modifier/choix" element={<SupplierPaymentPickRoute />} />
+        <Route path="paiement/modifier/methode" element={<SupplierPaymentMethodEditRoute />} />
+        <Route path="paiement/modifier/banque" element={<SupplierPaymentBankEditRoute />} />
+      </Route>
 
       {/* Legal & Info Pages */}
       <Route path="/mentions-legales" element={<MentionsLegalesPage />} />

@@ -1,3 +1,9 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+@import '../app/components/auth/auth-forms.css';
+@import '../app/components/auth/AuthModal.css';
+@import '../app/components/auth/OtpInput.css';
+@import '../app/components/auth/CompanyOnboardingStep.css';
+@import '../app/pages/supplier/SupplierPortal.css';
+@import '../app/pages/admin/Admin.css';

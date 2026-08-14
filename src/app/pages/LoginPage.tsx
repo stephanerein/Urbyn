@@ -1,89 +1,39 @@
 import { SEOMeta } from '../components/SEOMeta';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Construction, ArrowLeft, Loader2 } from 'lucide-react';
+import { Construction, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
+/** Page /login : ouvre le modal auth et renvoie vers l'accueil. */
 export function LoginPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { openAuth, isLoggedIn, isSupplier } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simuler une connexion
-    setTimeout(() => {
-      setLoading(false);
-      alert('Cette fonctionnalité n\'est pas encore disponible dans cette démo.');
-    }, 1500);
-  };
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(isSupplier ? '/fournisseur' : '/', { replace: true });
+      return;
+    }
+    openAuth();
+    navigate('/', { replace: true });
+  }, [isLoggedIn, isSupplier, navigate, openAuth]);
 
   return (
     <>
       <SEOMeta noIndex />
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-black hover:text-black transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        Retour à l'accueil
-      </Link>
-
-      <div className="mb-8 text-center">
-        <div className="w-12 h-12 bg-white border-2 border-black rounded mx-auto flex items-center justify-center mb-4">
-          <Construction className="w-7 h-7 text-black" />
-        </div>
-        <h1 className="text-2xl font-bold text-black">Urbyn</h1>
-      </div>
-
-      <Card className="w-full max-w-md border-2 border-black shadow-xl">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center text-black">Connexion</CardTitle>
-          <CardDescription className="text-center text-black">
-            Accédez à votre espace sécurisé
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="nom@entreprise.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full bg-black hover:bg-slate-800" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Se connecter
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 text-center text-sm text-black">
-          <a href="#" className="hover:underline">Mot de passe oublié ?</a>
-          <div className="pt-4 border-t w-full">
-             Pas encore de compte ? <a href="#" className="font-semibold text-black hover:underline">Créer un compte</a>
+        <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-black hover:text-black transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Retour à l'accueil
+        </Link>
+        <div className="mb-8 text-center">
+          <div className="w-12 h-12 bg-white border-2 border-black rounded mx-auto flex items-center justify-center mb-4">
+            <Construction className="w-7 h-7 text-black" />
           </div>
-        </CardFooter>
-      </Card>
-    </div>
-  </>
+          <h1 className="text-2xl font-bold text-black">Urbyn</h1>
+          <p className="text-sm text-slate-600 mt-2">Ouverture de la connexion…</p>
+        </div>
+      </div>
+    </>
   );
 }
