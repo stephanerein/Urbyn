@@ -1,8 +1,19 @@
-# Gouvernance SEO & GEO — Urbyn by Atelier Urbanize
+# Gouvernance SEO & GEO — Atelier Urbanize
 
 > **URL de production** : https://plateform.urbanize.site  
 > **Site principal** : https://www.urbanize.site  
-> **Dernière mise à jour** : Juin 2026
+> **Dernière mise à jour** : 14 août 2026
+
+## 0. Positionnement (14 août 2026)
+
+Le site a été restructuré autour d'**Atelier Urbanize**, organisé en deux domaines :
+- **Habillage Urbain** (totems, palissades, massifs béton, échafaudages...) — vendu et estimé
+  en ligne via **Urbyn**, la plateforme dédiée (`/urbyn`).
+- **Habillage Thermique** (toiles de protection façades/patios, films solaires vitrages) —
+  catalogue produit à venir, contenu descriptif uniquement pour l'instant.
+
+L'accueil (`/`) présente désormais Atelier Urbanize et ses deux domaines ; `/urbyn` porte
+l'ancien contenu de la page d'accueil (estimation instantanée, configurateur).
 
 ---
 
@@ -32,7 +43,8 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 
 | Page | URL sitemap | Title | Schémas JSON-LD |
 |---|---|---|---|
-| Accueil | `/` | Mobilier urbain temporaire — Totems, Palissades, Massifs béton | Organization, Breadcrumb |
+| Accueil (Atelier Urbanize) | `/` | Habillage urbain & habillage thermique | Organization, Breadcrumb |
+| Urbyn (plateforme) | `/urbyn` | Urbyn — Estimation instantanée pour vos projets d'habillage urbain | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Urbyn | Breadcrumb |
 | Contact | `/contact` | Contact | Breadcrumb |
 | Configurateur | `/definir-besoin` | Configurez votre projet | — |

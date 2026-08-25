@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 // En environnement Figma Make, le document.head est sandboxé — on désactive silencieusement.
 const IS_FIGMA = typeof window !== 'undefined' && window.location.hostname.includes('figma');
 
-const SITE_NAME = 'Urbyn by Atelier Urbanize';
+const SITE_NAME = 'Atelier Urbanize';
 const BASE_URL = 'https://plateform.urbanize.site';
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.jpg`;
 
@@ -76,7 +76,7 @@ export function SEOMeta({
 export const ORG_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Urbyn by Atelier Urbanize',
+  name: 'Atelier Urbanize',
   url: 'https://www.urbanize.site',
   logo: 'https://plateform.urbanize.site/logo.png',
   contactPoint: {
@@ -90,7 +90,7 @@ export const ORG_SCHEMA = {
     addressCountry: 'FR',
   },
   sameAs: ['https://www.urbanize.site'],
-  description: 'Fabricant et loueur de mobilier urbain temporaire : totems, palissades, massifs béton pour chantiers et événements.',
+  description: 'Atelier Urbanize, expert en habillage urbain (totems, palissades, massifs béton, échafaudages) et en habillage thermique (protection solaire de façades, films solaires pour vitrages). Urbyn est sa plateforme d\'estimation instantanée en ligne.',
 };
 
 export function productSchema(opts: {

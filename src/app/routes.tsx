@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
+import { UrbynPlatformPage } from './pages/UrbynPlatformPage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
 import { ServicesSpecifiquesPage } from './pages/ServicesSpecifiquesPage';
@@ -71,6 +72,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/urbyn" element={<UrbynPlatformPage />} />
       <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
       <Route path="/services-additionnels/:product" element={<ServicesAdditionnelsPage />} />
       <Route path="/services-specifiques/:product" element={<ServicesSpecifiquesPage />} />

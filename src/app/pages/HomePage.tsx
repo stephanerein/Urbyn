@@ -1,4 +1,4 @@
-import { HardHat, Truck, Shield, Award, Package, Wrench, CheckCircle, Clock, ArrowRight } from 'lucide-react';
+import { HardHat, Sun, Wrench, ArrowRight, Layers, PenTool, Truck, Ruler, PanelsTopLeft, Calculator, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 
@@ -8,146 +8,121 @@ export function HomePage() {
   return (
     <>
       <SEOMeta
-        title="Mobilier urbain temporaire — Totems, Palissades, Massifs béton"
-        description="Urbyn by Atelier Urbanize : configurez et commandez en ligne vos totems de communication, palissades de chantier et massifs béton. Acquisition ou location, livraison partout en Europe."
-        keywords="totem urbain, totem chantier, palissade chantier, massif béton, mobilier urbain temporaire, location totem, Sign-IZ, Caisson Bois, Atelier Urbanize"
+        title="Habillage urbain & habillage thermique"
+        description="Atelier Urbanize conçoit et déploie vos projets d'habillage urbain (totems, palissades, massifs béton, échafaudages) et d'habillage thermique (protection solaire de façades, films solaires) : conseil, étude de structures, direction artistique et design produit."
+        keywords="Atelier Urbanize, habillage urbain, habillage thermique, protection solaire façade, film solaire vitrage, totem urbain, palissade chantier, massif béton, îlot de chaleur urbain"
         url="/"
         jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }])}
       />
+
       {/* Hero Section */}
       <section className="pt-20 pb-20 px-6 bg-gradient-to-br from-slate-100 via-white to-slate-50">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-6xl md:text-7xl font-bold mb-4 leading-tight text-black">
-            Urbyn
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight text-black max-w-3xl mx-auto">
+            Excellence en Consulting Urbain
           </h1>
 
-          <p className="text-xl md:text-2xl text-black font-medium mb-4 max-w-3xl mx-auto">
-            Votre plateforme dédiée à <span className="text-black font-bold">l'habillage urbain</span>
+          <p className="text-base text-black mb-8 max-w-2xl mx-auto">
+            Accompagnement complet de la conception à la livraison de vos projets depuis plus de 20 ans
           </p>
 
-          <p className="text-base text-black mb-12 max-w-2xl mx-auto">
-            Estimation instantanée • Achat en ligne sécurisé
-          </p>
-
-          {/* Distinguo Prestations de service vs Produits */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Wrench className="w-6 h-6 text-black" strokeWidth={2.5} />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Prestations de service</h3>
-              <p className="text-sm text-black mb-4">Solutions professionnelles avec accompagnement</p>
-              <ul className="text-sm text-black space-y-2 text-left">
-                <li>• Déploiement de projets</li>
-                <li>• Approvisionnement</li>
-                <li>• Etudes de structures</li>
-                <li>• Direction artistique</li>
-                <li>• Design produit</li>
-              </ul>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Package className="w-6 h-6 text-black" strokeWidth={2.5} />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Solutions</h3>
-              <p className="text-sm text-black mb-4">Commercialisation d'équipements urbains prêts à l'emploi</p>
-              <ul className="text-sm text-black space-y-2 text-left">
-                <li>• Totem</li>
-                <li>• Palissade</li>
-                <li>• Façade et Echafaudage</li>
-                <li>• Massif béton</li>
-                <li>• Panneau de chantier</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* CTA Button */}
-          <div className="mt-12">
+          <div className="mb-12">
             <button
               onClick={() => navigate('/definir-besoin')}
               className="px-8 py-4 bg-black hover:bg-gray-800 text-white font-bold text-lg rounded-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2 group"
             >
-              Définir votre besoin
+              <Calculator className="w-5 h-5" />
+              Estimer votre projet
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             <p className="flex items-center justify-center gap-2 text-sm text-gray-600 mt-4">
               <Clock className="w-4 h-4" />
-              Obtenez une estimation de votre projet en moins de 5 minutes
+              Estimation en moins de 5 minutes
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Étapes de la plateforme */}
-      <section className="py-16 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-black">Comment ça marche ?</h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-2xl">1</span>
+          {/* Les deux domaines d'expertise */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg text-left">
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-4">
+                <HardHat className="w-6 h-6 text-black" strokeWidth={2.5} />
               </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Définir votre besoin</h3>
-              <p className="text-sm text-gray-600">Palissade, acquisition d'un massif, etc.</p>
+              <h3 className="font-bold text-lg mb-2 text-black">Habillage Urbain</h3>
+              <p className="text-sm text-black mb-4">Une longue expérience dans l'aménagement et l'habillage des espaces urbains et de chantier</p>
+              <ul className="text-sm text-black space-y-2">
+                <li>• Habillage d'échafaudage</li>
+                <li>• Habillage de mur</li>
+                <li>• Palissade de chantier</li>
+                <li>• Totem de communication urbain</li>
+                <li>• Massif béton</li>
+                <li>• Panneau de chantier</li>
+                <li>• Structures extérieures</li>
+              </ul>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-2xl">2</span>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg text-left">
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-4">
+                <Sun className="w-6 h-6 text-black" strokeWidth={2.5} />
               </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Choisir le service</h3>
-              <p className="text-sm text-gray-600">Sélectionnez le service dont vous avez besoin</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-2xl">3</span>
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Obtenir votre estimation</h3>
-              <p className="text-sm text-gray-600">Estimation en ligne instantanée</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-2xl">4</span>
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Échanger avec un spécialiste</h3>
-              <p className="text-sm text-gray-600">Réservez un appel en visio</p>
+              <h3 className="font-bold text-lg mb-2 text-black">Habillage Thermique</h3>
+              <p className="text-sm text-black mb-4">Des solutions pour protéger vos bâtiments de la chaleur et optimiser leur performance énergétique</p>
+              <ul className="text-sm text-black space-y-2">
+                <li>• Toiles de protection pour façades et patios — performances énergétiques spectaculaires</li>
+                <li>• Films solaires pour vitrages — performance énergétique et luminosité préservée</li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pourquoi Urbyn */}
+      {/* Prestations de conseil transverses */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-black">Pourquoi Urbyn ?</h2>
-          <p className="text-center text-lg text-gray-600 mb-12">20 ans d'expertise</p>
+          <h2 className="text-4xl font-bold text-center mb-4 text-black">Nos prestations de conseil</h2>
+          <p className="text-center text-lg text-gray-600 mb-12">Un accompagnement de bout en bout, sur l'habillage urbain comme sur l'habillage thermique</p>
           <div className="grid md:grid-cols-5 gap-6">
             <div className="text-center p-6 bg-slate-50 rounded-xl">
-              <CheckCircle className="w-12 h-12 text-black mx-auto mb-4" />
-              <h3 className="font-bold text-base mb-2 text-black">Expertise reconnue</h3>
-              <p className="text-sm text-gray-600">Plus de 20 ans d'expérience dans l'habillage urbain</p>
-            </div>
-            <div className="text-center p-6 bg-slate-50 rounded-xl">
-              <Shield className="w-12 h-12 text-black mx-auto mb-4" />
-              <h3 className="font-bold text-base mb-2 text-black">Qualité certifiée</h3>
-              <p className="text-sm text-gray-600">Produits et services aux normes les plus exigeantes</p>
-            </div>
-            <div className="text-center p-6 bg-slate-50 rounded-xl">
-              <Clock className="w-12 h-12 text-black mx-auto mb-4" />
-              <h3 className="font-bold text-base mb-2 text-black">Rapidité d'exécution</h3>
-              <p className="text-sm text-gray-600">Estimation instantanée et livraison dans les délais</p>
-            </div>
-            <div className="text-center p-6 bg-slate-50 rounded-xl">
-              <HardHat className="w-12 h-12 text-black mx-auto mb-4" />
-              <h3 className="font-bold text-base mb-2 text-black">Solutions sur mesure</h3>
-              <p className="text-sm text-gray-600">Accompagnement personnalisé pour chaque projet</p>
+              <Wrench className="w-12 h-12 text-black mx-auto mb-4" />
+              <h3 className="font-bold text-base mb-2 text-black">Déploiement de projets</h3>
             </div>
             <div className="text-center p-6 bg-slate-50 rounded-xl">
               <Truck className="w-12 h-12 text-black mx-auto mb-4" />
-              <h3 className="font-bold text-base mb-2 text-black">Service complet</h3>
-              <p className="text-sm text-gray-600">De l'étude à la livraison, tout est géré</p>
+              <h3 className="font-bold text-base mb-2 text-black">Approvisionnement</h3>
+            </div>
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <Ruler className="w-12 h-12 text-black mx-auto mb-4" />
+              <h3 className="font-bold text-base mb-2 text-black">Études de structures</h3>
+            </div>
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <PenTool className="w-12 h-12 text-black mx-auto mb-4" />
+              <h3 className="font-bold text-base mb-2 text-black">Direction artistique</h3>
+            </div>
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <Layers className="w-12 h-12 text-black mx-auto mb-4" />
+              <h3 className="font-bold text-base mb-2 text-black">Design produit</h3>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* CTA Urbyn */}
+      <section className="py-16 px-6 bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center mx-auto mb-6">
+            <PanelsTopLeft className="w-7 h-7 text-black" strokeWidth={2.5} />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Urbyn, notre plateforme d'estimation instantanée</h2>
+          <p className="text-slate-300 text-base mb-8 max-w-2xl mx-auto">
+            Pour l'habillage urbain — totems, palissades, massifs béton — Urbyn vous permet d'obtenir rapidement
+            une estimation en ligne de votre projet et de le commander en toute sécurité.
+          </p>
+          <button
+            onClick={() => navigate('/urbyn')}
+            className="px-8 py-4 bg-white hover:bg-slate-100 text-black font-bold text-lg rounded-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2 group"
+          >
+            Découvrir Urbyn
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </section>
     </>

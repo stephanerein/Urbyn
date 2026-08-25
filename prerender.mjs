@@ -14,6 +14,7 @@ import { render } from './dist-server/entry-server.js';
 
 const ROUTES = [
   '/',
+  '/urbyn',
   '/a-propos',
   '/contact',
   '/definir-besoin',

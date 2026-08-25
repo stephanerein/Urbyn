@@ -1,16 +1,28 @@
-# Urbyn by Atelier Urbanize — Portail client
+# Atelier Urbanize — Habillage urbain & habillage thermique
 
 ## Qui sommes-nous ?
 
-Urbyn by Atelier Urbanize est une entreprise française spécialisée dans la conception,
-la fabrication et la location de mobilier urbain temporaire pour chantiers et événements :
-totems de communication, palissades, massifs béton, façades d'échafaudage.
+Atelier Urbanize est une entreprise française organisée autour de deux domaines d'expertise,
+avec plus de 20 ans d'expérience :
+
+1. **Habillage Urbain** — conception, fabrication et location de mobilier urbain temporaire
+   pour chantiers et événements : habillage d'échafaudage, habillage de mur, palissades,
+   totems de communication urbaine, massifs béton, panneaux de chantier, structures extérieures.
+2. **Habillage Thermique** — solutions de protection solaire et de performance énergétique
+   des bâtiments : toiles de protection pour façades et patios, films solaires pour vitrages
+   (performance énergétique et luminosité préservée).
+
+Sur les deux domaines, Atelier Urbanize propose des prestations de conseil : déploiement de
+projets, approvisionnement, études de structures, direction artistique, design produit.
+
+**Urbyn** est la plateforme en ligne d'Atelier Urbanize dédiée à l'habillage urbain : elle
+permet d'obtenir une estimation instantanée et de commander en ligne.
 
 Site web principal : https://www.urbanize.site
-Portail client / configurateur : https://plateform.urbanize.site
+Portail client / configurateur Urbyn : https://plateform.urbanize.site/urbyn
 Contact : info@urbanize.site
 
-## Produits et services
+## Produits et services — Habillage Urbain
 
 ### Totems de communication
 - **Totem Caisson Bois** (formats 80, 120, 160, 200 cm) — acquisition à partir de 2 650 € HT
@@ -30,6 +42,16 @@ Massifs temporaires (cubique, lego, cylindrique) pour lestage et sécurisation.
 ### Services associés
 Installation, transport, conception graphique, production graphique, note de calcul,
 reportage photo, survey, conformité vent (Eurocode EN 1991-1-4).
+
+## Produits et services — Habillage Thermique
+
+- **Toiles de protection solaire pour façades et patios** — réduction de la chaleur reçue par
+  le bâti, performances énergétiques élevées.
+- **Films solaires pour vitrages** — amélioration de la performance énergétique tout en
+  préservant la luminosité intérieure.
+
+Catalogue détaillé (références, dimensions, tarifs) à venir — nous contacter pour un devis :
+info@urbanize.site.
 
 ## Configurateur en ligne
 

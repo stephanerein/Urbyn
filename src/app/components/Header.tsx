@@ -1,7 +1,8 @@
-import { Building2, LogOut, ShoppingCart, User } from 'lucide-react';
+import { LogOut, ShoppingCart, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import logoAtelierUrbanize from '../../assets/logo-atelier-urbanize.png';
 
 export function Header() {
   const { items } = useCart();
@@ -15,13 +16,8 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between gap-4">
-          <Link to={isSupplier ? '/fournisseur' : '/'} className="flex items-center gap-3 shrink-0">
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-md border-2 border-black">
-              <Building2 className="w-7 h-7 text-black" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="font-bold text-2xl tracking-tight text-black">Urbyn</h1>
-            </div>
+          <Link to={isSupplier ? '/fournisseur' : '/'} className="flex items-center shrink-0">
+            <img src={logoAtelierUrbanize} alt="Atelier Urbanize" className="h-9 w-auto" />
           </Link>
 
           <nav className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end">
