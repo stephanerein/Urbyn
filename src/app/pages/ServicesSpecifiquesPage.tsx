@@ -306,7 +306,7 @@ export function ServicesSpecifiquesPage() {
   }
 
   return (
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={2} />
 
       <section className="pt-8 pb-20 px-6">

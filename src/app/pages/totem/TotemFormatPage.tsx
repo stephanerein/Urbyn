@@ -78,7 +78,7 @@ export function TotemFormatPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pt-20 px-4">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4">
       <div className="mb-8 flex gap-4 items-center">
         <Button
           variant="outline"

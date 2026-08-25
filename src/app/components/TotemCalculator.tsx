@@ -311,7 +311,7 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
   const currentConfig = getCurrentConfig();
 
   return (
-    <div className="max-w-6xl mx-auto pt-12 px-4">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4">
       <ProgressBar
         currentStep={currentStep === 'model' ? 1 : currentStep === 'format' ? 2 : 3}
         totalSteps={3}

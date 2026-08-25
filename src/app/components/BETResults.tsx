@@ -43,7 +43,7 @@ export function BETResults({ config, onReset }: BETResultsProps) {
 
   if (paymentSuccess) {
     return (
-      <div className="max-w-4xl mx-auto pt-12">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)]">
         <Card className="border-2 border-green-500 shadow-lg">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-24 h-24 mx-auto mb-6 text-green-600" />
@@ -82,7 +82,7 @@ export function BETResults({ config, onReset }: BETResultsProps) {
 
   if (showCheckout) {
     return (
-      <div className="max-w-2xl mx-auto pt-12">
+      <div className="max-w-2xl mx-auto pt-[var(--header-height)]">
         <StripeCheckout
           amount={BET_PRICE}
           onSuccess={handlePaymentSuccess}
@@ -97,7 +97,7 @@ export function BETResults({ config, onReset }: BETResultsProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pt-12">
+    <div className="max-w-4xl mx-auto pt-[var(--header-height)]">
       <ProgressBar 
         currentStep={2} 
         totalSteps={4}

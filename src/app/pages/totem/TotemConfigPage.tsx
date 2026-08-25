@@ -149,7 +149,7 @@ export function TotemConfigPage() {
 
   if (!formatData) {
     return (
-      <div className="max-w-4xl mx-auto pt-20 px-4">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
         <p>Format non trouvé</p>
         <Button onClick={() => navigate('/totem/caisson-bois/format')}>
           Retour aux formats
@@ -219,7 +219,7 @@ export function TotemConfigPage() {
   const totalQuantity = getTotalTotemQuantity() + quantity;
 
   return (
-    <div className="max-w-6xl mx-auto pt-20 px-4">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4">
       <div className="mb-8">
         <Button
           variant="outline"

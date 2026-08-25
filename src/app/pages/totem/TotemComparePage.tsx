@@ -73,7 +73,7 @@ export function TotemComparePage() {
 
   if (selectedFormats.length < 2) {
     return (
-      <div className="max-w-6xl mx-auto pt-20 px-4">
+      <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4">
         <Card className="border-2 border-yellow-500">
           <CardContent className="p-8 text-center">
             <h2 className="text-2xl font-bold mb-4">Comparaison impossible</h2>
@@ -94,7 +94,7 @@ export function TotemComparePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-7xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button
           variant="outline"

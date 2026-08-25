@@ -225,7 +225,7 @@ export function BETCalculator({ onCalculate }: BETCalculatorProps) {
   const selectedCategory = TERRAIN_CATEGORIES[terrainCategory];
 
   return (
-    <div className="max-w-3xl mx-auto pt-12">
+    <div className="max-w-3xl mx-auto pt-[var(--header-height)]">
       <ProgressBar 
         currentStep={1} 
         totalSteps={4}

@@ -64,7 +64,7 @@ export function PlanDuSitePage() {
         url="/plan-du-site"
         jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Plan du site', url: '/plan-du-site' }])}
       />
-      <div className="max-w-4xl mx-auto pt-20 px-4 pb-16">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4 pb-16">
         <div className="mb-8">
           <Button variant="outline" onClick={() => navigate('/')} className="border-2 border-black">
             ← Retour à l'accueil

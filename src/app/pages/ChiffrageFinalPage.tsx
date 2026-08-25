@@ -242,7 +242,7 @@ export function ChiffrageFinalPage() {
   return (
     <div className="min-h-screen bg-background">
       <ProgressSteps currentStep={4} />
-      <div className="max-w-7xl mx-auto pt-20 px-4 pb-20">
+      <div className="max-w-7xl mx-auto pt-[var(--header-height)] px-4 pb-20">
 
         {/* En-tête */}
         <div className="mb-8">

@@ -15,7 +15,7 @@ export function MassifCalculatorPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
       <div className="px-6">
         <MassifCalculator

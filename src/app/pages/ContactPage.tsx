@@ -32,7 +32,7 @@ export function ContactPage() {
         url="/contact"
         jsonLd={breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Contact", url: "/contact" }])}
       />
-    <div className="max-w-6xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button
           variant="outline"

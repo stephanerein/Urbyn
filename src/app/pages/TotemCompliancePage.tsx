@@ -167,7 +167,7 @@ export function TotemCompliancePage() {
 
   if (!deliveryAddress) {
     return (
-      <div className="min-h-screen pt-20 bg-gray-50">
+      <div className="min-h-screen pt-[var(--header-height)] bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 pb-16">
           <Card className="bg-white rounded-xl border-2 border-yellow-400 shadow-lg">
             <CardContent className="p-12 text-center">
@@ -187,7 +187,7 @@ export function TotemCompliancePage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 bg-gray-50">
+    <div className="min-h-screen pt-[var(--header-height)] bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 pb-16">
         <div className="mb-8">
           <Button variant="outline" onClick={() => navigate('/panier')} className="border border-gray-300 hover:bg-gray-100">

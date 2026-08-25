@@ -28,7 +28,7 @@ export function PalissadeSubTypePage() {
       />
     <div className="bg-white">
       {/* Hero Header for Palissade Section */}
-      <section className="pt-20 pb-12 px-6 bg-slate-50 border-b border-slate-200">
+      <section className="pt-[var(--header-height)] pb-12 px-6 bg-slate-50 border-b border-slate-200">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl font-bold mb-4 text-slate-900">Module Palissade</h1>
           <p className="text-lg text-slate-600">

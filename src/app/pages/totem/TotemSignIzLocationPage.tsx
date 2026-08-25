@@ -102,7 +102,7 @@ export function TotemSignIzLocationPage() {
         type="product"
         jsonLd={[productSchema({ name: "Totem Sign-IZ (Location)", description: "Location de totem autolesté avec impression visuel. Livraison et reprise incluses.", price: 290, url: "/totem/sign-iz/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Totems location", url: "/totem/location" }, { name: "Sign-IZ", url: "/totem/sign-iz/location" }])]}
       />
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-4xl mx-auto pt-8 px-4 pb-20">

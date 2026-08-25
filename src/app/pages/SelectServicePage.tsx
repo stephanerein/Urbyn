@@ -77,7 +77,7 @@ export function SelectServicePage() {
 
   if (!productData) {
     return (
-      <div className="pt-32 px-6 text-center">
+      <div className="pt-[var(--header-height)] px-6 text-center">
         <h1 className="text-2xl font-bold mb-4">Produit non trouvé</h1>
         <Button onClick={() => navigate('/definir-besoin')}>Retour</Button>
       </div>
@@ -102,7 +102,7 @@ export function SelectServicePage() {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={product === 'palissade' ? 3 : 2} />
 
       <section className="pt-8 pb-20 px-6">

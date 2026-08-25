@@ -21,7 +21,7 @@ export function LoginPage() {
   return (
     <>
       <SEOMeta noIndex />
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 pt-[var(--header-height)]">
         <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-black hover:text-black transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Retour à l'accueil

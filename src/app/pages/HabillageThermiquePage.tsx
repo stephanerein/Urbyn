@@ -28,7 +28,7 @@ export function HabillageThermiquePage() {
         url="/habillage-thermique"
         jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Habillage Thermique', url: '/habillage-thermique' }])}
       />
-      <div className="max-w-6xl mx-auto pt-24 px-4 pb-16">
+      <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4 pb-16">
         <div className="mb-8">
           <Button variant="outline" onClick={() => navigate('/')} className="border-2 border-black">
             <ArrowLeft className="w-4 h-4 mr-2" />

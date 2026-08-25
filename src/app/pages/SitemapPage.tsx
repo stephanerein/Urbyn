@@ -318,7 +318,7 @@ function SitemapNodeCard({
 
 export function SitemapPage() {
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
+    <div className="min-h-screen bg-slate-50 pt-[var(--header-height)] pb-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

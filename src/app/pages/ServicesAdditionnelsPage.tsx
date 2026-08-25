@@ -81,7 +81,7 @@ export function ServicesAdditionnelsPage() {
   const totalSelected = (selectedToolkit ? 1 : 0) + (selectedTransport ? 1 : 0) + (selectedEnlevement ? 1 : 0) + (selectedConseil ? 1 : 0) + selectedExpertises.length;
 
   return (
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={2} />
 
       <section className="pt-8 pb-20 px-6">

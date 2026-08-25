@@ -207,7 +207,7 @@ export function MassifResults({ config, onReset }: MassifResultsProps) {
 
   if (paymentSuccess) {
     return (
-      <div className="max-w-4xl mx-auto pt-12">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)]">
         <Card className="border-2 border-emerald-500 shadow-xl overflow-hidden">
           <div className="bg-emerald-500 p-8 text-center text-white">
             <CheckCircle className="w-16 h-16 mx-auto mb-4" />
@@ -289,7 +289,7 @@ export function MassifResults({ config, onReset }: MassifResultsProps) {
 
   if (currentStep === 'payment') {
     return (
-      <div className="max-w-2xl mx-auto pt-12">
+      <div className="max-w-2xl mx-auto pt-[var(--header-height)]">
         <StripeCheckout
           amount={totalPrice + liftingEyesCost + finalDeliveryCost}
           onSuccess={() => { setPaymentSuccess(true); }}
@@ -305,7 +305,7 @@ export function MassifResults({ config, onReset }: MassifResultsProps) {
 
   if (currentStep === 'delivery') {
     return (
-      <div className="max-w-4xl mx-auto pt-12">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)]">
         <ProgressBar currentStep={2} totalSteps={4} steps={['Configuration', 'Livraison', 'Validation', 'Confirmation']} />
         <Card className="border-2 border-slate-200 shadow-xl mt-8 overflow-hidden">
           <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
@@ -396,7 +396,7 @@ export function MassifResults({ config, onReset }: MassifResultsProps) {
 
   // Final Summary Step
   return (
-    <div className="max-w-4xl mx-auto pt-12">
+    <div className="max-w-4xl mx-auto pt-[var(--header-height)]">
       <ProgressBar currentStep={3} totalSteps={4} steps={['Configuration', 'Livraison', 'Validation', 'Confirmation']} />
       <div className="grid md:grid-cols-3 gap-8 mt-8">
         <div className="md:col-span-2 space-y-6">

@@ -34,7 +34,7 @@ function AppContent() {
       <SEOMeta jsonLd={ORG_SCHEMA} />
       <Toaster position="top-center" richColors />
       <Header />
-      <div className={isPartnerSpace ? 'pt-24' : undefined}>
+      <div className={isPartnerSpace ? 'pt-[var(--header-height)]' : undefined}>
         <AppRoutes />
       </div>
       {!isPartnerSpace && !isSupplier ? <ChatWidget /> : null}

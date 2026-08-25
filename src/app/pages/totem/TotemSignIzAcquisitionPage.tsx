@@ -146,7 +146,7 @@ export function TotemSignIzAcquisitionPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pt-20 px-4 pb-20">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4 pb-20">
       <ProgressSteps currentStep={3} />
 
       <SEOMeta

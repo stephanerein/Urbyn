@@ -6,7 +6,7 @@ export function ConfidentialitePage() {
   return (
     <>
       <SEOMeta title="Politique de confidentialité" url="/confidentialite" noIndex />
-    <div className="pt-24 pb-20 px-6 bg-slate-50 min-h-screen">
+    <div className="pt-[var(--header-height)] pb-20 px-6 bg-slate-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* En-tête */}
         <div className="bg-gradient-to-br from-slate-700 to-slate-800 text-white rounded-xl p-8 mb-8 shadow-lg">

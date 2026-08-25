@@ -102,7 +102,7 @@ export function DefinirBesoinPage() {
         description="Définissez votre besoin en mobilier urbain temporaire : totem, palissade, massif béton ou étude BET. Obtenez une estimation en quelques clics."
         url="/definir-besoin"
       />
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={1} />
 
       <section className="pt-8 pb-20 px-6">

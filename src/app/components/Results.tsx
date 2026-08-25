@@ -313,7 +313,7 @@ export function Results({ config, priceBreakdown, onReset, onAddToCart }: Result
   };
 
   return (
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-4xl mx-auto pt-8 pb-12">

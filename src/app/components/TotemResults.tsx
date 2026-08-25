@@ -121,7 +121,7 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
   // Écran de confirmation de paiement
   if (paymentSuccess) {
     return (
-      <div className="max-w-4xl mx-auto pt-12 px-4">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
         <ProgressBar
           currentStep={3}
           totalSteps={3}
@@ -149,7 +149,7 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
   // Étape paiement
   if (currentStep === 'payment') {
     return (
-      <div className="max-w-2xl mx-auto pt-12 px-4">
+      <div className="max-w-2xl mx-auto pt-[var(--header-height)] px-4">
         <ProgressBar
           currentStep={3}
           totalSteps={3}
@@ -173,7 +173,7 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
   // Étape adresse de livraison
   if (currentStep === 'delivery') {
     return (
-      <div className="max-w-4xl mx-auto pt-12 px-4">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
         <ProgressBar
           currentStep={2}
           totalSteps={3}
@@ -213,7 +213,7 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
 
   // Étape récapitulatif
   return (
-    <div className="max-w-4xl mx-auto pt-12 px-4">
+    <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
       <ProgressBar
         currentStep={2}
         totalSteps={3}

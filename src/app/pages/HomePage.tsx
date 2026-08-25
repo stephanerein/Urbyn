@@ -16,7 +16,7 @@ export function HomePage() {
       />
 
       {/* Hero Section */}
-      <section className="pt-20 pb-20 px-6 bg-gradient-to-br from-slate-100 via-white to-slate-50">
+      <section className="pt-[var(--header-height)] pb-20 px-6 bg-gradient-to-br from-slate-100 via-white to-slate-50">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight text-black max-w-3xl mx-auto">
             Excellence en Consulting Urbain

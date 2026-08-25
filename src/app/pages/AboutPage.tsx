@@ -15,7 +15,7 @@ export function AboutPage() {
         url="/a-propos"
         jsonLd={breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "À propos", url: "/a-propos" }])}
       />
-    <div className="max-w-6xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button
           variant="outline"

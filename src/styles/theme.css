@@ -2,7 +2,15 @@
 
 :root {
   --font-size: 16px;
-  
+
+  /* Valeur de secours uniquement (premier rendu serveur / avant hydratation).
+     Header.tsx mesure sa vraie hauteur en continu (ResizeObserver) et
+     réécrit cette variable en JS dès que le composant monte — elle s'ajuste
+     donc automatiquement quand la nav passe à la ligne sur petit écran.
+     Toute page qui doit démarrer sous le header utilise
+     pt-[var(--header-height)] : rien à recalculer ailleurs. */
+  --header-height: 72px;
+
   /* Couleurs urbaines - Environnement urbain */
   --background: #F5F5F5;
   --foreground: #2C3E50;

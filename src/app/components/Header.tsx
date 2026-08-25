@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { LogOut, ShoppingCart, User, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -18,8 +19,29 @@ export function Header() {
     .reduce((s, i) => s + i.quantity, 0)
     + (items.some(i => i.details?.itemType === 'installation') ? 1 : 0);
 
+  const headerRef = useRef<HTMLElement>(null);
+
+  // La hauteur du header n'est pas constante : sur petits écrans, la nav
+  // passe à la ligne et le header devient plus haut que sur desktop. On
+  // mesure donc sa vraie hauteur en continu et on la publie dans la variable
+  // --header-height (définie par défaut dans src/styles/theme.css pour le
+  // premier rendu serveur/avant hydratation) — seule source utilisée par les
+  // pages (pt-[var(--header-height)]) et CartSidebar pour se positionner sous
+  // le header sans jamais le deviner à un endroit différent.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--header-height', `${el.offsetHeight}px`);
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-50 shadow-sm">
+    <header ref={headerRef} className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-2">
         <div className="flex items-center justify-between gap-4">
           <Link to={isSupplier ? '/fournisseur' : '/'} className="flex items-center shrink-0">
@@ -59,7 +81,7 @@ export function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem asChild>
-                      <Link to="/habillage-urbain">Urbain</Link>
+                      <Link to="/habillage-urbain">Urbaine</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/habillage-thermique">Thermique</Link>
@@ -71,6 +93,12 @@ export function Header() {
                   className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   Configurateur
+                </Link>
+                <Link
+                  to="/realisations"
+                  className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Réalisations
                 </Link>
                 <Link
                   to="/contact"

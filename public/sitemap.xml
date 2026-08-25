@@ -25,6 +25,34 @@
   </url>
 
   <url>
+    <loc>https://plateform.urbanize.site/realisations</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://plateform.urbanize.site/realisations/totem-sign-iz-salon-professionnel</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://plateform.urbanize.site/realisations/palissade-chantier-habillage-graphique</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://plateform.urbanize.site/realisations/massif-beton-securisation-evenement</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
     <loc>https://plateform.urbanize.site/a-propos</loc>
     <lastmod>2026-07-23</lastmod>
     <changefreq>monthly</changefreq>

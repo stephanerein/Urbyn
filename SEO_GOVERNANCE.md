@@ -12,11 +12,19 @@ avec sa page de présentation dédiée et son entrée dans le menu principal :
 - **Habillage Thermique** (`/habillage-thermique`) — toiles de protection façades/patios,
   films solaires vitrages. Catalogue produit à venir, contenu descriptif uniquement pour l'instant.
 
-Menu principal : Expertise (Urbain · Thermique) · Configurateur (`/definir-besoin`) · À propos (`/a-propos`).
+Menu principal : Expertise (Urbain · Thermique) · Configurateur (`/definir-besoin`) ·
+Réalisations (`/realisations`) · Contact (`/contact`). `/a-propos` reste accessible depuis le footer.
 
 `/urbyn` a été supprimée le 25 août 2026 (page orpheline, plus aucun lien interne ni contenu
 propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urbain/Thermique).
 Retirée des routes, du sitemap et du script de pré-rendu.
+
+**Réalisations** (`/realisations` + `/realisations/:slug`) : portfolio de projets, données dans
+`src/app/data/realisations.ts` (tableau `REALISATIONS` — titre, catégorie, photo(s), texte).
+Ajouter une réalisation = ajouter une entrée à ce tableau, la page de détail
+(`RealisationDetailPage.tsx`) est générique et n'a pas besoin d'être dupliquée.
+⚠️ Les 3 entrées actuelles sont des **exemples génériques** ("modèle", pas de vrai projet
+client) — à remplacer par de vraies réalisations (photos + texte réels) dès que disponibles.
 
 ---
 
@@ -49,6 +57,8 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | Accueil (Atelier Urbanize) | `/` | Excellence en Consulting Urbain | Organization, Breadcrumb |
 | Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
 | Habillage Thermique | `/habillage-thermique` | Habillage Thermique — Protection solaire & performance énergétique | Breadcrumb |
+| Réalisations (liste) | `/realisations` | Réalisations | Breadcrumb |
+| Réalisations (détail, ×3 exemples) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
 | Contact | `/contact` | Contact | Breadcrumb |
 | Configurateur | `/definir-besoin` | Configurez votre projet | — |

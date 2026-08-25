@@ -65,7 +65,7 @@ export function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto pt-20 px-4">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
         <div className="text-center py-16">
           <ShoppingBag className="w-24 h-24 mx-auto mb-6 text-gray-400" />
           <h2 className="text-3xl font-bold mb-4 text-black">Votre panier est vide</h2>
@@ -93,7 +93,7 @@ export function CartPage() {
   const totalTTC          = totalHT * 1.2;
 
   return (
-    <div className="min-h-screen pt-20 bg-gray-50">
+    <div className="min-h-screen pt-[var(--header-height)] bg-gray-50">
       <ProgressSteps currentStep={3} />
       <div className="max-w-7xl mx-auto px-4 pb-16">
 

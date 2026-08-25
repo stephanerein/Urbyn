@@ -48,7 +48,7 @@ export function PaymentPage() {
     return (
       <>
       <SEOMeta noIndex />
-      <div className="max-w-4xl mx-auto pt-20 px-4 pb-16">
+      <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4 pb-16">
         <Card className="border-2 border-green-500 shadow-lg">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-24 h-24 mx-auto mb-6 text-green-600" />
@@ -85,7 +85,7 @@ export function PaymentPage() {
 
   // Page de paiement
   return (
-    <div className="max-w-2xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-2xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button
           variant="outline"

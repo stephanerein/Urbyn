@@ -101,7 +101,7 @@ export function TotemCaissonBoisLocationPage() {
         type="product"
         jsonLd={[productSchema({ name: "Totem Caisson Bois 120 (Location)", description: "Location de totem caisson bois format 120 cm avec impression visuel. Livraison et reprise incluses.", price: 320, url: "/totem/caisson-bois-120/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Totems location", url: "/totem/location" }, { name: "Caisson Bois 120", url: "/totem/caisson-bois-120/location" }])]}
       />
-    <div className="bg-white min-h-screen pt-[73px]">
+    <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-4xl mx-auto pt-8 px-4 pb-20">

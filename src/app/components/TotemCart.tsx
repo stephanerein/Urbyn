@@ -176,7 +176,7 @@ export function TotemCart({
   };
 
   return (
-    <div className="max-w-5xl mx-auto pt-12 px-4">
+    <div className="max-w-5xl mx-auto pt-[var(--header-height)] px-4">
       <div className="mb-8">
         <Button onClick={onBack} variant="outline" className="border-2">
           <ArrowLeft className="w-4 h-4 mr-2" />

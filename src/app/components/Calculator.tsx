@@ -286,7 +286,7 @@ export function Calculator({ projectType, onCalculate }: CalculatorProps) {
   }, 0);
 
   return (
-    <div className="bg-background min-h-screen pt-[73px]">
+    <div className="bg-background min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-3xl mx-auto pt-8 pb-12">

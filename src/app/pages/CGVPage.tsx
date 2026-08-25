@@ -8,7 +8,7 @@ export function CGVPage() {
   return (
     <>
       <SEOMeta title="Conditions générales de vente" url="/cgv" noIndex />
-    <div className="max-w-4xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button
           variant="outline"

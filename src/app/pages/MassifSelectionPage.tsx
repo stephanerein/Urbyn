@@ -280,7 +280,7 @@ export function MassifSelectionPage() {
           { name: 'Massif béton', url: '/massif/selection' },
         ])}
       />
-      <div className="bg-white min-h-screen pt-[73px]">
+      <div className="bg-white min-h-screen pt-[var(--header-height)]">
         <ProgressSteps currentStep={3} />
 
         <div className="max-w-2xl mx-auto px-6 pt-12 pb-20">

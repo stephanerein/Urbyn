@@ -131,7 +131,7 @@ export function DeliveryPage() {
       <SEOMeta noIndex />
       <div className="min-h-screen bg-gray-50">
       <ProgressSteps currentStep={3} />
-    <div className="max-w-4xl mx-auto pt-20 px-4 pb-16">
+    <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4 pb-16">
       <div className="mb-8">
         <Button variant="outline" onClick={() => navigate('/panier')} className="border border-black">
           ← Retour au panier
