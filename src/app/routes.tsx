@@ -42,6 +42,8 @@ import { PaymentPage } from './pages/PaymentPage';
 import { ChiffrageFinalPage } from './pages/ChiffrageFinalPage';
 import { SitemapPage } from './pages/SitemapPage';
 import { PlanDuSitePage } from './pages/PlanDuSitePage';
+import { RealisationsPage } from './pages/RealisationsPage';
+import { RealisationDetailPage } from './pages/RealisationDetailPage';
 import { SupplierLayout } from './pages/supplier/SupplierLayout';
 import {
   SupplierCatalogRoute,
@@ -174,6 +176,8 @@ export function AppRoutes() {
       <Route path="/cgv" element={<CGVPage />} />
       <Route path="/sitemap" element={<SitemapPage />} />
       <Route path="/plan-du-site" element={<PlanDuSitePage />} />
+      <Route path="/realisations" element={<RealisationsPage />} />
+      <Route path="/realisations/:slug" element={<RealisationDetailPage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
     </Routes>
