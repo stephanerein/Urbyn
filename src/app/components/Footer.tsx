@@ -43,15 +43,6 @@ export function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Mention plateforme et juridique */}
-        <div className="pt-6">
-          <p className="text-xs text-slate-500 text-center leading-relaxed max-w-4xl mx-auto">
-            <strong className="text-slate-400">Urbyn</strong> est une plateforme e-commerce appartenant à la société <strong className="text-slate-400">Urbanize</strong>, 
-            spécialisée dans l'habillage urbain et les solutions professionnelles pour le secteur du BTP. 
-            Société de droit français soumise à la juridiction du <strong className="text-slate-400">Tribunal de Commerce de Paris</strong>.
-          </p>
-        </div>
       </div>
     </footer>
   );
