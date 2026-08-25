@@ -14,7 +14,8 @@ import { render } from './dist-server/entry-server.js';
 
 const ROUTES = [
   '/',
-  '/urbyn',
+  '/habillage-urbain',
+  '/habillage-thermique',
   '/a-propos',
   '/contact',
   '/definir-besoin',
@@ -30,6 +31,7 @@ const ROUTES = [
   '/mentions-legales',
   '/confidentialite',
   '/cgv',
+  '/plan-du-site',
 ];
 
 const distDir = path.resolve('dist');

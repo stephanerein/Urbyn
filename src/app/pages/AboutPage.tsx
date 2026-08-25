@@ -9,9 +9,9 @@ export function AboutPage() {
   return (
     <>
       <SEOMeta
-        title="À propos d'Urbyn"
-        description="Urbyn by Atelier Urbanize, entreprise française spécialisée dans le mobilier urbain temporaire : totems, palissades, massifs béton pour chantiers et événements."
-        keywords="Atelier Urbanize, Urbyn, mobilier urbain, fabricant totem, palissade chantier France"
+        title="À propos d'Atelier Urbanize"
+        description="Atelier Urbanize, entreprise française spécialisée dans le mobilier urbain temporaire : totems, palissades, massifs béton pour chantiers et événements."
+        keywords="Atelier Urbanize, mobilier urbain, fabricant totem, palissade chantier France"
         url="/a-propos"
         jsonLd={breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "À propos", url: "/a-propos" }])}
       />
@@ -26,15 +26,15 @@ export function AboutPage() {
         </Button>
       </div>
 
-      <h1 className="text-4xl font-bold mb-4 text-black">À propos d'Urbyn</h1>
+      <h1 className="text-4xl font-bold mb-4 text-black">À propos d'Atelier Urbanize</h1>
       <p className="text-xl text-black mb-12">
-        Spécialiste de l'aménagement urbain depuis 2015
+        Spécialiste de l'aménagement urbain depuis 2006
       </p>
 
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         <div className="space-y-6 text-black">
           <p>
-            <strong>Urbyn by Atelier Urbanize</strong> est une entreprise française spécialisée dans la conception, 
+            <strong>Atelier Urbanize</strong> est une entreprise française spécialisée dans la conception,
             la fabrication et l'installation de mobilier urbain de qualité professionnelle.
           </p>
           <p>
@@ -59,7 +59,7 @@ export function AboutPage() {
           </div>
           <div className="bg-gray-50 p-6 border-2 border-black rounded-lg">
             <Award className="w-12 h-12 mb-4 text-black" />
-            <h3 className="font-bold text-black mb-2">10 ans</h3>
+            <h3 className="font-bold text-black mb-2">20 ans</h3>
             <p className="text-sm text-black">D'expertise</p>
           </div>
           <div className="bg-gray-50 p-6 border-2 border-black rounded-lg">

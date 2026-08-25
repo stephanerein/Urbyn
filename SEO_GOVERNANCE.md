@@ -2,18 +2,21 @@
 
 > **URL de production** : https://plateform.urbanize.site  
 > **Site principal** : https://www.urbanize.site  
-> **Dernière mise à jour** : 14 août 2026
+> **Dernière mise à jour** : 25 août 2026
 
-## 0. Positionnement (14 août 2026)
+## 0. Positionnement (25 août 2026)
 
-Le site a été restructuré autour d'**Atelier Urbanize**, organisé en deux domaines :
-- **Habillage Urbain** (totems, palissades, massifs béton, échafaudages...) — vendu et estimé
-  en ligne via **Urbyn**, la plateforme dédiée (`/urbyn`).
-- **Habillage Thermique** (toiles de protection façades/patios, films solaires vitrages) —
-  catalogue produit à venir, contenu descriptif uniquement pour l'instant.
+Le site a été restructuré autour d'**Atelier Urbanize**, organisé en deux domaines, chacun
+avec sa page de présentation dédiée et son entrée dans le menu principal :
+- **Habillage Urbain** (`/habillage-urbain`) — totems, palissades, massifs béton, échafaudages...
+- **Habillage Thermique** (`/habillage-thermique`) — toiles de protection façades/patios,
+  films solaires vitrages. Catalogue produit à venir, contenu descriptif uniquement pour l'instant.
 
-L'accueil (`/`) présente désormais Atelier Urbanize et ses deux domaines ; `/urbyn` porte
-l'ancien contenu de la page d'accueil (estimation instantanée, configurateur).
+Menu principal : Expertise (Urbain · Thermique) · Configurateur (`/definir-besoin`) · À propos (`/a-propos`).
+
+`/urbyn` a été supprimée le 25 août 2026 (page orpheline, plus aucun lien interne ni contenu
+propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urbain/Thermique).
+Retirée des routes, du sitemap et du script de pré-rendu.
 
 ---
 
@@ -43,9 +46,10 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 
 | Page | URL sitemap | Title | Schémas JSON-LD |
 |---|---|---|---|
-| Accueil (Atelier Urbanize) | `/` | Habillage urbain & habillage thermique | Organization, Breadcrumb |
-| Urbyn (plateforme) | `/urbyn` | Urbyn — Estimation instantanée pour vos projets d'habillage urbain | Breadcrumb |
-| À propos | `/a-propos` | À propos d'Urbyn | Breadcrumb |
+| Accueil (Atelier Urbanize) | `/` | Excellence en Consulting Urbain | Organization, Breadcrumb |
+| Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
+| Habillage Thermique | `/habillage-thermique` | Habillage Thermique — Protection solaire & performance énergétique | Breadcrumb |
+| À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
 | Contact | `/contact` | Contact | Breadcrumb |
 | Configurateur | `/definir-besoin` | Configurez votre projet | — |
 | Totems acquisition | `/totem/acquisition` | Totems — Acquisition | Product, Breadcrumb |
@@ -56,15 +60,16 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | Palissade | `/palissade` | Palissade de chantier — Configuration | Breadcrumb |
 | Massif béton | `/massif/selection` | Massif béton — Sélection | Breadcrumb |
 | BET | `/bet` | Bureau d'études techniques | Breadcrumb |
-| Mentions légales | `/mentions-legales` | Mentions légales | noIndex |
-| Confidentialité | `/confidentialite` | Politique de confidentialité | noIndex |
-| CGV | `/cgv` | Conditions générales de vente | noIndex |
-| Cookies | `/cookies` | Politique des cookies | noIndex |
+| Plan du site | `/plan-du-site` | Plan du site | Breadcrumb |
 
 ### Pages exclues de l'index (`noIndex`) ❌
 
 | Page | Raison |
 |---|---|
+| `/mentions-legales` | Page légale, faible valeur SEO |
+| `/confidentialite` | Page légale, faible valeur SEO |
+| `/cgv` | Page légale, faible valeur SEO |
+| `/cookies` | Page légale, faible valeur SEO |
 | `/panier` | Tunnel transactionnel |
 | `/livraison` | Tunnel transactionnel |
 | `/paiement` | Tunnel transactionnel |

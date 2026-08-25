@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import { UrbynPlatformPage } from './pages/UrbynPlatformPage';
+import { HabillageUrbainPage } from './pages/HabillageUrbainPage';
+import { HabillageThermiquePage } from './pages/HabillageThermiquePage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
 import { ServicesSpecifiquesPage } from './pages/ServicesSpecifiquesPage';
@@ -40,6 +41,7 @@ import { DeliveryPage } from './pages/DeliveryPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { ChiffrageFinalPage } from './pages/ChiffrageFinalPage';
 import { SitemapPage } from './pages/SitemapPage';
+import { PlanDuSitePage } from './pages/PlanDuSitePage';
 import { SupplierLayout } from './pages/supplier/SupplierLayout';
 import {
   SupplierCatalogRoute,
@@ -72,7 +74,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/urbyn" element={<UrbynPlatformPage />} />
+      <Route path="/habillage-urbain" element={<HabillageUrbainPage />} />
+      <Route path="/habillage-thermique" element={<HabillageThermiquePage />} />
       <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
       <Route path="/services-additionnels/:product" element={<ServicesAdditionnelsPage />} />
       <Route path="/services-specifiques/:product" element={<ServicesSpecifiquesPage />} />
@@ -170,6 +173,7 @@ export function AppRoutes() {
       <Route path="/cookies" element={<CookiesPage />} />
       <Route path="/cgv" element={<CGVPage />} />
       <Route path="/sitemap" element={<SitemapPage />} />
+      <Route path="/plan-du-site" element={<PlanDuSitePage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
     </Routes>

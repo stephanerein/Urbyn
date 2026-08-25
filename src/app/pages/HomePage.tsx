@@ -1,4 +1,4 @@
-import { HardHat, Sun, Wrench, ArrowRight, Layers, PenTool, Truck, Ruler, PanelsTopLeft, Calculator, Clock } from 'lucide-react';
+import { HardHat, Sun, Wrench, ArrowRight, Layers, PenTool, Truck, Ruler, Calculator, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 
@@ -32,7 +32,7 @@ export function HomePage() {
               className="px-8 py-4 bg-black hover:bg-gray-800 text-white font-bold text-lg rounded-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2 group"
             >
               <Calculator className="w-5 h-5" />
-              Estimer votre projet
+              Estimez votre projet
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             <p className="flex items-center justify-center gap-2 text-sm text-gray-600 mt-4">
@@ -58,6 +58,12 @@ export function HomePage() {
                 <li>• Panneau de chantier</li>
                 <li>• Structures extérieures</li>
               </ul>
+              <button
+                onClick={() => navigate('/habillage-urbain')}
+                className="mt-4 text-sm font-bold text-black inline-flex items-center gap-1 hover:gap-2 transition-all"
+              >
+                En savoir plus <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-lg text-left">
@@ -70,6 +76,12 @@ export function HomePage() {
                 <li>• Toiles de protection pour façades et patios — performances énergétiques spectaculaires</li>
                 <li>• Films solaires pour vitrages — performance énergétique et luminosité préservée</li>
               </ul>
+              <button
+                onClick={() => navigate('/habillage-thermique')}
+                className="mt-4 text-sm font-bold text-black inline-flex items-center gap-1 hover:gap-2 transition-all"
+              >
+                En savoir plus <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -102,27 +114,6 @@ export function HomePage() {
               <h3 className="font-bold text-base mb-2 text-black">Design produit</h3>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Urbyn */}
-      <section className="py-16 px-6 bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center mx-auto mb-6">
-            <PanelsTopLeft className="w-7 h-7 text-black" strokeWidth={2.5} />
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Urbyn, notre plateforme d'estimation instantanée</h2>
-          <p className="text-slate-300 text-base mb-8 max-w-2xl mx-auto">
-            Pour l'habillage urbain — totems, palissades, massifs béton — Urbyn vous permet d'obtenir rapidement
-            une estimation en ligne de votre projet et de le commander en toute sécurité.
-          </p>
-          <button
-            onClick={() => navigate('/urbyn')}
-            className="px-8 py-4 bg-white hover:bg-slate-100 text-black font-bold text-lg rounded-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2 group"
-          >
-            Découvrir Urbyn
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
         </div>
       </section>
     </>

@@ -263,10 +263,11 @@ export function CookiesPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-4">Nous contacter</h2>
             <div className="bg-slate-50 p-6 rounded-lg text-slate-700">
               <p>
-                Pour toute question relative à notre politique de cookies, vous pouvez nous contacter à :
+                Pour toute question relative à notre politique de cookies, rendez-vous sur notre{' '}
+                <Link to="/contact" className="text-slate-700 font-semibold underline hover:text-slate-900">
+                  page de contact
+                </Link>.
               </p>
-              <p className="font-bold text-slate-900 mt-3">Email : contact@urbanize.fr</p>
-              <p className="font-bold text-slate-900">Téléphone : +33 (0)X XX XX XX XX</p>
             </div>
           </section>
 

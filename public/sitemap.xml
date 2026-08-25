@@ -11,8 +11,15 @@
   </url>
 
   <url>
-    <loc>https://plateform.urbanize.site/urbyn</loc>
-    <lastmod>2026-08-14</lastmod>
+    <loc>https://plateform.urbanize.site/habillage-urbain</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://plateform.urbanize.site/habillage-thermique</loc>
+    <lastmod>2026-08-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -106,26 +113,12 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Pages légales -->
+  <!-- Plan du site (les autres pages légales sont en noindex, volontairement absentes ici) -->
   <url>
-    <loc>https://plateform.urbanize.site/mentions-legales</loc>
-    <lastmod>2026-07-23</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://plateform.urbanize.site/confidentialite</loc>
-    <lastmod>2026-07-23</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://plateform.urbanize.site/cgv</loc>
-    <lastmod>2026-07-23</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <loc>https://plateform.urbanize.site/plan-du-site</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 
 </urlset>

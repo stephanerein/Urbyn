@@ -1,7 +1,13 @@
-import { LogOut, ShoppingCart, User } from 'lucide-react';
+import { LogOut, ShoppingCart, User, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 import logoAtelierUrbanize from '../../assets/logo-atelier-urbanize.png';
 
 export function Header() {
@@ -14,10 +20,10 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6 py-2">
         <div className="flex items-center justify-between gap-4">
           <Link to={isSupplier ? '/fournisseur' : '/'} className="flex items-center shrink-0">
-            <img src={logoAtelierUrbanize} alt="Atelier Urbanize" className="h-9 w-auto" />
+            <img src={logoAtelierUrbanize} alt="Atelier Urbanize" className="h-[54px] w-auto" />
           </Link>
 
           <nav className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end">
@@ -45,17 +51,45 @@ export function Header() {
             ) : null}
 
             {!isSupplier ? (
-              <Link
-                to="/panier"
-                className="relative text-black hover:text-gray-700 font-medium transition-colors p-1"
-              >
-                <ShoppingCart className="w-6 h-6" />
-                {cartItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemsCount}
-                  </span>
-                )}
-              </Link>
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors outline-none">
+                    Expertise
+                    <ChevronDown className="w-4 h-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem asChild>
+                      <Link to="/habillage-urbain">Urbain</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/habillage-thermique">Thermique</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Link
+                  to="/definir-besoin"
+                  className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Configurateur
+                </Link>
+                <Link
+                  to="/contact"
+                  className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Contact
+                </Link>
+                <Link
+                  to="/panier"
+                  className="relative text-black hover:text-gray-700 font-medium transition-colors p-1"
+                >
+                  <ShoppingCart className="w-6 h-6" />
+                  {cartItemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemsCount}
+                    </span>
+                  )}
+                </Link>
+              </>
             ) : null}
 
             {isLoggedIn ? (

@@ -19,7 +19,9 @@ projets, approvisionnement, études de structures, direction artistique, design 
 permet d'obtenir une estimation instantanée et de commander en ligne.
 
 Site web principal : https://www.urbanize.site
-Portail client / configurateur Urbyn : https://plateform.urbanize.site/urbyn
+Habillage Urbain : https://plateform.urbanize.site/habillage-urbain
+Habillage Thermique : https://plateform.urbanize.site/habillage-thermique
+Configurateur / estimation en ligne : https://plateform.urbanize.site/definir-besoin
 Contact : info@urbanize.site
 
 ## Produits et services — Habillage Urbain

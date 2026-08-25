@@ -35,22 +35,10 @@ export function Footer() {
                 Mentions légales
               </Link>
               <Link
-                to="/cgv"
+                to="/plan-du-site"
                 className="text-slate-400 hover:text-white transition-colors hover:underline"
               >
-                CGV
-              </Link>
-              <Link
-                to="/confidentialite"
-                className="text-slate-400 hover:text-white transition-colors hover:underline"
-              >
-                Politique de confidentialité
-              </Link>
-              <Link
-                to="/cookies"
-                className="text-slate-400 hover:text-white transition-colors hover:underline"
-              >
-                Cookies
+                Plan du site
               </Link>
             </div>
           </div>

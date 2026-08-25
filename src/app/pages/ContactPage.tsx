@@ -86,6 +86,7 @@ export function ContactPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="border-2 border-black"
+                  required
                 />
               </div>
 
@@ -139,8 +140,7 @@ export function ContactPage() {
                 <Phone className="w-6 h-6 text-black mt-1" />
                 <div>
                   <h3 className="font-bold text-black mb-1">Téléphone</h3>
-                  <p className="text-black">+33 (0)1 XX XX XX XX</p>
-                  <p className="text-sm text-black mt-1">Du lundi au vendredi, 9h-18h</p>
+                  <p className="text-black">+33 6 24 20 22 43</p>
                 </div>
               </div>
             </CardContent>
@@ -151,28 +151,30 @@ export function ContactPage() {
               <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-black mt-1" />
                 <div>
-                  <h3 className="font-bold text-black mb-1">Adresse</h3>
+                  <h3 className="font-bold text-black mb-1">Bureau Paris</h3>
                   <p className="text-black">
-                    Atelier Urbanize<br />
-                    [Adresse complète]<br />
-                    75000 Paris, France
+                    Urbanize<br />
+                    39 rue Dupleix<br />
+                    75015 Paris, France
                   </p>
+                  <p className="text-sm text-black mt-1">TVA : FR73827458779</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-black bg-gray-50">
+          <Card className="border-2 border-black">
             <CardContent className="p-6">
-              <h3 className="font-bold text-black mb-2">Horaires d'ouverture</h3>
-              <div className="space-y-1 text-sm text-black">
-                <div className="flex justify-between">
-                  <span>Lundi - Vendredi</span>
-                  <span className="font-bold">9h00 - 18h00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Samedi - Dimanche</span>
-                  <span className="font-bold">Fermé</span>
+              <div className="flex items-start gap-4">
+                <MapPin className="w-6 h-6 text-black mt-1" />
+                <div>
+                  <h3 className="font-bold text-black mb-1">Bureau Dubaï</h3>
+                  <p className="text-black">
+                    Urbanize<br />
+                    Splendour Villa 69, Al Safa 1<br />
+                    Dubaï, UAE
+                  </p>
+                  <p className="text-sm text-black mt-1">Licence #1423255</p>
                 </div>
               </div>
             </CardContent>
