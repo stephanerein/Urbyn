@@ -11,6 +11,7 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useCart } from '../../context/CartContext';
 import { Check, ShoppingCart, MapPin, ChevronDown, ChevronUp, CalendarClock, ImageIcon, Info } from 'lucide-react';
 import { imgCaissonBois120 } from '../../assets/images';
+import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France:     { pattern: /^\d{5}$/, example: '75011' },
@@ -149,6 +150,7 @@ export function TotemCaissonBoisLocationPage() {
                 </div>
               ))}
             </div>
+            <FicheTechniqueButton documentKey="caisson-bois-120" className="mt-4" />
           </div>
 
           {/* Colonne droite : configurateur */}

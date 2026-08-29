@@ -11,6 +11,7 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useCart } from '../../context/CartContext';
 import { Check, ShoppingCart, MapPin, ChevronDown, ChevronUp, CalendarClock, ImageIcon, Info } from 'lucide-react';
 import { imgTotemSignIzNoir } from '../../assets/images';
+import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France:     { pattern: /^\d{5}$/, example: '75011' },
@@ -136,6 +137,7 @@ export function TotemSignIzLocationPage() {
                 </div>
               ))}
             </div>
+            <FicheTechniqueButton documentKey="sign-iz" className="mt-4" />
           </div>
 
           {/* Colonne droite : configurateur */}

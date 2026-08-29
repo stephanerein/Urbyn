@@ -8,6 +8,7 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { ArrowRight, Check, Info, Package, ChevronRight } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 import { useCart } from '../../context/CartContext';
 import { imgCaissonBois80 as image_Celize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Celize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Celize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Celize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
 
@@ -298,6 +299,11 @@ export function TotemConfigPage() {
                     </li>
                   </ul>
                 </div>
+
+                <FicheTechniqueButton
+                  documentKey={`caisson-bois-${format}`}
+                  className="mt-6"
+                />
               </div>
 
               {/* Configuration */}
