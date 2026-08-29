@@ -13,6 +13,8 @@ import { PalissadeResultsPage } from './pages/PalissadeResultsPage';
 import { TotemModelPage } from './pages/totem/TotemModelPage';
 import { TotemAcquisitionPage } from './pages/totem/TotemAcquisitionPage';
 import { TotemLocationPage } from './pages/totem/TotemLocationPage';
+import { TotemFamilyProductsPage } from './pages/totem/TotemFamilyProductsPage';
+import { TotemProductDetailPage } from './pages/totem/TotemProductDetailPage';
 import { TotemFormatPage } from './pages/totem/TotemFormatPage';
 import { TotemComparePage } from './pages/totem/TotemComparePage';
 import { TotemConfigPage } from './pages/totem/TotemConfigPage';
@@ -93,6 +95,9 @@ export function AppRoutes() {
       <Route path="/totem" element={<TotemModelPage />} />
       <Route path="/totem/acquisition" element={<TotemAcquisitionPage />} />
       <Route path="/totem/location" element={<TotemLocationPage />} />
+      <Route path="/totem/:offer/family/:familyId" element={<TotemFamilyProductsPage />} />
+      <Route path="/totem/:offer/compare" element={<TotemComparePage />} />
+      <Route path="/totem/:offer/product/:productId" element={<TotemProductDetailPage />} />
       <Route path="/totem/caisson-bois/format" element={<TotemFormatPage />} />
       <Route path="/totem/caisson-bois/compare" element={<TotemComparePage />} />
       <Route path="/totem/caisson-bois/:format" element={<TotemConfigPage />} />
