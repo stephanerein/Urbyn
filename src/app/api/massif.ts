@@ -17,6 +17,19 @@ export interface MassifLeafCatalogsResponse {
   catalogs: MassifLeafCatalog[]
 }
 
+export interface MassifWeightBandAvailability {
+  poids_min: number
+  poids_max: number
+  product_count: number
+  available: boolean
+}
+
+export interface MassifWeightBandsResponse {
+  root_id: number
+  root_name: string
+  bands: MassifWeightBandAvailability[]
+}
+
 export interface MassifProductDimensions {
   longueur: number | null
   largeur: number | null
@@ -66,11 +79,23 @@ export interface MassifProductsResponse {
   products: MassifProduct[]
 }
 
-export function fetchMassifLeafCatalogs(
-  rootName: string = MASSIF_ROOT_NAME,
-): Promise<MassifLeafCatalogsResponse> {
+export function fetchMassifLeafCatalogs(options?: {
+  rootName?: string
+  poids_min?: number
+  poids_max?: number
+}): Promise<MassifLeafCatalogsResponse> {
+  const rootName = options?.rootName ?? MASSIF_ROOT_NAME
   const params = new URLSearchParams({ root_name: rootName })
+  if (options?.poids_min != null) params.set('poids_min', String(options.poids_min))
+  if (options?.poids_max != null) params.set('poids_max', String(options.poids_max))
   return apiFetch(`/api/v1/client-portal/massif/leaf-catalogs?${params}`)
+}
+
+export function fetchMassifWeightBands(
+  rootName: string = MASSIF_ROOT_NAME,
+): Promise<MassifWeightBandsResponse> {
+  const params = new URLSearchParams({ root_name: rootName })
+  return apiFetch(`/api/v1/client-portal/massif/weight-bands?${params}`)
 }
 
 export function fetchMassifProducts(payload: {

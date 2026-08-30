@@ -1,5 +1,5 @@
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowLeft, ArrowRight, Check, Loader2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -17,6 +17,7 @@ import massifImg from 'figma:asset/massif-beton-cubique.png';
 import {
   fetchMassifLeafCatalogs,
   fetchMassifProducts,
+  fetchMassifWeightBands,
   type MassifLeafCatalog,
   type MassifProduct,
 } from '../api/massif';
@@ -135,6 +136,7 @@ export function MassifSelectionPage() {
   const [catalogs, setCatalogs] = useState<MassifLeafCatalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(false);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
+  const [availableBandKeys, setAvailableBandKeys] = useState<Set<string> | null>(null);
 
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -148,11 +150,47 @@ export function MassifSelectionPage() {
   const selectedBand = WEIGHT_BANDS.find((b) => b.id === selectedBandId) ?? null;
   const selectedFamilyType = selectedCatalog ? catalogToMassifType(selectedCatalog) : null;
 
+  const visibleWeightBands = useMemo(() => {
+    if (!availableBandKeys) return WEIGHT_BANDS;
+    const filtered = WEIGHT_BANDS.filter((b) => {
+      const max = b.max === Infinity ? 99999 : b.max;
+      return availableBandKeys.has(`${b.min}:${max}`);
+    });
+    return filtered.length > 0 ? filtered : WEIGHT_BANDS;
+  }, [availableBandKeys]);
+
+  // Charge les fourchettes de poids réellement peuplées après import catalogue
   useEffect(() => {
+    let cancelled = false;
+    fetchMassifWeightBands()
+      .then((data) => {
+        if (cancelled) return;
+        const keys = new Set(
+          (data.bands ?? [])
+            .filter((b) => b.available)
+            .map((b) => `${b.poids_min}:${b.poids_max}`),
+        );
+        setAvailableBandKeys(keys);
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableBandKeys(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Familles (feuilles) filtrées par le poids sélectionné
+  useEffect(() => {
+    if (!selectedBand) {
+      setCatalogs([]);
+      return;
+    }
     let cancelled = false;
     setCatalogsLoading(true);
     setCatalogsError(null);
-    fetchMassifLeafCatalogs()
+    const filter = weightFilterFromBand(selectedBand);
+    fetchMassifLeafCatalogs(filter)
       .then((data) => {
         if (!cancelled) setCatalogs(data.catalogs ?? []);
       })
@@ -169,7 +207,7 @@ export function MassifSelectionPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedBand]);
 
   const handleCatalogSelect = async (
     catalog: MassifLeafCatalog,
@@ -322,7 +360,7 @@ export function MassifSelectionPage() {
             <div>
               <h2 className="font-bold text-black text-lg mb-4">Quel poids recherchez-vous ?</h2>
               <div className="grid grid-cols-2 gap-3">
-                {WEIGHT_BANDS.map((wb) => (
+                {visibleWeightBands.map((wb) => (
                   <button
                     key={wb.id}
                     type="button"

@@ -12,6 +12,7 @@ import { useCart } from '../../context/CartContext';
 import { Check, ArrowRight, ChevronRight, Info, Package } from 'lucide-react';
 import { imgTotemSignIzNoir } from '../../assets/images';
 import { SEOMeta, productSchema, breadcrumbSchema } from '../../components/SEOMeta';
+import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France:     { pattern: /^\d{5}$/, example: '75011' },
@@ -223,6 +224,8 @@ export function TotemSignIzAcquisitionPage() {
                   ))}
                 </ul>
               </div>
+
+              <FicheTechniqueButton documentKey="sign-iz" className="mt-6" />
             </div>
 
             {/* Colonne droite : configuration */}

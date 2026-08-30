@@ -1,54 +1,49 @@
-import { useNavigate } from 'react-router-dom';
-import { SEOMeta, productSchema, breadcrumbSchema } from '../../components/SEOMeta';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { ProgressSteps } from '../../components/ProgressSteps';
-import { imgCaissonBoisVignette, imgTotemSignIzNoir } from '../../assets/images';
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { SEOMeta, breadcrumbSchema } from '../../components/SEOMeta'
+import { Card, CardContent } from '../../components/ui/card'
+import { Button } from '../../components/ui/button'
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback'
+import { ProgressSteps } from '../../components/ProgressSteps'
+import { imgCaissonBoisVignette } from '../../assets/images'
+import {
+  fetchTotemFamilies,
+  formatPriceEur,
+  type TotemFamily,
+} from '../../api/totem'
 
-const ACQUISITION_MODELS = [
-  {
-    id: 'caisson-bois',
-    name: 'Totem Caisson Bois',
-    description: 'Totem en structure bois avec panneaux interchangeables — 4 formats disponibles',
-    image: imgCaissonBoisVignette,
-    startPrice: '2 650€',
-  },
-  {
-    id: 'gabion',
-    name: 'Totem Gabion',
-    description: 'Totem design en gabion métallique avec remplissage minéral',
-    image: 'https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800&q=80',
-    startPrice: '1 800€',
-  },
-  {
-    id: 'liz',
-    name: 'Totem LIZ',
-    description: 'Totem triptyque haut de gamme avec panneaux orientables',
-    image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80',
-    startPrice: '2 600€',
-  },
-  {
-    id: 'sign-iz',
-    name: 'Totem Sign-IZ',
-    description: 'Totem compact et modulaire — autolesté, montage rapide',
-    image: imgTotemSignIzNoir,
-    startPrice: '1 980€',
-  },
-];
+function familyImage(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('caisson') || n.includes('sign')) return imgCaissonBoisVignette
+  return imgCaissonBoisVignette
+}
 
 export function TotemAcquisitionPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [families, setFamilies] = useState<TotemFamily[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleModelSelect = (modelId: string) => {
-    if (modelId === 'caisson-bois') {
-      navigate('/totem/caisson-bois/format');
-    } else if (modelId === 'sign-iz') {
-      navigate('/totem/sign-iz/acquisition');
-    } else {
-      navigate(`/totem/${modelId}/config`);
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetchTotemFamilies('Acquisition')
+      .then((res) => {
+        if (!cancelled) setFamilies(res.families)
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Impossible de charger les modèles.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  };
+  }, [])
 
   return (
     <div className="bg-white min-h-screen pt-[var(--header-height)]">
@@ -57,13 +52,13 @@ export function TotemAcquisitionPage() {
       <div className="max-w-6xl mx-auto pt-8 px-4 pb-20">
         <SEOMeta
           title="Totems — Acquisition"
-          description="Choisissez votre totem urbain à l'achat : Caisson Bois, Gabion, LIZ, Sign-IZ. Fabriqués en France, livrés montés. À partir de 1 980 € HT."
-          keywords="totem acquisition, totem achat, totem Caisson Bois, totem Sign-IZ, totem Gabion, totem LIZ, Urbyn"
+          description="Choisissez votre totem urbain à l'achat. Fabriqués en France, livrés montés."
+          keywords="totem acquisition, totem achat, Urbyn"
           url="/totem/acquisition"
-          jsonLd={[
-            breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Totems', url: '/totem/acquisition' }]),
-            productSchema({ name: 'Totem Sign-IZ', description: 'Totem autolesté compact, montage rapide, RAL au choix. Fabriqué en France.', price: 1980, url: '/totem/sign-iz/acquisition' }),
-          ]}
+          jsonLd={breadcrumbSchema([
+            { name: 'Accueil', url: '/' },
+            { name: 'Totems', url: '/totem/acquisition' },
+          ])}
         />
         <div className="mb-8">
           <Button
@@ -83,33 +78,49 @@ export function TotemAcquisitionPage() {
           <p className="text-gray-600">Choisissez le modèle que vous souhaitez acquérir</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {ACQUISITION_MODELS.map((model) => (
-            <Card
-              key={model.id}
-              className="cursor-pointer hover:shadow-2xl transition-all group overflow-hidden"
-              onClick={() => handleModelSelect(model.id)}
-            >
-              <CardContent className="p-0">
-                <div className="relative h-64 overflow-hidden">
-                  <ImageWithFallback
-                    src={model.image}
-                    alt={model.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
-                    <span className="font-bold text-sm text-black">À partir de {model.startPrice} HT</span>
+        {loading ? (
+          <p className="text-gray-500">Chargement des modèles…</p>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : families.length === 0 ? (
+          <p className="text-gray-500">Aucun modèle Acquisition disponible pour le moment.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {families.map((family) => (
+              <Card
+                key={family.family_catalog_id}
+                className="cursor-pointer hover:shadow-2xl transition-all group overflow-hidden"
+                onClick={() =>
+                  navigate(`/totem/acquisition/family/${family.family_catalog_id}`)
+                }
+              >
+                <CardContent className="p-0">
+                  <div className="relative h-64 overflow-hidden bg-gray-100">
+                    <ImageWithFallback
+                      src={familyImage(family.name)}
+                      alt={family.display_name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
+                      <span className="font-bold text-sm text-black">
+                        À partir de {formatPriceEur(family.min_price)}€ HT
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-black group-hover:underline">{model.name}</h3>
-                  <p className="text-sm text-gray-600">{model.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2 text-black group-hover:underline">
+                      {family.display_name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {family.description || `${family.product_count} format(s) disponible(s)`}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
