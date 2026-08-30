@@ -1,0 +1,160 @@
+/* Styles partagés AuthModal (boutons / champs) — portés depuis frontend */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: #111;
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: #222;
+}
+
+.btn--ghost {
+  background: #fff;
+  border-color: #ddd;
+  color: #111;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.field span {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.field input,
+.field select {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid #111;
+  outline-offset: 1px;
+}
+
+.api-bootstrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(160deg, #f8fafc, #eef2ff);
+}
+
+.api-bootstrap--error {
+  background: linear-gradient(160deg, #fef2f2, #fff7ed);
+}
+
+.api-bootstrap__card {
+  max-width: 420px;
+  padding: 2rem;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  text-align: center;
+}
+
+.api-bootstrap__card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.api-bootstrap__card p {
+  margin: 0 0 0.75rem;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.api-bootstrap__hint {
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+}
+
+.api-bootstrap__spinner {
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto 1rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: api-spin 0.7s linear infinite;
+}
+
+@keyframes api-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.api-bootstrap__banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #fecaca;
+}
+
+.api-bootstrap__banner button {
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #991b1b;
+  background: #fff;
+  color: #991b1b;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.api-bootstrap__badge {
+  position: fixed;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 9999;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  font-family: ui-monospace, monospace;
+  pointer-events: none;
+}
