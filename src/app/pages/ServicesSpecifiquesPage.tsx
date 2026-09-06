@@ -191,6 +191,10 @@ export function ServicesSpecifiquesPage() {
     const stored: Record<string, string[]> = Array.isArray(existing) ? {} : existing;
     stored[product!] = services;
     sessionStorage.setItem('servicesSpecifiques', JSON.stringify(stored));
+    if (product === 'totem') {
+      const enabled = services.includes('installation');
+      localStorage.setItem('totemInstallFee', enabled ? '1690' : '0');
+    }
   };
 
   const productDefaults = (): string[] => {
@@ -408,12 +412,17 @@ export function ServicesSpecifiquesPage() {
                               </div>
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold mb-2 text-black">{service.name}</h3>
+                                {service.id === 'installation' && (
+                                  <p className="text-sm text-gray-600 leading-relaxed">
+                                    Installation complète +1 690 € HT (facturée au panier)
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </div>
                           {service.hasExpand && service.details && (
                             <div className="mt-4">
-                              <button onClick={() => toggleExpand(service.id)} className="flex items-center gap-2 text-sm font-bold text-black hover:text-gray-700 transition-colors">
+                              <button type="button" onClick={() => toggleExpand(service.id)} className="flex items-center gap-2 text-sm font-bold text-black hover:text-gray-700 transition-colors">
                                 {isExpanded ? <><ChevronUp className="w-4 h-4" /> Masquer les détails</> : <><ChevronDown className="w-4 h-4" /> Voir les détails</>}
                               </button>
                               {isExpanded && (

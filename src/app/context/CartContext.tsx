@@ -53,7 +53,8 @@ function readStorage(storage: Storage, key: string): CartItem[] {
     const raw = storage.getItem(key)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : []
+    if (!Array.isArray(parsed)) return []
+    return (parsed as CartItem[]).filter((x) => x?.details?.itemType !== 'installation')
   } catch {
     return []
   }
@@ -68,8 +69,32 @@ function writeStorage(storage: Storage, key: string, items: CartItem[]) {
 }
 
 function mergeInto(prev: CartItem[], item: CartItem): CartItem[] {
+  // Lests conformité vent : 1 ligne par totem (pas de mutualisation globale)
   if (item.details?.itemType === 'balast') {
-    const existingBalastIndex = prev.findIndex((i) => i.details?.itemType === 'balast')
+    const forTotemId = item.details?.forTotemId as string | undefined
+    if (forTotemId) {
+      const lineId = `balast-for-${forTotemId}`
+      const existingIndex = prev.findIndex(
+        (i) =>
+          i.details?.itemType === 'balast' &&
+          (i.id === lineId || i.details?.forTotemId === forTotemId),
+      )
+      if (existingIndex >= 0) {
+        const next = [...prev]
+        next[existingIndex] = {
+          ...next[existingIndex],
+          ...item,
+          id: lineId,
+          quantity: item.quantity,
+        }
+        return next
+      }
+      return [...prev, { ...item, id: lineId }]
+    }
+    // Legacy (sans forTotemId) : une seule ligne mutualisée
+    const existingBalastIndex = prev.findIndex(
+      (i) => i.details?.itemType === 'balast' && !i.details?.forTotemId,
+    )
     if (existingBalastIndex >= 0) {
       const next = [...prev]
       next[existingBalastIndex] = {
@@ -79,6 +104,17 @@ function mergeInto(prev: CartItem[], item: CartItem): CartItem[] {
       return next
     }
     return [...prev, { ...item, id: 'balast-unique' }]
+  }
+
+  // Manille : 1 par type — ne jamais cumuler la quantité
+  if (item.details?.itemType === 'manille') {
+    const existingIndex = prev.findIndex((i) => i.id === item.id)
+    if (existingIndex >= 0) {
+      const next = [...prev]
+      next[existingIndex] = { ...item, quantity: 1 }
+      return next
+    }
+    return [...prev, { ...item, quantity: 1 }]
   }
 
   const existingIndex = prev.findIndex((i) => i.id === item.id)
@@ -105,7 +141,8 @@ function normalizeItems(raw: unknown): CartItem[] {
       !!x &&
       typeof x === 'object' &&
       typeof (x as CartItem).id === 'string' &&
-      typeof (x as CartItem).name === 'string',
+      typeof (x as CartItem).name === 'string' &&
+      (x as CartItem).details?.itemType !== 'installation',
   )
 }
 
@@ -175,6 +212,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [authReady, buyerSession?.user_id, buyerSession?.email])
 
+  // Purge legacy « installation » cart products (now billed as fee)
+  useEffect(() => {
+    if (!hydrated) return
+    setItems((prev) => {
+      const next = prev.filter((i) => i.details?.itemType !== 'installation')
+      return next.length === prev.length ? prev : next
+    })
+  }, [hydrated])
+
   // Persist on change
   useEffect(() => {
     if (!hydrated || !authReady) return
@@ -202,6 +248,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated, authReady, buyerSession])
 
   const addItem = useCallback((item: CartItem) => {
+    if (item.details?.itemType === 'installation') return
     setLastAddedItem(item)
     setLastAddedItems([item])
     setItems((prev) => mergeInto(prev, item))
@@ -209,17 +256,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const addItems = useCallback((batch: CartItem[]) => {
-    if (batch.length === 0) return
-    setLastAddedItem(batch[0])
-    setLastAddedItems(batch)
-    setItems((prev) => batch.reduce((acc, item) => mergeInto(acc, item), prev))
+    const cleaned = batch.filter((item) => item.details?.itemType !== 'installation')
+    if (cleaned.length === 0) return
+    setLastAddedItem(cleaned[0])
+    setLastAddedItems(cleaned)
+    setItems((prev) => {
+      const withoutInstall = prev.filter((i) => i.details?.itemType !== 'installation')
+      return cleaned.reduce((acc, item) => mergeInto(acc, item), withoutInstall)
+    })
     setIsSidebarOpen(true)
   }, [])
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => {
       const removed = prev.find((item) => item.id === id)
-      const next = prev.filter((item) => item.id !== id)
+      let next = prev.filter((item) => item.id !== id)
+
+      if (removed?.details?.itemType === 'totem') {
+        // Retirer les lests liés à ce totem
+        next = next.filter(
+          (i) => !(i.details?.itemType === 'balast' && i.details?.forTotemId === removed.id),
+        )
+      }
+
+      if (removed?.details?.itemType === 'balast' && removed.details?.forTotemId) {
+        // Sans les lests supplémentaires → marqueur orange à nouveau
+        const totemId = String(removed.details.forTotemId)
+        next = next.map((item) =>
+          item.id === totemId ? { ...item, windComplianceChecked: false } : item,
+        )
+      }
+
       if (removed) {
         const typeStillPresent = next.some((item) => item.type === removed.type)
         if (!typeStillPresent) {
@@ -250,9 +317,71 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateQuantity = useCallback((id: string, quantity: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item)),
-    )
+    setItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target) return prev
+
+      // Lests conformité : qty verrouillée — suit uniquement le totem associé
+      if (
+        target.details?.itemType === 'balast' &&
+        target.details?.forTotemId
+      ) {
+        return prev
+      }
+
+      if (quantity <= 0) {
+        let next = prev.filter((item) => item.id !== id)
+        if (target.details?.itemType === 'totem') {
+          next = next.filter(
+            (i) => !(i.details?.itemType === 'balast' && i.details?.forTotemId === target.id),
+          )
+        }
+        if (target.details?.itemType === 'balast' && target.details?.forTotemId) {
+          const totemId = String(target.details.forTotemId)
+          next = next.map((item) =>
+            item.id === totemId ? { ...item, windComplianceChecked: false } : item,
+          )
+        }
+        return next
+      }
+
+      // Même totem : scaler les lests liés (balastsPerUnit × nouvelle qty)
+      if (target.details?.itemType === 'totem') {
+        const prevQty = target.quantity > 0 ? target.quantity : 1
+        return prev
+          .map((item) => {
+            if (item.id === id) return { ...item, quantity }
+            if (item.details?.itemType === 'balast' && item.details?.forTotemId === id) {
+              const perUnit =
+                typeof item.details.balastsPerUnit === 'number' &&
+                Number.isFinite(item.details.balastsPerUnit)
+                  ? item.details.balastsPerUnit
+                  : item.quantity / prevQty
+              const newBalastQty = Math.max(0, Math.round(perUnit * quantity))
+              return {
+                ...item,
+                quantity: newBalastQty,
+                details: {
+                  ...item.details,
+                  balastsPerUnit: perUnit,
+                  balastsNeeded: newBalastQty,
+                },
+              }
+            }
+            return item
+          })
+          .filter(
+            (item) =>
+              !(
+                item.details?.itemType === 'balast' &&
+                item.details?.forTotemId === id &&
+                item.quantity <= 0
+              ),
+          )
+      }
+
+      return prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+    })
   }, [])
 
   const updateWindCompliance = useCallback((id: string, checked: boolean) => {
@@ -269,9 +398,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const getTotalPrice = () =>
-    items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    items
+      .filter((item) => item.details?.itemType !== 'installation')
+      .reduce((sum, item) => sum + item.price * item.quantity, 0)
 
-  const getTotalItems = () => items.reduce((sum, item) => sum + item.quantity, 0)
+  const getTotalItems = () =>
+    items
+      .filter((item) => item.details?.itemType !== 'installation')
+      .reduce((sum, item) => sum + item.quantity, 0)
 
   return (
     <CartContext.Provider

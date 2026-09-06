@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, ChevronRight, Info, Package } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, Info, Package, Truck } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { Checkbox } from '../../components/ui/checkbox'
@@ -29,6 +29,26 @@ import {
   formatPriceEur,
   type TotemProductDetail,
 } from '../../api/totem'
+import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping'
+import {
+  computeTotemPanelPrintPrice,
+  formatPanelPriceEur,
+} from '../../lib/totemPanelPrice'
+import {
+  TOTEM_ORIGIN_LABEL,
+  TOTEM_PER_KM_EUR,
+  TOTEM_TRUCK_BASE_EUR,
+  TOTEM_TRUCK_CAPACITY,
+  computeTotemShipping,
+  countTotemUnits,
+} from '../../lib/totemShipping'
+import {
+  totemCatalogEntryPrice,
+  totemUnitPriceAfterDiscount,
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountBanner,
+  totemVolumeDiscountPercentLabel,
+} from '../../lib/totemDiscount'
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France: { pattern: /^\d{5}$/, example: '75011' },
@@ -42,7 +62,7 @@ const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   Espagne: { pattern: /^\d{5}$/, example: '28001' },
 }
 
-const INSTALLATION_PRICE = 1690
+const INSTALLATION_PRICE = TOTEM_INSTALLATION_EUR
 
 function productImage(name: string): string {
   const n = name.toLowerCase()
@@ -51,16 +71,6 @@ function productImage(name: string): string {
   if (n.includes('120')) return imgCaissonBois120
   if (n.includes('80')) return imgCaissonBois80
   return imgCaissonBoisVignette
-}
-
-function guessPanelPrice(product: TotemProductDetail): number {
-  const fromName = product.product_name.match(/(\d{2,3})\s*$/)
-  const fromPanel = product.panel_format?.match(/(\d{2,3})/)
-  const n = parseInt(fromName?.[1] || fromPanel?.[1] || '120', 10)
-  if (n <= 80) return 120
-  if (n <= 120) return 180
-  if (n <= 160) return 240
-  return 300
 }
 
 function installationServiceSelected(): boolean {
@@ -157,20 +167,68 @@ export function TotemProductDetailPage() {
     }
   }
 
-  const getTotalTotemQuantity = () =>
-    items
-      .filter((item) => item.details?.itemType === 'totem')
-      .reduce((sum, item) => sum + item.quantity, 0)
+  const cartTotemQty = useMemo(() => countTotemUnits(items), [items])
+  const totalQuantity = cartTotemQty + quantity
+
+  const cartTotemsHT = useMemo(
+    () =>
+      items
+        .filter((i) => i.details?.itemType === 'totem')
+        .reduce((s, i) => s + i.price * i.quantity, 0),
+    [items],
+  )
+  const cartPanelsHT = useMemo(
+    () =>
+      items
+        .filter((i) => i.details?.itemType === 'panels')
+        .reduce((s, i) => s + i.price * i.quantity, 0),
+    [items],
+  )
+  const cartBalastsHT = useMemo(
+    () =>
+      items
+        .filter((i) => i.details?.itemType === 'balast')
+        .reduce((s, i) => s + i.price * i.quantity, 0),
+    [items],
+  )
+
+  const panelUnitPrice = product ? computeTotemPanelPrintPrice(product) : 0
+  const discountPctLabel = totemVolumeDiscountPercentLabel(totalQuantity)
+  const discountBanner = totemVolumeDiscountBanner(totalQuantity)
+  const draftTotemsGrossHT = product ? product.price * quantity : 0
+  const draftTotemsHT =
+    draftTotemsGrossHT - totemVolumeDiscountAmount(draftTotemsGrossHT, totalQuantity)
+  const draftPanelsHT = panelsEnabled ? panelUnitPrice * panelsQuantity : 0
+  const installFee = installationEnabled ? INSTALLATION_PRICE : 0
+
+  const totemShipping = useMemo(
+    () =>
+      computeTotemShipping(
+        totalQuantity,
+        deliveryInfoValidated ? deliveryPostalCode : null,
+        deliveryCountry || 'France',
+      ),
+    [totalQuantity, deliveryInfoValidated, deliveryPostalCode, deliveryCountry],
+  )
+
+  const cartTotemsDiscount = totemVolumeDiscountAmount(cartTotemsHT, totalQuantity)
+  const productsHT =
+    cartTotemsHT -
+    cartTotemsDiscount +
+    cartPanelsHT +
+    cartBalastsHT +
+    draftTotemsHT +
+    draftPanelsHT
+  const shippingHT = deliveryInfoValidated ? totemShipping.shippingTotal : 0
+  const grandTotalHT = productsHT + shippingHT + installFee
 
   const handleAddToCart = () => {
     if (!product) return
-    const panelPrice = guessPanelPrice(product)
+    const panelPrice = computeTotemPanelPrintPrice(product)
     const panelSize = product.panel_format || '—'
     const label = product.product_name.replace(/^totem\s+/i, '')
-    const unitPrice =
-      getTotalTotemQuantity() + quantity >= 5
-        ? Math.round(product.price * 0.9)
-        : product.price
+    // Prix catalogue : la remise volume est appliquée au panier / totaux (selon qty globale).
+    const unitPrice = product.price
 
     const batch = [
       {
@@ -185,6 +243,8 @@ export function TotemProductDetailPage() {
           format: label,
           mode: offer,
           basePrice: product.price,
+          companyName: product.company_name ?? null,
+          companyTva: product.company_tva ?? null,
         },
       },
       ...(panelsEnabled
@@ -200,19 +260,9 @@ export function TotemProductDetailPage() {
                 productId: product.product_id,
                 panelSize,
                 panelPrice,
+                companyName: product.company_name ?? null,
+                companyTva: product.company_tva ?? null,
               },
-            },
-          ]
-        : []),
-      ...(installationEnabled
-        ? [
-            {
-              id: `installation-product-${product.product_id}`,
-              type: 'totem' as const,
-              name: 'Installation complète',
-              price: INSTALLATION_PRICE,
-              quantity: 1,
-              details: { itemType: 'installation' },
             },
           ]
         : []),
@@ -223,9 +273,9 @@ export function TotemProductDetailPage() {
       'deliveryInfo',
       JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }),
     )
+    localStorage.setItem('shippingCostTotem', String(totemShipping.shippingTotal))
+    localStorage.setItem('totemShippingBreakdown', JSON.stringify(totemShipping))
   }
-
-  const totalQuantity = getTotalTotemQuantity() + quantity
 
   return (
     <div className="bg-white min-h-screen">
@@ -260,11 +310,12 @@ export function TotemProductDetailPage() {
                     {product.product_name.replace(/^totem\s+/i, '')}
                   </h1>
                   <p className="text-base font-semibold text-black">
-                    {formatPriceEur(product.price)}€ HT
+                    {formatPriceEur(totemCatalogEntryPrice(product.price))}€ HT
                   </p>
                   <p className="text-sm text-black mt-1">
-                    Prix unitaire dès 5 unités : {formatPriceEur(Math.round(product.price * 0.9))}€
-                    HT
+                    Prix catalogue : {formatPriceEur(product.price)}€ HT · Dès 5 (−10%) :{' '}
+                    {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 5))}€ · Dès 10
+                    (−15%) : {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 10))}€
                   </p>
                 </div>
                 <span className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full capitalize">
@@ -289,26 +340,31 @@ export function TotemProductDetailPage() {
                   <div className="space-y-3 mb-6">
                     {product.dimensions_label ? (
                       <div className="flex justify-between gap-4">
-                        <span className="text-black font-medium">Dimensions:</span>
+                        <span className="text-black font-bold">Dimensions:</span>
                         <span className="text-black text-right">{product.dimensions_label}</span>
                       </div>
                     ) : null}
                     {product.poids != null ? (
                       <div className="flex justify-between gap-4">
-                        <span className="text-black font-medium">Poids:</span>
-                        <span className="text-black">{product.poids} kg</span>
+                        <span className="text-black font-bold">Poids:</span>
+                        <span className="text-black">
+                          {Number.isInteger(product.poids)
+                            ? product.poids
+                            : String(product.poids).replace('.', ',')}{' '}
+                          kg
+                        </span>
                       </div>
                     ) : null}
                     {product.footprint ? (
                       <div className="flex justify-between gap-4">
-                        <span className="text-black font-medium">Encombrement au sol:</span>
-                        <span className="text-black">{product.footprint}</span>
+                        <span className="text-black font-bold">Encombrement au sol:</span>
+                        <span className="text-black text-right">{product.footprint}</span>
                       </div>
                     ) : null}
                     {product.panel_format ? (
                       <div className="flex justify-between gap-4">
-                        <span className="text-black font-medium">Format panneau:</span>
-                        <span className="text-black">{product.panel_format}</span>
+                        <span className="text-black font-bold">Format panneau:</span>
+                        <span className="text-black text-right">{product.panel_format}</span>
                       </div>
                     ) : null}
                   </div>
@@ -356,19 +412,16 @@ export function TotemProductDetailPage() {
                     />
                     <div
                       className={`mt-2 text-xs p-2 rounded border-2 ${
-                        totalQuantity >= 5
+                        discountBanner.applied
                           ? 'bg-green-50 border-green-500 text-green-900'
                           : 'bg-blue-50 border-blue-200 text-black'
                       }`}
                     >
                       <Info className="w-3 h-3 inline mr-1" />
-                      {totalQuantity >= 5 ? (
-                        <strong>Remise de 10% appliquée sur les totems !</strong>
+                      {discountBanner.applied ? (
+                        <strong>{discountBanner.message}</strong>
                       ) : (
-                        <>
-                          Commandez 5 totems ou plus et bénéficiez de 10% de remise sur les
-                          totems
-                        </>
+                        <>{discountBanner.message}</>
                       )}
                     </div>
                   </div>
@@ -401,7 +454,8 @@ export function TotemProductDetailPage() {
                             {product.panel_format || 'selon modèle'}
                           </p>
                           <p className="text-sm font-bold text-black mt-2">
-                            {guessPanelPrice(product)}€ HT par panneau
+                            {formatPanelPriceEur(computeTotemPanelPrintPrice(product))}€ HT par
+                            panneau
                           </p>
                         </div>
                       </div>
@@ -448,6 +502,147 @@ export function TotemProductDetailPage() {
                       <strong>Totems livrés déjà montés, prêts à l'emploi</strong>
                     </p>
                   </div>
+
+                  {totemShipping.trucksCount > 0 ? (
+                    <Card className="border border-blue-200 bg-blue-50/50">
+                      <CardContent className="p-4">
+                        <h4 className="font-bold text-black text-sm mb-2 flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-blue-700" />
+                          Remplissage camion — totems ({TOTEM_ORIGIN_LABEL})
+                        </h4>
+                        <p className="text-[11px] text-gray-600 mb-3">
+                          {cartTotemQty > 0
+                            ? `Mutualisé avec le panier : ${cartTotemQty} totem(s) déjà présents + ${quantity} en sélection = ${totalQuantity}.`
+                            : `${totalQuantity} totem(s) · max ${TOTEM_TRUCK_CAPACITY} / camion.`}
+                        </p>
+                        <div className="space-y-2">
+                          {totemShipping.truckFills.map((pct, i) => {
+                            const fill = Math.round(pct)
+                            return (
+                              <div key={i} className="space-y-1">
+                                <div className="flex justify-between text-[10px] font-bold uppercase text-black">
+                                  <span>
+                                    Camion {i + 1}
+                                    {totemShipping.trucksCount > 1
+                                      ? ` / ${totemShipping.trucksCount}`
+                                      : ''}
+                                    {totemShipping.truckLoads[i] != null
+                                      ? ` · ${totemShipping.truckLoads[i]}/${TOTEM_TRUCK_CAPACITY}`
+                                      : ''}
+                                  </span>
+                                  <span
+                                    className={
+                                      fill >= 95 ? 'text-emerald-600' : 'text-gray-500'
+                                    }
+                                  >
+                                    {fill}%
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      fill >= 95 ? 'bg-emerald-500' : 'bg-blue-500'
+                                    }`}
+                                    style={{ width: `${Math.min(100, fill)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {totemShipping.truckFills.length > 0 &&
+                        totemShipping.truckFills[totemShipping.truckFills.length - 1] < 90 ? (
+                          <p className="text-[11px] text-blue-800 bg-white/70 border border-blue-200 rounded-lg p-2 mt-3">
+                            <Info className="w-3 h-3 inline mr-1" />
+                            Dernier camion à{' '}
+                            <strong>
+                              {Math.round(
+                                totemShipping.truckFills[totemShipping.truckFills.length - 1],
+                              )}
+                              %
+                            </strong>
+                            . Ajoutez des totems pour optimiser le transport.
+                          </p>
+                        ) : null}
+                        {deliveryInfoValidated ? (
+                          <p className="text-[11px] text-gray-600 mt-2">
+                            Livraison estimée : {totemShipping.trucksCount} camion
+                            {totemShipping.trucksCount > 1 ? 's' : ''} ·{' '}
+                            {totemShipping.trucksCount} × ({TOTEM_TRUCK_BASE_EUR} € +{' '}
+                            {totemShipping.distanceKm} km × {TOTEM_PER_KM_EUR} €) ={' '}
+                            <strong className="text-black">
+                              {formatPriceEur(totemShipping.shippingTotal)}€
+                            </strong>
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-amber-700 mt-2">
+                            Validez le code postal pour calculer le prix de livraison.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
+                  <Card className="border border-gray-300 bg-white shadow-sm">
+                    <CardContent className="p-4 space-y-2 text-sm">
+                      <p className="font-bold text-black mb-2">Récapitulatif (panier + sélection)</p>
+                      {cartTotemQty > 0 || cartPanelsHT > 0 || cartBalastsHT > 0 ? (
+                        <>
+                          {cartTotemsHT > 0 ? (
+                            <div className="flex justify-between text-gray-600">
+                              <span>Totems déjà au panier</span>
+                              <span>{formatPriceEur(cartTotemsHT)}€</span>
+                            </div>
+                          ) : null}
+                          {cartPanelsHT > 0 ? (
+                            <div className="flex justify-between text-gray-600">
+                              <span>Panneaux déjà au panier</span>
+                              <span>{formatPriceEur(cartPanelsHT)}€</span>
+                            </div>
+                          ) : null}
+                          {cartBalastsHT > 0 ? (
+                            <div className="flex justify-between text-gray-600">
+                              <span>Lests déjà au panier</span>
+                              <span>{formatPriceEur(cartBalastsHT)}€</span>
+                            </div>
+                          ) : null}
+                        </>
+                      ) : null}
+                      <div className="flex justify-between text-gray-700">
+                        <span>
+                          Sélection · {quantity} totem{quantity > 1 ? 's' : ''}
+                          {discountPctLabel ? ` (${discountPctLabel})` : ''}
+                        </span>
+                        <span>{formatPriceEur(draftTotemsHT)}€</span>
+                      </div>
+                      {panelsEnabled ? (
+                        <div className="flex justify-between text-gray-700">
+                          <span>Sélection · {panelsQuantity} panneau(x)</span>
+                          <span>{formatPriceEur(draftPanelsHT)}€</span>
+                        </div>
+                      ) : null}
+                      {installFee > 0 ? (
+                        <div className="flex justify-between text-gray-700">
+                          <span>Installation</span>
+                          <span>{formatPriceEur(installFee)}€</span>
+                        </div>
+                      ) : null}
+                      <div className="flex justify-between text-gray-700">
+                        <span className="flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5" /> Livraison totems (mutualisée)
+                        </span>
+                        <span>
+                          {deliveryInfoValidated
+                            ? `${formatPriceEur(shippingHT)}€`
+                            : 'CP requis'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold text-black text-base pt-2 border-t border-gray-200">
+                        <span>Total HT estimé</span>
+                        <span>{formatPriceEur(grandTotalHT)}€</span>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   <Card className="border border-gray-300 bg-gray-50">
                     <CardContent className="p-4">
@@ -566,42 +761,44 @@ export function TotemProductDetailPage() {
 
                   <Card className="border border-gray-300 bg-gray-50">
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <Checkbox
-                          id="installation"
-                          checked={installationEnabled}
-                          onCheckedChange={(checked) =>
-                            setInstallationEnabled(checked as boolean)
-                          }
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor="installation"
-                            className="text-black font-bold cursor-pointer"
-                          >
-                            Installation complète
-                          </Label>
-                          <p className="text-sm font-bold text-black mt-2">
-                            + {INSTALLATION_PRICE}€ HT
+                      {installationEnabled ? (
+                        <>
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                              <p className="text-black font-bold">Installation complète</p>
+                              <p className="text-sm font-bold text-black mt-1">
+                                + {INSTALLATION_PRICE}€ HT
+                              </p>
+                            </div>
+                            <span className="text-[11px] font-semibold bg-black text-white px-2.5 py-1 rounded-full shrink-0">
+                              Sélectionnée
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mb-2">
+                            Choix fait à l&apos;étape services — non modifiable ici.
                           </p>
-                        </div>
-                      </div>
-                      <div className="pl-7">
-                        <p className="text-xs text-black mb-2">
-                          <strong>L'installation complète comprend :</strong>
+                          <div>
+                            <p className="text-xs text-black mb-2">
+                              <strong>L&apos;installation complète comprend :</strong>
+                            </p>
+                            <ul className="text-xs text-black space-y-1 ml-4">
+                              <li>
+                                • <strong>Pilotage / Scénographie :</strong> établissement des plans
+                                d&apos;intervention, coordination des intervenants, suivi de chantier
+                              </li>
+                              <li>
+                                • <strong>Installation :</strong> mise en place, nivellement,
+                                fixation sécurisée et tests de stabilité
+                              </li>
+                            </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-600">
+                          Installation non sélectionnée à l&apos;étape services. Pour l&apos;ajouter,
+                          revenez aux services totem.
                         </p>
-                        <ul className="text-xs text-black space-y-1 ml-4">
-                          <li>
-                            • <strong>Pilotage / Scénographie :</strong> établissement des plans
-                            d'intervention, coordination des intervenants, suivi de chantier
-                          </li>
-                          <li>
-                            • <strong>Installation :</strong> mise en place, nivellement,
-                            fixation sécurisée et tests de stabilité
-                          </li>
-                        </ul>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
 

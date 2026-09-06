@@ -10,7 +10,11 @@ import { useNavigate } from 'react-router-dom'
 import { clearSession, loadSession, saveSession } from '../api/auth'
 import { AuthModal } from '../components/auth/AuthModal'
 import { isBuyer, isSupplier, userDisplayName } from '../lib/session'
-import type { AccountSide, SessionUser } from '../types/auth'
+import type { AccountSide, AuthMode, SessionUser } from '../types/auth'
+
+export type OpenAuthOptions = {
+  mode?: AuthMode
+}
 
 interface AuthContextValue {
   session: SessionUser | null
@@ -19,7 +23,7 @@ interface AuthContextValue {
   isBuyer: boolean
   isSupplier: boolean
   userLabel: string | null
-  openAuth: (side?: AccountSide) => void
+  openAuth: (side?: AccountSide, options?: OpenAuthOptions) => void
   closeAuth: () => void
   logout: () => void
   setSessionUser: (user: SessionUser | null) => void
@@ -33,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [authSide, setAuthSide] = useState<AccountSide>('buyer')
+  const [authMode, setAuthMode] = useState<AuthMode | undefined>(undefined)
 
   useEffect(() => {
     setSession(loadSession())
@@ -51,8 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/')
   }, [navigate])
 
-  const openAuth = useCallback((side: AccountSide = 'buyer') => {
+  const openAuth = useCallback((side: AccountSide = 'buyer', options?: OpenAuthOptions) => {
     setAuthSide(side)
+    setAuthMode(options?.mode)
     setAuthOpen(true)
   }, [])
 
@@ -88,7 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <AuthModal
         open={authOpen}
         initialSide={authSide}
-        onClose={() => setAuthOpen(false)}
+        initialMode={authMode}
+        onClose={() => {
+          setAuthOpen(false)
+          setAuthMode(undefined)
+        }}
         onSuccess={handleAuthSuccess}
       />
     </AuthContext.Provider>

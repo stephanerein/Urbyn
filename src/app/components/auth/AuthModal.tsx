@@ -25,6 +25,12 @@ import type {
   ProfileDraft,
   SessionUser,
 } from '../../types/auth'
+import {
+  clearAuthSignupPrefill,
+  mergeProfileFromPrefill,
+  readAuthSignupPrefill,
+  type AuthSignupPrefill,
+} from '../../lib/authSignupPrefill'
 import './AuthModal.css'
 
 interface AuthModalProps {
@@ -33,6 +39,8 @@ interface AuthModalProps {
   onSuccess: (user: SessionUser) => void
   /** Pré-sélection Client / Partenaire à l'ouverture */
   initialSide?: AccountSide
+  /** Mode d'auth à l'ouverture (ex. signup depuis le chiffrage) */
+  initialMode?: AuthMode
 }
 
 const EMPTY_CREDENTIALS: CredentialsDraft = { email: '', password: '' }
@@ -44,9 +52,15 @@ const EMPTY_PROFILE: ProfileDraft = {
   language_id: 1,
 }
 
-export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: AuthModalProps) {
+export function AuthModal({
+  open,
+  onClose,
+  onSuccess,
+  initialSide = 'buyer',
+  initialMode,
+}: AuthModalProps) {
   const [side, setSide] = useState<AccountSide>(initialSide)
-  const [mode, setMode] = useState<AuthMode>('login')
+  const [mode, setMode] = useState<AuthMode>(initialMode ?? 'login')
   const [step, setStep] = useState<AuthStep>('credentials')
   const [credentials, setCredentials] = useState<CredentialsDraft>(EMPTY_CREDENTIALS)
   const [profile, setProfile] = useState<ProfileDraft>(EMPTY_PROFILE)
@@ -54,6 +68,7 @@ export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: A
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [activeUser, setActiveUser] = useState<SessionUser | null>(null)
   const [siblingPrefill, setSiblingPrefill] = useState<SiblingOnboardingPrefill | null>(null)
+  const [checkoutPrefill, setCheckoutPrefill] = useState<AuthSignupPrefill | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -69,8 +84,27 @@ export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: A
   }, [step, secondsLeft])
 
   useEffect(() => {
-    if (open) setSide(initialSide)
-  }, [open, initialSide])
+    if (!open) return
+    setSide(initialSide)
+    if (initialMode) setMode(initialMode)
+
+    const prefill = readAuthSignupPrefill()
+    setCheckoutPrefill(prefill)
+    if (!prefill) return
+
+    if (prefill.email) {
+      setCredentials((c) => ({ ...c, email: prefill.email || c.email }))
+    }
+    setProfile((p) => ({
+      ...p,
+      first_name: prefill.first_name || p.first_name,
+      last_name: prefill.last_name || p.last_name,
+      mobile_phone: prefill.mobile_phone || p.mobile_phone,
+    }))
+    if (initialMode === 'signup' || prefill.email) {
+      setMode('signup')
+    }
+  }, [open, initialSide, initialMode])
 
   if (!open) return null
 
@@ -83,6 +117,7 @@ export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: A
     setSecondsLeft(0)
     setActiveUser(null)
     setSiblingPrefill(null)
+    setCheckoutPrefill(null)
     setNewPassword('')
     setConfirmPassword('')
     setError(null)
@@ -223,17 +258,18 @@ export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: A
       saveSession(user)
       if (mode === 'signup') {
         setActiveUser(user)
-        const prefill = await fetchSiblingOnboardingPrefill(user.user_id, user.email).catch(
+        const sibling = await fetchSiblingOnboardingPrefill(user.user_id, user.email).catch(
           () => ({ has_sibling: false } as SiblingOnboardingPrefill),
         )
-        setSiblingPrefill(prefill)
-        setProfile({
-          title: prefill.profile?.title ?? '',
-          first_name: prefill.profile?.first_name ?? user.first_name ?? '',
-          last_name: prefill.profile?.last_name ?? user.last_name ?? '',
-          mobile_phone: prefill.profile?.mobile_phone ?? user.mobile_phone ?? '',
-          language_id: prefill.profile?.language_id ?? 1,
-        })
+        setSiblingPrefill(sibling)
+        const checkout = checkoutPrefill ?? readAuthSignupPrefill()
+        setProfile(
+          mergeProfileFromPrefill({
+            sibling: sibling.profile,
+            checkout,
+            user,
+          }),
+        )
         setStep('profile')
         setError(null)
         setInfo(null)
@@ -693,11 +729,13 @@ export function AuthModal({ open, onClose, onSuccess, initialSide = 'buyer' }: A
             <CompanyOnboardingStep
               user={activeUser}
               siblingPrefill={siblingPrefill}
+              checkoutPrefill={checkoutPrefill ?? readAuthSignupPrefill()}
               loading={loading}
               setLoading={setLoading}
               error={error}
               setError={setError}
               onSuccess={() => {
+                clearAuthSignupPrefill()
                 saveSession(activeUser)
                 onSuccess(activeUser)
                 handleClose()

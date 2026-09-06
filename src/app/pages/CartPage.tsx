@@ -1,10 +1,31 @@
 import { SEOMeta } from '../components/SEOMeta';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { Button } from '../components/ui/button';
-import { ArrowRight, Trash2, ShoppingBag, MapPin, Plus, Minus, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Trash2, ShoppingBag, MapPin, Plus, Minus, CheckCircle, AlertCircle, ShieldCheck, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import {
+  MASSIF_INSTALLATION_EUR,
+  MASSIF_PER_TON_EXTRA_EUR,
+  TOTEM_INSTALLATION_EUR,
+  computeMassifShippingBySupplier,
+  isMassifInstallationSelected,
+  isTotemInstallationSelected,
+} from '../lib/massifShipping';
+import {
+  TOTEM_ORIGIN_LABEL,
+  TOTEM_PER_KM_EUR,
+  TOTEM_TRUCK_BASE_EUR,
+  TOTEM_TRUCK_CAPACITY,
+  computeTotemShipping,
+  countTotemUnits,
+} from '../lib/totemShipping';
+import {
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountPercentLabel,
+} from '../lib/totemDiscount';
+
 import totemCaissonBoisImg from '../../imports/totem-caisson-bois.jpg';
 
 const IMG: Record<string, string> = {
@@ -51,7 +72,7 @@ function QuantityControl({
 
 export function CartPage() {
   const navigate = useNavigate();
-  const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, clearCart } = useCart();
   const [savedDeliveryAddress, setSavedDeliveryAddress] = useState<{
     street?: string; postalCode?: string; city?: string; country?: string;
   } | null>(null);
@@ -62,6 +83,128 @@ export function CartPage() {
     const partial = localStorage.getItem('deliveryInfo');
     if (partial) setSavedDeliveryAddress(JSON.parse(partial));
   }, []);
+
+  // Group items by itemType for the summary panel
+  const totemItems       = items.filter(i => i.details?.itemType === 'totem');
+  const panelItems       = items.filter(i => i.details?.itemType === 'panels');
+  const balastItems      = items.filter(i => i.details?.itemType === 'balast');
+  const massifItems      = items.filter(i => i.type === 'massif');
+  const productItems     = items.filter(i => i.details?.itemType !== 'installation');
+
+  const balastsForTotem = (totemId: string) =>
+    balastItems.filter((b) => b.details?.forTotemId === totemId);
+  const orphanBalastItems = balastItems.filter(
+    (b) => !b.details?.forTotemId || !totemItems.some((t) => t.id === b.details?.forTotemId),
+  );
+
+  const renderBalastCard = (item: (typeof balastItems)[number]) => (
+    <div key={item.id} className="bg-white rounded-xl border border-green-200 flex gap-4 p-5">
+      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+        <ShieldCheck className="w-10 h-10 text-green-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 mb-1">
+          <h3 className="font-semibold text-black text-sm flex-1">{item.name}</h3>
+          <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded text-green-700">
+            <CheckCircle className="w-3 h-3" />
+            <span className="text-xs font-medium">Conformité vent</span>
+          </div>
+        </div>
+        {item.details?.weight && (
+          <p className="text-xs text-gray-500 mt-0.5">Poids unitaire : {item.details.weight} kg</p>
+        )}
+        {item.details?.forTotemName && (
+          <p className="text-xs text-gray-500 mt-0.5">Pour : {item.details.forTotemName}</p>
+        )}
+        <p className="text-xs text-gray-400 mt-0.5">{item.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT / unité</p>
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex items-center border border-green-200 bg-green-50 rounded-md px-3 py-1 text-sm font-medium text-green-900 min-w-[2rem] justify-center">
+            {item.quantity}
+          </span>
+          <span className="text-[11px] text-gray-500">
+            Quantité liée au totem (non modifiable)
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col justify-between items-end">
+        <button onClick={() => removeItem(item.id)}
+          className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Supprimer">
+          <Trash2 className="w-4 h-4" />
+        </button>
+        <p className="font-bold text-black text-sm">
+          {(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT
+        </p>
+      </div>
+    </div>
+  );
+
+  const totalTotemQty     = totemItems.reduce((s, i) => s + i.quantity, 0);
+  const totemSubtotal     = totemItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const totemDiscount     = totemVolumeDiscountAmount(totemSubtotal, totalTotemQty);
+  const totemDiscountPct  = totemVolumeDiscountPercentLabel(totalTotemQty);
+  const productsHT        = productItems.reduce((s, i) => s + i.price * i.quantity, 0) - totemDiscount;
+
+  const massifShipping = useMemo(
+    () =>
+      computeMassifShippingBySupplier(
+        massifItems,
+        savedDeliveryAddress?.postalCode,
+        savedDeliveryAddress?.country || 'France',
+      ),
+    [massifItems, savedDeliveryAddress?.postalCode, savedDeliveryAddress?.country],
+  );
+
+  const totemShipping = useMemo(
+    () =>
+      computeTotemShipping(
+        countTotemUnits(totemItems),
+        savedDeliveryAddress?.postalCode,
+        savedDeliveryAddress?.country || 'France',
+      ),
+    [totemItems, savedDeliveryAddress?.postalCode, savedDeliveryAddress?.country],
+  );
+
+  const massifInstallFee =
+    massifItems.length > 0 && isMassifInstallationSelected() ? MASSIF_INSTALLATION_EUR : 0;
+  const totemInstallFee =
+    totemItems.length > 0 && isTotemInstallationSelected() ? TOTEM_INSTALLATION_EUR : 0;
+  const massifShipAmount = massifItems.length > 0 ? massifShipping.shippingTotal : 0;
+  const totemShipAmount = totemItems.length > 0 ? totemShipping.shippingTotal : 0;
+  // Panneaux seuls (hors totems) — valeur calculée à l'étape livraison
+  const hasPanelsOnlyShip = panelItems.length > 0;
+  const panelShipAmount = hasPanelsOnlyShip
+    ? Number(localStorage.getItem('shippingCostOther') || '0')
+    : 0;
+  const shippingCost = massifShipAmount + totemShipAmount + panelShipAmount;
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    if (!hasPanelsOnlyShip) {
+      localStorage.setItem('shippingCostOther', '0');
+    }
+    localStorage.setItem('shippingCostMassif', String(massifShipAmount));
+    localStorage.setItem('shippingCostTotem', String(totemShipAmount));
+    localStorage.setItem('massifInstallFee', String(massifInstallFee));
+    localStorage.setItem('totemInstallFee', String(totemInstallFee));
+    localStorage.setItem(
+      'shippingCost',
+      String(shippingCost + massifInstallFee + totemInstallFee),
+    );
+    localStorage.setItem('totemShippingBreakdown', JSON.stringify(totemShipping));
+  }, [
+    items.length,
+    massifShipAmount,
+    totemShipAmount,
+    massifInstallFee,
+    totemInstallFee,
+    shippingCost,
+    hasPanelsOnlyShip,
+    totemShipping,
+  ]);
+
+  const totalHT  = productsHT + shippingCost + massifInstallFee + totemInstallFee;
+  const tva      = totalHT * 0.2;
+  const totalTTC = totalHT * 1.2;
 
   if (items.length === 0) {
     return (
@@ -77,20 +220,6 @@ export function CartPage() {
       </div>
     );
   }
-
-  // Group items by itemType for the summary panel
-  const totemItems       = items.filter(i => i.details?.itemType === 'totem');
-  const panelItems       = items.filter(i => i.details?.itemType === 'panels');
-  const balastItems      = items.filter(i => i.details?.itemType === 'balast');
-  const massifItems      = items.filter(i => i.type === 'massif');
-  const installationItem = items.find(i => i.details?.itemType === 'installation');
-
-  const totalTotemQty     = totemItems.reduce((s, i) => s + i.quantity, 0);
-  const totemSubtotal     = totemItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totemDiscount     = totalTotemQty >= 5 ? totemSubtotal * 0.1 : 0;
-  const totalHT           = getTotalPrice() - totemDiscount;
-  const tva               = totalHT * 0.2;
-  const totalTTC          = totalHT * 1.2;
 
   return (
     <div className="min-h-screen pt-[var(--header-height)] bg-gray-50">
@@ -110,7 +239,6 @@ export function CartPage() {
                   `${balastItems.reduce((s, i) => s + i.quantity, 0)} lest(s)`,
                 massifItems.reduce((s, i) => s + i.quantity, 0) > 0 &&
                   `${massifItems.reduce((s, i) => s + i.quantity, 0)} massif(s)`,
-                installationItem && '1 installation',
               ].filter(Boolean).join(' · ')}
             </p>
           </div>
@@ -126,66 +254,149 @@ export function CartPage() {
           {/* LEFT — product list */}
           <div className="space-y-4">
 
-            {/* Totems */}
+            {/* Totems (+ lests liés juste en dessous) */}
             {totemItems.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Totems</p>
                 <div className="space-y-3">
                   {totemItems.map(item => (
-                    <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-5">
-                      <div className="flex gap-4">
-                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-300">
-                          <img src={itemImg('totem', item.id)} alt={item.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 mb-1">
-                            <h3 className="font-semibold text-black text-sm flex-1">{item.name}</h3>
-                            {item.windComplianceChecked ? (
-                              <div className="flex items-center gap-1 text-green-600" title="Conformité vent vérifiée">
-                                <CheckCircle className="w-4 h-4" />
-                                <span className="text-xs font-medium">Vérifié</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 text-orange-600" title="Conformité vent à vérifier">
-                                <AlertCircle className="w-4 h-4" />
-                                <span className="text-xs font-medium">À vérifier</span>
-                              </div>
+                    <div key={item.id} className="space-y-2">
+                      <div
+                        className={`bg-white rounded-xl border p-5 ${
+                          item.windComplianceChecked
+                            ? 'border-green-400 ring-1 ring-green-200'
+                            : 'border-gray-200'
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-300">
+                            <img src={itemImg('totem', item.id)} alt={item.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-1">
+                              <h3 className="font-semibold text-black text-sm flex-1">{item.name}</h3>
+                              {item.windComplianceChecked ? (
+                                <div className="flex items-center gap-1 text-green-600" title="Conformité vent vérifiée">
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span className="text-xs font-medium">Vérifié</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 text-orange-600" title="Conformité vent à vérifier">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span className="text-xs font-medium">À vérifier</span>
+                                </div>
+                              )}
+                            </div>
+                            {item.details?.format && (
+                              <p className="text-xs text-gray-500 mt-0.5">Format : {item.details.format} cm</p>
                             )}
+                            <p className="text-xs text-gray-400 mt-0.5">{item.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT / unité</p>
+                            <div className="mt-3">
+                              <QuantityControl value={item.quantity} onChange={v => updateQuantity(item.id, v)} />
+                            </div>
                           </div>
-                          {item.details?.format && (
-                            <p className="text-xs text-gray-500 mt-0.5">Format : {item.details.format} cm</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-0.5">{item.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT / unité</p>
-                          <div className="mt-3">
-                            <QuantityControl value={item.quantity} onChange={v => updateQuantity(item.id, v)} />
+                          <div className="flex flex-col justify-between items-end">
+                            <button onClick={() => removeItem(item.id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Supprimer">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <p className="font-bold text-black text-sm">
+                              {(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT
+                            </p>
                           </div>
                         </div>
-                        <div className="flex flex-col justify-between items-end">
-                          <button onClick={() => removeItem(item.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Supprimer">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <p className="font-bold text-black text-sm">
-                            {(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT
-                          </p>
-                        </div>
+                        {item.windComplianceChecked ? (
+                          <div className="mt-3 pt-3 border-t border-green-200">
+                            <div className="w-full flex items-center justify-center gap-2 rounded-md border border-green-400 bg-green-50 text-green-800 text-sm py-2">
+                              <ShieldCheck className="w-4 h-4" />
+                              Conformité vent validée
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <Button
+                              onClick={() => navigate('/totem/conformite')}
+                              variant="outline"
+                              className="w-full border border-orange-400 text-orange-700 hover:bg-orange-50 text-sm"
+                              size="sm"
+                            >
+                              <ShieldCheck className="w-4 h-4 mr-2" />
+                              Vérifier la conformité vent
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      {!item.windComplianceChecked && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <Button
-                            onClick={() => navigate('/totem/conformite')}
-                            variant="outline"
-                            className="w-full border border-orange-400 text-orange-700 hover:bg-orange-50 text-sm"
-                            size="sm"
-                          >
-                            <ShieldCheck className="w-4 h-4 mr-2" />
-                            Vérifier la conformité vent
-                          </Button>
+                      {balastsForTotem(item.id).map((b) => (
+                        <div key={b.id} className="pl-4 border-l-2 border-green-300">
+                          {renderBalastCard(b)}
                         </div>
-                      )}
+                      ))}
                     </div>
                   ))}
                 </div>
+
+                {totemShipping.trucksCount > 0 && (
+                  <div className="mt-3 bg-white rounded-xl border border-blue-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-black text-sm flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-blue-700" /> Remplissage camion — totems
+                      </h3>
+                      <span className="text-xs text-blue-700">
+                        {totemShipping.trucksCount} camion
+                        {totemShipping.trucksCount > 1 ? 's' : ''} · max {TOTEM_TRUCK_CAPACITY} ·{' '}
+                        {TOTEM_ORIGIN_LABEL}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {totemShipping.truckFills.map((pct, i) => {
+                        const fill = Math.round(pct);
+                        return (
+                          <div key={i} className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-bold uppercase text-black">
+                              <span>
+                                Camion {i + 1}
+                                {totemShipping.trucksCount > 1
+                                  ? ` / ${totemShipping.trucksCount}`
+                                  : ''}
+                                {totemShipping.truckLoads[i] != null
+                                  ? ` · ${totemShipping.truckLoads[i]}/${TOTEM_TRUCK_CAPACITY}`
+                                  : ''}
+                              </span>
+                              <span className={fill >= 95 ? 'text-emerald-600' : 'text-gray-500'}>
+                                {fill}%
+                              </span>
+                            </div>
+                            <div className="h-2 bg-blue-50 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  fill >= 95 ? 'bg-emerald-500' : 'bg-blue-500'
+                                }`}
+                                style={{ width: `${Math.min(fill, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <p className="text-[11px] text-gray-500 pt-1">
+                        {totemShipping.trucksCount} × ({TOTEM_TRUCK_BASE_EUR} € +{' '}
+                        {totemShipping.distanceKm} km × {TOTEM_PER_KM_EUR} €) ={' '}
+                        <strong className="text-black">
+                          {totemShipping.shippingTotal.toLocaleString('fr-FR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                          €
+                        </strong>
+                        {!savedDeliveryAddress?.postalCode && (
+                          <span className="text-amber-600"> (distance estimée — CP requis)</span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        Séparé des camions massifs — jamais mélangés.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -233,43 +444,12 @@ export function CartPage() {
               </div>
             )}
 
-            {/* Lests */}
-            {balastItems.length > 0 && (
+            {/* Lests orphelins (sans totem lié) */}
+            {orphanBalastItems.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Lestage et sécurité</p>
                 <div className="space-y-3">
-                  {balastItems.map(item => (
-                    <div key={item.id} className="bg-white rounded-xl border border-green-200 flex gap-4 p-5">
-                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
-                        <ShieldCheck className="w-10 h-10 text-green-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2 mb-1">
-                          <h3 className="font-semibold text-black text-sm flex-1">{item.name}</h3>
-                          <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded text-green-700">
-                            <CheckCircle className="w-3 h-3" />
-                            <span className="text-xs font-medium">Conformité vent</span>
-                          </div>
-                        </div>
-                        {item.details?.weight && (
-                          <p className="text-xs text-gray-500 mt-0.5">Poids unitaire : {item.details.weight} kg</p>
-                        )}
-                        <p className="text-xs text-gray-400 mt-0.5">{item.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT / unité</p>
-                        <div className="mt-3">
-                          <QuantityControl value={item.quantity} onChange={v => updateQuantity(item.id, v)} />
-                        </div>
-                      </div>
-                      <div className="flex flex-col justify-between items-end">
-                        <button onClick={() => removeItem(item.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Supprimer">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <p className="font-bold text-black text-sm">
-                          {(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€ HT
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  {orphanBalastItems.map((item) => renderBalastCard(item))}
                 </div>
               </div>
             )}
@@ -313,32 +493,74 @@ export function CartPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {/* Installation */}
-            {installationItem && (
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Services</p>
-                <div className="bg-white rounded-xl border border-gray-200 flex gap-4 p-5">
-                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                    <img src={itemImg('installation')} alt="Installation complète" className="w-full h-full object-cover" />
+                {massifShipping.groups.length > 0 && (
+                  <div className="mt-3 bg-white rounded-xl border border-amber-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-black text-sm flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-amber-700" /> Remplissage camion — massifs
+                      </h3>
+                      <span className="text-xs text-amber-700">
+                        {massifShipping.trucksTotal} camion
+                        {massifShipping.trucksTotal > 1 ? 's' : ''} · 24 T
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      {massifShipping.groups.map((g) => (
+                        <div key={g.supplierKey} className="space-y-2">
+                          <p className="text-xs font-semibold text-gray-700">
+                            {g.supplierName}
+                            <span className="font-normal text-gray-500">
+                              {' '}
+                              · {(g.totalWeightKg / 1000).toFixed(2)} t
+                            </span>
+                          </p>
+                          {g.truckFills.map((pct, i) => {
+                            const fill = Math.round(pct);
+                            return (
+                              <div key={i} className="space-y-1">
+                                <div className="flex justify-between text-[10px] font-bold uppercase text-black">
+                                  <span>
+                                    Camion {i + 1}
+                                    {g.trucksCount > 1 ? ` / ${g.trucksCount}` : ''}
+                                  </span>
+                                  <span className={fill >= 95 ? 'text-emerald-600' : 'text-gray-500'}>
+                                    {fill}%
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-amber-50 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      fill >= 95 ? 'bg-emerald-500' : 'bg-amber-500'
+                                    }`}
+                                    style={{ width: `${Math.min(fill, 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <p className="text-[11px] text-gray-500">
+                            {g.trucksCount} × 200 € + {g.trucksCount} × {g.distanceKm} km
+                            {g.tonnageFee > 0
+                              ? ` + ${MASSIF_PER_TON_EXTRA_EUR} €/t`
+                              : ''}{' '}
+                            ={' '}
+                            <strong className="text-black">
+                              {g.shippingTotal.toLocaleString('fr-FR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                              €
+                            </strong>
+                          </p>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-gray-400">
+                        Séparé des camions totems — jamais mélangés.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-black text-sm">{installationItem.name}</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Pilotage, scénographie et installation pour tous les totems</p>
-                    <p className="text-xs text-gray-400 mt-1">Service forfaitaire</p>
-                  </div>
-                  <div className="flex flex-col justify-between items-end">
-                    <button onClick={() => removeItem(installationItem.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Supprimer">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <p className="font-bold text-black text-sm">
-                      {installationItem.price.toLocaleString('fr-FR')}€ HT
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -379,9 +601,17 @@ export function CartPage() {
 
               <div className="space-y-2 text-sm">
                 {totemItems.map(item => (
-                  <div key={item.id} className="flex justify-between text-gray-700">
-                    <span className="truncate pr-2">{item.name} ×{item.quantity}</span>
-                    <span className="flex-shrink-0">{(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
+                  <div key={item.id} className="space-y-1">
+                    <div className="flex justify-between text-gray-700">
+                      <span className="truncate pr-2">{item.name} ×{item.quantity}</span>
+                      <span className="flex-shrink-0">{(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
+                    </div>
+                    {balastsForTotem(item.id).map((b) => (
+                      <div key={b.id} className="flex justify-between text-green-700 font-medium pl-3">
+                        <span className="truncate pr-2">↳ Lests 25 kg ×{b.quantity}</span>
+                        <span className="flex-shrink-0">{(b.price * b.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
+                      </div>
+                    ))}
                   </div>
                 ))}
                 {panelItems.map(item => (
@@ -390,7 +620,7 @@ export function CartPage() {
                     <span className="flex-shrink-0">{(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
                   </div>
                 ))}
-                {balastItems.map(item => (
+                {orphanBalastItems.map(item => (
                   <div key={item.id} className="flex justify-between text-green-700 font-medium">
                     <span className="truncate pr-2">Lests 25 kg ×{item.quantity}</span>
                     <span className="flex-shrink-0">{(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
@@ -402,19 +632,97 @@ export function CartPage() {
                     <span className="flex-shrink-0">{(item.price * item.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
                   </div>
                 ))}
-                {installationItem && (
-                  <div className="flex justify-between text-gray-600">
-                    <span>Installation</span>
-                    <span>{installationItem.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
-                  </div>
-                )}
               </div>
 
               <div className="border-t border-gray-100 mt-4 pt-4 space-y-2 text-sm">
                 {totemDiscount > 0 && (
                   <div className="flex justify-between text-green-700 font-medium">
-                    <span>Remise totems (−10%)</span>
+                    <span>Remise totems ({totemDiscountPct})</span>
                     <span>−{totemDiscount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-600">
+                  <span>Sous-total produits HT</span>
+                  <span>{productsHT.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
+                </div>
+                {(shippingCost > 0 || massifItems.length > 0 || totemItems.length > 0) && (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-gray-600">
+                      <span className="flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5" /> Transport
+                      </span>
+                      <span>
+                        {shippingCost > 0
+                          ? `${shippingCost.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`
+                          : savedDeliveryAddress?.postalCode
+                            ? '0,00€'
+                            : 'CP requis'}
+                      </span>
+                    </div>
+                    {totemShipAmount > 0 && (
+                      <div className="flex justify-between text-gray-400 text-xs pl-1">
+                        <span>
+                          Totems {TOTEM_ORIGIN_LABEL} · {totemShipping.trucksCount} camion
+                          {totemShipping.trucksCount > 1 ? 's' : ''} ({TOTEM_TRUCK_CAPACITY}/camion) ·{' '}
+                          {totemShipping.distanceKm} km
+                        </span>
+                        <span>
+                          {totemShipAmount.toLocaleString('fr-FR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                          €
+                        </span>
+                      </div>
+                    )}
+                    {massifShipAmount > 0 && (
+                      <div className="flex justify-between text-gray-400 text-xs pl-1">
+                        <span>Massifs (séparé)</span>
+                        <span>
+                          {massifShipAmount.toLocaleString('fr-FR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                          €
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {massifShipAmount > 0 && massifShipping.tonnageFeeTotal > 0 && (
+                  <div className="flex justify-between text-gray-400 text-xs">
+                    <span>dont coût exceptionnel ({MASSIF_PER_TON_EXTRA_EUR} €/t)</span>
+                    <span>
+                      {massifShipping.tonnageFeeTotal.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      €
+                    </span>
+                  </div>
+                )}
+                {totemInstallFee > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Installation totems</span>
+                    <span>
+                      {totemInstallFee.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      €
+                    </span>
+                  </div>
+                )}
+                {massifInstallFee > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Installation massifs</span>
+                    <span>
+                      {massifInstallFee.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      €
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-gray-600">

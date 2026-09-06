@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Check, GitCompare } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useCart } from '../../context/CartContext';
+import { totemCatalogEntryPrice } from '../../lib/totemDiscount';
 
 const CAISSON_FORMATS = {
   '80': {
@@ -157,7 +158,9 @@ export function TotemFormatPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                   <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
-                    <span className="font-bold text-sm text-black">À partir de {Math.round(format.price * 0.9)}€ HT</span>
+                    <span className="font-bold text-sm text-black">
+                      À partir de {totemCatalogEntryPrice(format.price)}€ HT
+                    </span>
                   </div>
                   {isConfigured && !compareMode && (
                     <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-full text-sm">
