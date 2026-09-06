@@ -7,6 +7,11 @@ import { DeliveryAddressForm, DeliveryAddress } from './DeliveryAddressForm';
 import { StripeCheckout } from './StripeCheckout';
 import type { TotemConfig, TotemItem } from './TotemCalculator';
 import { TOTEM_PRICES } from './TotemCalculator';
+import {
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountPercentLabel,
+  totemVolumeDiscountRate,
+} from '../lib/totemDiscount';
 
 interface TotemResultsProps {
   config: TotemConfig;
@@ -89,10 +94,8 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
       }
     });
 
-    // Remise de 10% sur les totems uniquement si 5 totems ou plus
-    if (totalQuantity >= 5) {
-      totemTotal = totemTotal * 0.9;
-    }
+    // Remise volume sur les totems (5→10%, 10+→15%)
+    totemTotal -= totemVolumeDiscountAmount(totemTotal, totalQuantity);
 
     total += totemTotal;
 
@@ -115,7 +118,7 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
         totemTotal += TOTEM_PRICES[item.totemType] * item.quantity;
       }
     });
-    return totemTotal * 0.1;
+    return totemVolumeDiscountAmount(totemTotal, totalQuantity);
   };
 
   // Écran de confirmation de paiement
@@ -301,9 +304,12 @@ export function TotemResults({ config, onReset }: TotemResultsProps) {
           {/* Total */}
           <div className="bg-black text-white p-6 rounded-lg mb-6">
             <div className="space-y-3">
-              {totalQuantity >= 5 && (
+              {totemVolumeDiscountRate(totalQuantity) > 0 && (
                 <div className="flex justify-between text-green-400">
-                  <span>Remise -10% sur totems ({totalQuantity} totems)</span>
+                  <span>
+                    Remise {totemVolumeDiscountPercentLabel(totalQuantity)} sur totems (
+                    {totalQuantity} totems)
+                  </span>
                   <span>-{calculateDiscountAmount().toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
                 </div>
               )}

@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { CheckCircle } from 'lucide-react';
 import { StripeCheckout } from '../components/StripeCheckout';
 import { useCart } from '../context/CartContext';
+import { totemVolumeDiscountAmount } from '../lib/totemDiscount';
 
 export function PaymentPage() {
   const navigate = useNavigate();
@@ -37,11 +38,11 @@ export function PaymentPage() {
   const totalTotemQty = items
     .filter(i => i.details?.itemType === 'totem')
     .reduce((s, i) => s + i.quantity, 0);
-  const totemDiscount = totalTotemQty >= 5 ? totemSubtotal * 0.1 : 0;
-  const totalHT = getTotalPrice() - totemDiscount;
-  // v1 : frais de livraison exclus du paiement
-  const shippingCost = 0;
-  const totalTTC = (totalHT + shippingCost) * 1.2;
+  const totemDiscount = totemVolumeDiscountAmount(totemSubtotal, totalTotemQty);
+  const productsHT = getTotalPrice() - totemDiscount;
+  const shippingCost = Number(localStorage.getItem('shippingCost') || '0');
+  const totalHT = productsHT + shippingCost;
+  const totalTTC = totalHT * 1.2;
 
   // Écran de confirmation
   if (paymentSuccess) {

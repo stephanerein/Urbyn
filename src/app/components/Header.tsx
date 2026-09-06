@@ -12,12 +12,10 @@ import {
 import logoAtelierUrbanize from '../../assets/logo-atelier-urbanize.png';
 
 export function Header() {
-  const { items } = useCart();
+  const { items, getTotalItems } = useCart();
   const { isLoggedIn, isBuyer, isSupplier, userLabel, openAuth, logout } = useAuth();
-  const cartItemsCount = items
-    .filter(i => i.details?.itemType === 'totem' || i.details?.itemType === 'panels')
-    .reduce((s, i) => s + i.quantity, 0)
-    + (items.some(i => i.details?.itemType === 'installation') ? 1 : 0);
+  // Tous les articles du panier (totems, massifs, panneaux, etc.)
+  const cartItemsCount = getTotalItems();
 
   const headerRef = useRef<HTMLElement>(null);
 
@@ -56,6 +54,12 @@ export function Header() {
                   className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   Accueil
+                </Link>
+                <Link
+                  to="/fournisseur/leads"
+                  className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Leads
                 </Link>
                 <Link
                   to="/fournisseur/expedition"
@@ -122,7 +126,11 @@ export function Header() {
 
             {isLoggedIn ? (
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-black max-w-[160px] truncate">
+                <Link
+                  to={isSupplier ? '/fournisseur/leads' : '/compte/commandes'}
+                  className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-black max-w-[180px] truncate hover:underline"
+                  title={isSupplier ? 'Leads' : 'Commandes'}
+                >
                   <User className="w-4 h-4 shrink-0" />
                   {userLabel}
                   {isBuyer ? (
@@ -130,7 +138,13 @@ export function Header() {
                   ) : isSupplier ? (
                     <span className="text-xs text-slate-500 font-normal">(partenaire)</span>
                   ) : null}
-                </span>
+                </Link>
+                <Link
+                  to="/compte/parametres"
+                  className="hidden sm:inline-flex px-2 py-2 text-xs font-medium text-gray-600 hover:text-black hover:bg-slate-100 rounded-lg"
+                >
+                  Settings
+                </Link>
                 <button
                   type="button"
                   onClick={logout}

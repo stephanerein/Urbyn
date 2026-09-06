@@ -19,6 +19,7 @@ import {
   type TotemOffer,
   type TotemProduct,
 } from '../../api/totem'
+import { totemCatalogEntryPrice } from '../../lib/totemDiscount'
 
 function productImage(name: string): string {
   const n = name.toLowerCase()
@@ -199,7 +200,7 @@ export function TotemFamilyProductsPage() {
                       />
                       <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
                         <span className="font-bold text-sm text-black">
-                          À partir de {formatPriceEur(product.price)}€ HT
+                          À partir de {formatPriceEur(totemCatalogEntryPrice(product.price))}€ HT
                         </span>
                       </div>
                       {isConfigured && !compareMode ? (

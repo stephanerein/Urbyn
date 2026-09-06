@@ -43,7 +43,13 @@ function productAttributes(
       rows.push({ label: attr.attribute_name, value: attr.value });
     }
   }
-  // Pas d'attributs libres ici : on reste sur le schéma du catalogue feuille choisi.
+  for (const attr of product.free_attributes ?? []) {
+    if (!attr.value?.trim()) continue;
+    // Nécessaire pour matching Manille sur l'écran qty
+    if (/manille/i.test(attr.name || '')) {
+      rows.push({ label: attr.name, value: attr.value });
+    }
+  }
   return rows;
 }
 
@@ -548,17 +554,9 @@ export function MassifSelectionPage() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900">
+                        <div className="flex-1 min-w-0 flex items-center justify-center">
+                          <p className="font-bold text-gray-900 text-center text-base">
                             {catalog.name ?? `Catalogue #${catalog.id}`}
-                          </p>
-                          {catalog.description ? (
-                            <p className="text-xs text-gray-500 mt-0.5">{catalog.description}</p>
-                          ) : null}
-                          <p className="text-xs text-gray-400 mt-1 font-mono">
-                            {(catalog.breadcrumb.length ? catalog.breadcrumb : ['Massif Type']).join(
-                              ' › ',
-                            )}
                           </p>
                         </div>
                         <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
@@ -665,14 +663,16 @@ export function MassifSelectionPage() {
                                 </span>
                               )}
                             </div>
-                            <p
-                              className={cn(
-                                'text-xs mt-1 font-mono',
-                                isSelected ? 'text-gray-400' : 'text-gray-400',
-                              )}
-                            >
-                              {product.admin_sku}
-                            </p>
+                            {(product.description || '').trim() ? (
+                              <p
+                                className={cn(
+                                  'text-xs mt-1 line-clamp-2',
+                                  isSelected ? 'text-gray-300' : 'text-gray-500',
+                                )}
+                              >
+                                {product.description}
+                              </p>
+                            ) : null}
                           </div>
                           <div className="text-right shrink-0">
                             <p className="font-bold text-sm">{product.poids} kg</p>

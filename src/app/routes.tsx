@@ -42,6 +42,9 @@ import { ContactPage } from './pages/ContactPage';
 import { DeliveryPage } from './pages/DeliveryPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { ChiffrageFinalPage } from './pages/ChiffrageFinalPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { LeadsPage } from './pages/LeadsPage';
+import { AccountSettingsPage } from './pages/AccountSettingsPage';
 import { SitemapPage } from './pages/SitemapPage';
 import { PlanDuSitePage } from './pages/PlanDuSitePage';
 import { RealisationsPage } from './pages/RealisationsPage';
@@ -128,6 +131,9 @@ export function AppRoutes() {
       <Route path="/livraison" element={<DeliveryPage />} />
       <Route path="/chiffrage-final" element={<ChiffrageFinalPage />} />
       <Route path="/paiement" element={<PaymentPage />} />
+      <Route path="/compte/commandes" element={<OrdersPage />} />
+      <Route path="/compte/parametres" element={<AccountSettingsPage />} />
+      <Route path="/fournisseur/leads" element={<LeadsPage />} />
 
       {/* Authentication */}
       <Route path="/login" element={<LoginPage />} />

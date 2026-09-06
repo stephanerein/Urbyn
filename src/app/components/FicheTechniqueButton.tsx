@@ -78,7 +78,13 @@ export function FicheTechniqueButton({
       a.remove()
       URL.revokeObjectURL(url)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Téléchargement impossible')
+      const msg =
+        e instanceof TypeError
+          ? 'Impossible de joindre l’API (Failed to fetch). Vérifie que le backend tourne et l’URL VITE_API_URL_WEB.'
+          : e instanceof Error
+            ? e.message
+            : 'Téléchargement impossible'
+      setError(msg)
     } finally {
       setLoading(false)
     }

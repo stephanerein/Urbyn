@@ -16,6 +16,11 @@ import {
   formatPriceEur,
   type TotemProductDetail,
 } from '../../api/totem'
+import {
+  computeTotemPanelPrintPrice,
+  formatPanelPriceEur,
+} from '../../lib/totemPanelPrice'
+import { totemCatalogEntryPrice, totemUnitPriceAfterDiscount } from '../../lib/totemDiscount'
 
 function productImage(name: string): string {
   const n = name.toLowerCase()
@@ -30,16 +35,6 @@ function fmtDim(value: number | null | undefined): string {
   if (value == null) return '—'
   if (Math.abs(value - Math.round(value)) < 1e-9) return `${Math.round(value)} cm`
   return `${String(value).replace('.', ',')} cm`
-}
-
-function guessPanelPrice(product: TotemProductDetail): number {
-  const fromName = product.product_name.match(/(\d{2,3})\s*$/)
-  const fromPanel = product.panel_format?.match(/(\d{2,3})/)
-  const n = parseInt(fromName?.[1] || fromPanel?.[1] || '120', 10)
-  if (n <= 80) return 120
-  if (n <= 120) return 180
-  if (n <= 160) return 240
-  return 300
 }
 
 export function TotemComparePage() {
@@ -190,11 +185,14 @@ export function TotemComparePage() {
                       <div className="bg-gray-50 rounded-lg p-4 mb-4">
                         <p className="text-sm text-gray-600 mb-1">Prix unitaire</p>
                         <p className="text-2xl font-bold text-black">
-                          {formatPriceEur(product.price)}€{' '}
+                          {formatPriceEur(totemCatalogEntryPrice(product.price))}€{' '}
                           <span className="text-sm font-normal">HT</span>
                         </p>
-                        <p className="text-sm text-green-700 mt-1">
-                          Dès 5 unités : {formatPriceEur(Math.round(product.price * 0.9))}€ HT
+                        <p className="text-sm text-gray-600 mt-1">
+                          Catalogue {formatPriceEur(product.price)}€ · Dès 5 :{' '}
+                          {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 5))}€ (−10%) ·
+                          Dès 10 : {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 10))}€
+                          (−15%)
                         </p>
                       </div>
                       <div className="space-y-3 mb-6">
@@ -235,7 +233,7 @@ export function TotemComparePage() {
                         <div className="pb-2">
                           <p className="text-xs text-gray-600">Prix panneau imprimé</p>
                           <p className="font-semibold text-black">
-                            {guessPanelPrice(product)}€ HT
+                            {formatPanelPriceEur(computeTotemPanelPrintPrice(product))}€ HT
                           </p>
                         </div>
                       </div>
@@ -281,7 +279,18 @@ export function TotemComparePage() {
                   </thead>
                   <tbody>
                     <tr className="border-b border-gray-200">
-                      <td className="py-3 px-4 text-gray-700">Prix unitaire (HT)</td>
+                      <td className="py-3 px-4 text-gray-700">Prix d&apos;entrée (−15%)</td>
+                      {products.map((p) => (
+                        <td
+                          key={p.product_id}
+                          className="text-center py-3 px-4 font-semibold text-green-700"
+                        >
+                          {formatPriceEur(totemCatalogEntryPrice(p.price))}€
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <td className="py-3 px-4 text-gray-700">Prix catalogue (HT)</td>
                       {products.map((p) => (
                         <td
                           key={p.product_id}
@@ -291,14 +300,25 @@ export function TotemComparePage() {
                         </td>
                       ))}
                     </tr>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <td className="py-3 px-4 text-gray-700">Prix dès 5 unités (HT)</td>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-3 px-4 text-gray-700">Prix dès 5 unités (−10%)</td>
                       {products.map((p) => (
                         <td
                           key={p.product_id}
                           className="text-center py-3 px-4 font-semibold text-green-700"
                         >
-                          {formatPriceEur(Math.round(p.price * 0.9))}€
+                          {formatPriceEur(totemUnitPriceAfterDiscount(p.price, 5))}€
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <td className="py-3 px-4 text-gray-700">Prix dès 10 unités (−15%)</td>
+                      {products.map((p) => (
+                        <td
+                          key={p.product_id}
+                          className="text-center py-3 px-4 font-semibold text-green-700"
+                        >
+                          {formatPriceEur(totemUnitPriceAfterDiscount(p.price, 10))}€
                         </td>
                       ))}
                     </tr>
@@ -338,7 +358,7 @@ export function TotemComparePage() {
                       <td className="py-3 px-4 text-gray-700">Prix panneau imprimé (HT)</td>
                       {products.map((p) => (
                         <td key={p.product_id} className="text-center py-3 px-4 text-black">
-                          {guessPanelPrice(p)}€
+                          {formatPanelPriceEur(computeTotemPanelPrintPrice(p))}€
                         </td>
                       ))}
                     </tr>
