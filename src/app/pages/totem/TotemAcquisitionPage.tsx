@@ -11,6 +11,7 @@ import {
   formatPriceEur,
   type TotemFamily,
 } from '../../api/totem'
+import { totemCatalogEntryPrice } from '../../lib/totemDiscount'
 
 function familyImage(name: string): string {
   const n = name.toLowerCase()
@@ -103,7 +104,7 @@ export function TotemAcquisitionPage() {
                     />
                     <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
                       <span className="font-bold text-sm text-black">
-                        À partir de {formatPriceEur(family.min_price)}€ HT
+                        À partir de {formatPriceEur(totemCatalogEntryPrice(family.min_price))}€ HT
                       </span>
                     </div>
                   </div>
@@ -111,6 +112,9 @@ export function TotemAcquisitionPage() {
                     <h3 className="text-xl font-bold mb-2 text-black group-hover:underline">
                       {family.display_name}
                     </h3>
+                    {family.min_dimensions_label ? (
+                      <p className="text-xs text-black mb-2">{family.min_dimensions_label}</p>
+                    ) : null}
                     <p className="text-sm text-gray-600">
                       {family.description || `${family.product_count} format(s) disponible(s)`}
                     </p>

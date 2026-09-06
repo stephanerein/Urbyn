@@ -11,6 +11,8 @@ import { useCart } from '../context/CartContext';
 import { getWindZone, TERRAIN_CATEGORIES, type TerrainCategory } from '../lib/wind-zones';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { getTotemImage } from '../assets/totemImages';
+import { lookupTotemWindSheet, fetchTotemBallasts } from '../api/totem';
+import { parseSheetBalastsPerUnit } from '../lib/totemBallast';
 
 // Images pour les catégories de terrain
 const TERRAIN_IMAGES: Record<string, string> = {
@@ -121,49 +123,171 @@ export function TotemCompliancePage() {
     return balastsPerTotem;
   };
 
-  const handleShowResults = () => {
+  const totemItems = items.filter((i) => i.details?.itemType === 'totem');
+
+  const handleShowResults = async () => {
     if (!windZone || !selectedTerrain) return;
 
-    const balastsPerTotem = calculateBalastsPerTotem(selectedTerrain, windZone.zone);
+    setIsCalculating(true);
+    const fallbackPerTotem = calculateBalastsPerTotem(selectedTerrain, windZone.zone);
 
-    // Calculer les besoins par totem
-    const totemRequirements = totemItems.map(item => {
-      const balastsNeeded = balastsPerTotem * item.quantity;
+    let sheetByCartId: Record<
+      string,
+      { sheet_header: string | null; value: number | string | null; matched: boolean; supported: boolean; message: string | null }
+    > = {};
+    let sheetMeta: {
+      region_sheet?: string;
+      terrain_sheet?: string;
+      write_ok?: boolean;
+      error?: string | null;
+      error_code?: string | null;
+    } = {};
+    let unitPrice = 70;
+    let ballastProduct: {
+      product_id: number;
+      product_name: string;
+      client_sku: string | null;
+      price: number;
+      poids: number | null;
+    } | null = null;
+
+    try {
+      const [sheetRes, ballastRes] = await Promise.all([
+        lookupTotemWindSheet({
+          wind_zone: windZone.zone,
+          terrain: selectedTerrain,
+          products: totemItems.map((item) => {
+            const name = (item.name || '').trim();
+            const format = (item.details?.format || '').trim();
+            const raw = name || format;
+            const product_name = raw
+              ? raw.toLowerCase().startsWith('totem')
+                ? raw
+                : `Totem ${raw}`
+              : null;
+            return {
+              cart_item_id: item.id,
+              product_id:
+                typeof item.details?.productId === 'number' ? item.details.productId : null,
+              product_name,
+              client_sku: item.details?.sku || item.details?.client_sku || null,
+              format: format || null,
+            };
+          }),
+        }),
+        fetchTotemBallasts().catch((e) => {
+          console.warn('Totem ballasts fetch failed:', e);
+          return null;
+        }),
+      ]);
+
+      sheetMeta = {
+        region_sheet: sheetRes.region_sheet,
+        terrain_sheet: sheetRes.terrain_sheet,
+        write_ok: sheetRes.write_ok,
+        error: null,
+        error_code: null,
+      };
+      for (const p of sheetRes.products) {
+        if (p.cart_item_id) {
+          sheetByCartId[p.cart_item_id] = {
+            sheet_header: p.sheet_header,
+            value: p.value,
+            matched: p.matched,
+            supported: p.supported,
+            message: p.message,
+          };
+        }
+      }
+
+      if (ballastRes?.default_ballast) {
+        ballastProduct = {
+          product_id: ballastRes.default_ballast.product_id,
+          product_name: ballastRes.default_ballast.product_name,
+          client_sku: ballastRes.default_ballast.client_sku,
+          price: ballastRes.default_ballast.price,
+          poids: ballastRes.default_ballast.poids,
+        };
+        unitPrice = ballastRes.default_ballast.price || unitPrice;
+      }
+    } catch (e: unknown) {
+      const err = e as { message?: string; code?: string };
+      console.warn('Google Sheets wind lookup failed, fallback local:', e);
+      sheetMeta = {
+        write_ok: false,
+        error: err?.message || String(e),
+        error_code: err?.code || null,
+      };
+      try {
+        const ballastRes = await fetchTotemBallasts();
+        if (ballastRes?.default_ballast) {
+          ballastProduct = {
+            product_id: ballastRes.default_ballast.product_id,
+            product_name: ballastRes.default_ballast.product_name,
+            client_sku: ballastRes.default_ballast.client_sku,
+            price: ballastRes.default_ballast.price,
+            poids: ballastRes.default_ballast.poids,
+          };
+          unitPrice = ballastRes.default_ballast.price || unitPrice;
+        }
+      } catch {
+        /* prix fallback */
+      }
+    }
+
+    const unitWeight = ballastProduct?.poids && ballastProduct.poids > 0 ? ballastProduct.poids : 25;
+
+    // Calculer les besoins par totem : sheet prioritaire, sinon fallback local × quantité
+    const totemRequirements = totemItems.map((item) => {
+      const sheet = sheetByCartId[item.id];
+      const sheetPerUnit = sheet?.matched ? parseSheetBalastsPerUnit(sheet.value) : null;
+      const perUnit = sheetPerUnit != null ? sheetPerUnit : fallbackPerTotem;
+      const balastsNeeded = perUnit * item.quantity;
       return {
         totemId: item.id,
         totemName: item.name,
         totemFormat: item.details?.format || 'N/A',
+        totemQuantity: item.quantity,
+        balastsPerUnit: perUnit,
         balastsNeeded,
-        totalWeight: balastsNeeded * 25
+        totalWeight: balastsNeeded * unitWeight,
+        unitPrice,
+        linePrice: balastsNeeded * unitPrice,
+        sheetHeader: sheet?.sheet_header ?? null,
+        sheetValue: sheet?.value ?? null,
+        sheetMatched: sheet?.matched ?? false,
+        sheetSupported: sheet?.supported ?? false,
+        sheetMessage: sheet?.message ?? null,
+        source: sheetPerUnit != null ? 'sheet' : 'fallback',
       };
     });
 
     const totalBalasts = totemRequirements.reduce((sum, req) => sum + req.balastsNeeded, 0);
-    const totalWeight = totalBalasts * 25;
-    const totalPrice = totalBalasts * 35;
+    const totalWeight = totalBalasts * unitWeight;
+    const totalPrice = totalBalasts * unitPrice;
 
-    // Sauvegarder les résultats dans localStorage
     const results = {
       windZone,
       terrain: {
         key: selectedTerrain,
-        label: TERRAIN_CATEGORIES[selectedTerrain].label
+        label: TERRAIN_CATEGORIES[selectedTerrain].label,
       },
       nearWater: nearWater === true,
       totemRequirements,
       totalBalasts,
       totalWeight,
       totalPrice,
-      deliveryAddress
+      unitPrice,
+      unitWeight,
+      ballastProduct,
+      deliveryAddress,
+      googleSheet: sheetMeta,
     };
 
     localStorage.setItem('complianceResults', JSON.stringify(results));
-
-    // Naviguer vers la page de résultats
+    setIsCalculating(false);
     navigate('/totem/conformite/resultats');
   };
-
-  const totemItems = items.filter(i => i.details?.itemType === 'totem');
 
   if (!deliveryAddress) {
     return (
@@ -503,11 +627,7 @@ export function TotemCompliancePage() {
             <div className="flex gap-3">
               <Button
                 onClick={() => {
-                  setIsCalculating(true);
-                  setTimeout(() => {
-                    setIsCalculating(false);
-                    handleShowResults();
-                  }, 5000);
+                  void handleShowResults();
                 }}
                 className="flex-1 bg-black hover:bg-gray-800 text-white py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
               >

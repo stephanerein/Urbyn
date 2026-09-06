@@ -10,6 +10,10 @@ import { ApiError } from '../../api/client'
 import type { SessionUser } from '../../types/auth'
 import type { SiblingOnboardingPrefill } from '../../api/auth'
 import {
+  checkoutToNewCompanySeed,
+  type AuthSignupPrefill,
+} from '../../lib/authSignupPrefill'
+import {
   ADDRESS_TYPE_PRESETS,
   emptyAddress,
   type CompanyOption,
@@ -21,6 +25,7 @@ import './CompanyOnboardingStep.css'
 interface CompanyOnboardingStepProps {
   user: SessionUser
   siblingPrefill?: SiblingOnboardingPrefill | null
+  checkoutPrefill?: AuthSignupPrefill | null
   loading: boolean
   setLoading: (v: boolean) => void
   error: string | null
@@ -33,6 +38,7 @@ type AffiliationMode = 'existing' | 'new'
 export function CompanyOnboardingStep({
   user,
   siblingPrefill,
+  checkoutPrefill,
   loading,
   setLoading,
   error,
@@ -66,48 +72,66 @@ export function CompanyOnboardingStep({
 
   useEffect(() => {
     const company = siblingPrefill?.company
-    if (!company) return
+    if (company) {
+      if (company.affiliation_mode === 'existing' && company.tva_intra_com) {
+        setMode('existing')
+        setSelectedTva(company.tva_intra_com)
+        setTvaVerification(company.tva_intra_com)
+        return
+      }
 
-    if (company.affiliation_mode === 'existing' && company.tva_intra_com) {
-      setMode('existing')
-      setSelectedTva(company.tva_intra_com)
-      setTvaVerification(company.tva_intra_com)
-      return
+      if (company.company_name || company.tva_intra_com) {
+        setMode('new')
+        const addresses =
+          company.addresses && company.addresses.length > 0
+            ? company.addresses.map((addr, idx) => {
+                const draft = emptyAddress(`addr-prefill-${idx}`)
+                draft.street = addr.street
+                draft.city = addr.city
+                draft.zip_code = addr.zip_code
+                draft.state = addr.state ?? ''
+                draft.country_code = addr.country_code || 'FR'
+                const preset = ADDRESS_TYPE_PRESETS.find((t) => t === addr.type)
+                if (preset) {
+                  draft.typePreset = preset
+                } else if (addr.type) {
+                  draft.typePreset = 'Autre'
+                  draft.typeCustom = addr.type
+                }
+                return draft
+              })
+            : [emptyAddress('addr-1')]
+
+        setNewCo({
+          company_name: company.company_name ?? '',
+          tva_intra_com: company.tva_intra_com ?? '',
+          code_naf: company.code_naf ?? '',
+          email: company.email ?? '',
+          phone_number: company.phone_number ?? '',
+          website: company.website ?? '',
+          addresses,
+        })
+        return
+      }
     }
 
-    if (!company.company_name && !company.tva_intra_com) return
-
+    // Prefill depuis le chiffrage (création de compte pour envoi de demande)
+    const seed = checkoutToNewCompanySeed(checkoutPrefill ?? null)
+    if (!seed) return
     setMode('new')
-    const addresses =
-      company.addresses && company.addresses.length > 0
-        ? company.addresses.map((addr, idx) => {
-            const draft = emptyAddress(`addr-prefill-${idx}`)
-            draft.street = addr.street
-            draft.city = addr.city
-            draft.zip_code = addr.zip_code
-            draft.state = addr.state ?? ''
-            draft.country_code = addr.country_code || 'FR'
-            const preset = ADDRESS_TYPE_PRESETS.find((t) => t === addr.type)
-            if (preset) {
-              draft.typePreset = preset
-            } else if (addr.type) {
-              draft.typePreset = 'Autre'
-              draft.typeCustom = addr.type
-            }
-            return draft
-          })
-        : [emptyAddress('addr-1')]
-
-    setNewCo({
-      company_name: company.company_name ?? '',
-      tva_intra_com: company.tva_intra_com ?? '',
-      code_naf: company.code_naf ?? '',
-      email: company.email ?? '',
-      phone_number: company.phone_number ?? '',
-      website: company.website ?? '',
-      addresses,
-    })
-  }, [siblingPrefill])
+    setNewCo((prev) => ({
+      ...prev,
+      company_name: seed.company_name || prev.company_name,
+      email: seed.email || prev.email || user.email || '',
+      phone_number: seed.phone_number || prev.phone_number,
+      addresses:
+        seed.addresses.some((a) => a.street || a.city || a.zip_code)
+          ? seed.addresses
+          : prev.addresses.length > 0
+            ? prev.addresses
+            : [emptyAddress('addr-1')],
+    }))
+  }, [siblingPrefill, checkoutPrefill, user.email])
 
   useEffect(() => {
     if (mode !== 'new' || searchQuery.trim().length < 2) {

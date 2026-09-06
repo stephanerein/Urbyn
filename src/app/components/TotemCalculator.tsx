@@ -9,6 +9,12 @@ import { ArrowRight, Check, Info, Package } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import totemCaissonBoisImg from '../../imports/totem-caisson-bois.jpg';
+import {
+  totemCatalogEntryPrice,
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountBanner,
+  totemVolumeDiscountRate,
+} from '../lib/totemDiscount';
 
 export type TotemType = 'caisson_bois' | 'gabion' | 'liz';
 export type CaissonBoisFormat = '80' | '120' | '160' | '200';
@@ -294,10 +300,8 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
       }
     });
 
-    // Remise de 10% sur les totems uniquement si 5 totems ou plus
-    if (totalQuantity >= 5) {
-      totemTotal = totemTotal * 0.9;
-    }
+    // Remise volume sur les totems (5→10%, 10+→15%)
+    totemTotal -= totemVolumeDiscountAmount(totemTotal, totalQuantity);
 
     total += totemTotal;
 
@@ -345,7 +349,10 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
                         />
                         <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
                           <span className="font-bold text-sm text-black">
-                            {type === 'caisson_bois' ? 'Dès 2650€' : `${baseData.price}€`} HT
+                            {type === 'caisson_bois'
+                              ? `Dès ${totemCatalogEntryPrice(2650)}€`
+                              : `${totemCatalogEntryPrice(baseData.price)}€`}{' '}
+                            HT
                           </span>
                         </div>
                       </div>
@@ -400,7 +407,9 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                         <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
-                          <span className="font-bold text-sm text-black">{formatData.price}€ HT</span>
+                          <span className="font-bold text-sm text-black">
+                            {totemCatalogEntryPrice(formatData.price)}€ HT
+                          </span>
                         </div>
                         {isConfigured && (
                           <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-full">
@@ -471,7 +480,9 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full border-2 border-black">
-                          <span className="font-bold text-sm text-black">{formatData.price}€ HT</span>
+                          <span className="font-bold text-sm text-black">
+                            {totemCatalogEntryPrice(formatData.price)}€ HT
+                          </span>
                         </div>
                       </div>
 
@@ -534,16 +545,21 @@ export function TotemCalculator({ onCalculate }: TotemCalculatorProps) {
                                 className="border-2 border-black text-black"
                               />
                               <div className={`mt-2 text-xs p-2 rounded border-2 ${
-                                getTotalQuantity() + currentConfig.quantity >= 5
+                                totemVolumeDiscountRate(getTotalQuantity() + currentConfig.quantity) > 0
                                   ? 'bg-green-50 border-green-500 text-green-900'
                                   : 'bg-gray-50 border-gray-300 text-black'
                               }`}>
                                 <Info className="w-3 h-3 inline mr-1" />
-                                {getTotalQuantity() + currentConfig.quantity >= 5 ? (
-                                  <strong>Remise de 10% appliquée sur les totems !</strong>
-                                ) : (
-                                  <>Commandez 5 totems ou plus et bénéficiez de 10% de remise sur les totems</>
-                                )}
+                                {(() => {
+                                  const banner = totemVolumeDiscountBanner(
+                                    getTotalQuantity() + currentConfig.quantity,
+                                  )
+                                  return banner.applied ? (
+                                    <strong>{banner.message}</strong>
+                                  ) : (
+                                    <>{banner.message}</>
+                                  )
+                                })()}
                               </div>
                             </div>
 

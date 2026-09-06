@@ -50,11 +50,16 @@ export interface MassifProduct {
   product_id: number
   product_name: string
   admin_sku: string
+  description?: string | null
   poids: number
   dimensions: MassifProductDimensions
   price: number
   currency: string
   company_name: string | null
+  company_tva?: string | null
+  company_zip?: string | null
+  company_city?: string | null
+  company_country?: string | null
   catalog_id: number
   catalog_name: string | null
   mandatory_attributes: Array<{
@@ -118,4 +123,28 @@ export function fetchMassifProducts(payload: {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export interface MassifManille {
+  product_id: number
+  product_name: string
+  admin_sku: string
+  description: string | null
+  manille_type: string
+  price: number
+  currency: string
+  company_name: string | null
+  company_tva: string | null
+  poids: number | null
+}
+
+export interface MassifManillesResponse {
+  catalog_id: number
+  catalog_path: string[]
+  count: number
+  manilles: MassifManille[]
+}
+
+export function fetchMassifManilles(): Promise<MassifManillesResponse> {
+  return apiFetch('/api/v1/client-portal/massif/manilles')
 }

@@ -29,7 +29,7 @@ export const TERRAIN_CATEGORIES = {
     ce: 0.85
   },
   zone_urbaine: {
-    label: 'Zone urbaine (>15% surface bâtie)',
+    label: 'Zone urbaine (>15% surface)',
     eurocodeCategory: 'Catégorie IV',
     description: 'Zone urbaine dense avec bâtiments de grande hauteur',
     roughness: 1.00,

@@ -13,6 +13,12 @@ import { Check, ArrowRight, ChevronRight, Info, Package } from 'lucide-react';
 import { imgTotemSignIzNoir } from '../../assets/images';
 import { SEOMeta, productSchema, breadcrumbSchema } from '../../components/SEOMeta';
 import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
+import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping';
+import {
+  totemCatalogEntryPrice,
+  totemUnitPriceAfterDiscount,
+  totemVolumeDiscountBanner,
+} from '../../lib/totemDiscount';
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France:     { pattern: /^\d{5}$/, example: '75011' },
@@ -27,7 +33,6 @@ const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
 };
 
 const BASE_PRICE = 2200;
-const DISCOUNTED_PRICE = 1980;
 const PANEL_PRICE = 140;
 const PANEL_SIZE = '850 x 1650 mm';
 
@@ -101,8 +106,8 @@ export function TotemSignIzAcquisitionPage() {
     items.filter(i => i.details?.itemType === 'totem').reduce((s, i) => s + i.quantity, 0);
 
   const totalQuantity = getTotalTotemQuantity() + quantity;
-  const hasDiscount = totalQuantity >= 5;
-  const unitPrice = hasDiscount ? DISCOUNTED_PRICE : BASE_PRICE;
+  const discountBanner = totemVolumeDiscountBanner(totalQuantity);
+  const unitPrice = totemUnitPriceAfterDiscount(BASE_PRICE, totalQuantity);
 
   const calculateTotal = () => {
     let total = unitPrice * quantity;
@@ -121,7 +126,7 @@ export function TotemSignIzAcquisitionPage() {
         id: 'totem-sign-iz-acquisition',
         type: 'totem' as const,
         name: 'Totem Sign-IZ',
-        price: unitPrice,
+        price: BASE_PRICE,
         quantity,
         details: { itemType: 'totem', format: 'sign-iz', mode: 'acquisition', basePrice: BASE_PRICE },
       },
@@ -132,14 +137,6 @@ export function TotemSignIzAcquisitionPage() {
         price: PANEL_PRICE,
         quantity: panelsQuantity,
         details: { itemType: 'panels', format: 'sign-iz', panelSize: PANEL_SIZE, panelPrice: PANEL_PRICE },
-      }] : []),
-      ...(installationEnabled ? [{
-        id: 'installation-sign-iz',
-        type: 'totem' as const,
-        name: 'Installation complète',
-        price: 1690,
-        quantity: 1,
-        details: { itemType: 'installation' },
       }] : []),
     ];
     addItems(batch);
@@ -152,7 +149,7 @@ export function TotemSignIzAcquisitionPage() {
 
       <SEOMeta
         title="Totem Sign-IZ — Acquisition"
-        description="Totem Sign-IZ : structure acier laqué, autolesté, montage rapide, support adhésif renouvelable. Fabriqué en France. À partir de 1 980 € HT. Modèle déposé INPI réf. 20213357-3."
+        description="Totem Sign-IZ : structure acier laqué, autolesté, montage rapide, support adhésif renouvelable. Fabriqué en France. À partir de 1 870 € HT. Modèle déposé INPI réf. 20213357-3."
         keywords="Totem Sign-IZ, totem autolesté, totem chantier, totem événementiel, achat totem, Atelier Urbanize"
         url="/totem/sign-iz/acquisition"
         type="product"
@@ -181,9 +178,12 @@ export function TotemSignIzAcquisitionPage() {
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
               <h1 className="text-3xl font-bold mb-1 text-black">Totem Sign-IZ</h1>
-              <p className="text-base font-semibold text-black">{BASE_PRICE}€ HT</p>
+              <p className="text-base font-semibold text-black">
+                {totemCatalogEntryPrice(BASE_PRICE)}€ HT
+              </p>
               <p className="text-sm text-black mt-1">
-                Prix unitaire dès 5 unités : {DISCOUNTED_PRICE}€ HT
+                Catalogue {BASE_PRICE}€ · Dès 5 : {totemUnitPriceAfterDiscount(BASE_PRICE, 5)}€ (−10%)
+                · Dès 10 : {totemUnitPriceAfterDiscount(BASE_PRICE, 10)}€ (−15%)
               </p>
             </div>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -243,15 +243,15 @@ export function TotemSignIzAcquisitionPage() {
                   className="border border-gray-300 text-black"
                 />
                 <div className={`mt-2 text-xs p-2 rounded border-2 ${
-                  hasDiscount
+                  discountBanner.applied
                     ? 'bg-green-50 border-green-500 text-green-900'
                     : 'bg-gray-50 border-gray-300 text-black'
                 }`}>
                   <Info className="w-3 h-3 inline mr-1" />
-                  {hasDiscount ? (
-                    <strong>Remise de 10% appliquée sur les totems !</strong>
+                  {discountBanner.applied ? (
+                    <strong>{discountBanner.message}</strong>
                   ) : (
-                    <>Commandez 5 totems ou plus et bénéficiez de 10% de remise sur les totems</>
+                    <>{discountBanner.message}</>
                   )}
                 </div>
               </div>
@@ -396,30 +396,36 @@ export function TotemSignIzAcquisitionPage() {
                 </CardContent>
               </Card>
 
-              {/* Installation */}
+              {/* Installation — lecture seule (choix à l'étape services) */}
               <Card className="border border-gray-300 bg-gray-50">
                 <CardContent className="p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    <Checkbox
-                      id="installation"
-                      checked={installationEnabled}
-                      onCheckedChange={checked => setInstallationEnabled(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor="installation" className="text-black font-bold cursor-pointer">
-                        Installation complète
-                      </Label>
-                      <p className="text-sm font-bold text-black mt-2">+ 1 690€ HT</p>
-                    </div>
-                  </div>
-                  <div className="pl-7">
-                    <p className="text-xs text-black mb-2"><strong>L'installation complète comprend :</strong></p>
-                    <ul className="text-xs text-black space-y-1 ml-4">
-                      <li>• <strong>Pilotage / Scénographie :</strong> plans d'intervention, coordination, suivi de chantier</li>
-                      <li>• <strong>Installation :</strong> mise en place, nivellement, fixation sécurisée et tests de stabilité</li>
-                    </ul>
-                  </div>
+                  {installationEnabled ? (
+                    <>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                          <p className="text-black font-bold">Installation complète</p>
+                          <p className="text-sm font-bold text-black mt-1">+ 1 690€ HT</p>
+                        </div>
+                        <span className="text-[11px] font-semibold bg-black text-white px-2.5 py-1 rounded-full shrink-0">
+                          Sélectionnée
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Choix fait à l&apos;étape services — non modifiable ici.
+                      </p>
+                      <div>
+                        <p className="text-xs text-black mb-2"><strong>L&apos;installation complète comprend :</strong></p>
+                        <ul className="text-xs text-black space-y-1 ml-4">
+                          <li>• <strong>Pilotage / Scénographie :</strong> plans d&apos;intervention, coordination, suivi de chantier</li>
+                          <li>• <strong>Installation :</strong> mise en place, nivellement, fixation sécurisée et tests de stabilité</li>
+                        </ul>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      Installation non sélectionnée à l&apos;étape services.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 

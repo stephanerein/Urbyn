@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { Button } from '../components/ui/button';
@@ -9,6 +9,34 @@ import {
   Phone, Mail, User, Layers, AlertTriangle, Send, ArrowLeft, Building2
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import {
+  MASSIF_INSTALLATION_EUR,
+  MASSIF_PER_TON_EXTRA_EUR,
+  TOTEM_INSTALLATION_EUR,
+  computeMassifShippingBySupplier,
+  isMassifInstallationSelected,
+  isTotemInstallationSelected,
+  uniqueSupplierNames,
+} from '../lib/massifShipping';
+import {
+  TOTEM_ORIGIN_LABEL,
+  TOTEM_PER_KM_EUR,
+  TOTEM_TRUCK_BASE_EUR,
+  TOTEM_TRUCK_CAPACITY,
+  computeTotemShipping,
+  countTotemUnits,
+} from '../lib/totemShipping';
+import {
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountPercentLabel,
+} from '../lib/totemDiscount';
+import type { AuthMode } from '../types/auth';
+import {
+  clearAuthSignupPrefill,
+  writeAuthSignupPrefill,
+} from '../lib/authSignupPrefill';
+import { createClientOrder } from '../api/orders';
 
 interface DeliveryAddress {
   company?: string;
@@ -27,8 +55,6 @@ interface ContactForm {
   phone: string;
 }
 
-const TRUCK_CAPACITY_KG = 24_000;
-
 const TYPE_LABELS: Record<string, string> = {
   totem: 'Totem',
   cloture: 'Clôture / Palissade',
@@ -40,7 +66,7 @@ interface Partner {
   name: string;
   role: string;
   note: string;
-  accentClass: string; // bg color token for the badge
+  accentClass: string;
 }
 
 const PARTNERS: Record<string, Partner> = {
@@ -62,18 +88,7 @@ const PARTNERS: Record<string, Partner> = {
     note: 'Notre équipe vous contactera pour votre commande de store.',
     accentClass: 'bg-secondary',
   },
-  massif: {
-    name: 'Alkern',
-    role: 'Consultant Alkern',
-    note: 'Un consultant Alkern vous rappellera sous 48h pour valider les détails et organiser la livraison des massifs.',
-    accentClass: 'bg-amber-600',
-  },
 };
-
-// Label affiché dans l'en-tête de chaque section produit
-const SUPPLIER_LABELS: Record<string, string> = Object.fromEntries(
-  Object.entries(PARTNERS).map(([k, v]) => [k, v.name])
-);
 
 const SERVICE_LABELS: Record<string, string> = {
   acquisition: 'Acquisition',
@@ -88,7 +103,6 @@ const SERVICE_LABELS: Record<string, string> = {
   survey: 'Survey',
 };
 
-// Mapping type de panier → clé produit de ServicesSpecifiquesPage
 const TYPE_TO_PRODUCT_PARAM: Record<string, string> = {
   totem: 'totem',
   cloture: 'palissade',
@@ -99,14 +113,19 @@ function fmt(n: number): string {
   return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function TruckGauge({ fillPct, truckIndex, totalTrucks }: { fillPct: number; truckIndex: number; totalTrucks: number }) {
+function TruckGauge({ fillPct, truckIndex, totalTrucks, label }: {
+  fillPct: number;
+  truckIndex: number;
+  totalTrucks: number;
+  label?: string;
+}) {
   const capped = Math.min(fillPct, 100);
   const barColor = capped > 90 ? 'bg-amber-500' : 'bg-primary';
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">
-          Camion {truckIndex + 1}{totalTrucks > 1 ? ` / ${totalTrucks}` : ''}
+          {label ? `${label} · ` : ''}Camion {truckIndex + 1}{totalTrucks > 1 ? ` / ${totalTrucks}` : ''}
         </span>
         <span className="text-xs font-semibold text-foreground">{Math.round(capped)} %</span>
       </div>
@@ -120,38 +139,90 @@ function TruckGauge({ fillPct, truckIndex, totalTrucks }: { fillPct: number; tru
   );
 }
 
+function massifSupplierLabel(items: { details?: Record<string, unknown> }[]): string {
+  const names = uniqueSupplierNames(items as never);
+  return names.length > 0 ? names.join(', ') : 'Fournisseur';
+}
+
 export function ChiffrageFinalPage() {
   const navigate = useNavigate();
-  const { items, getTotalPrice } = useCart();
+  const { items, getTotalPrice, clearCart } = useCart();
+  const { isLoggedIn, session, openAuth } = useAuth();
 
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress | null>(null);
-  const [shippingCost, setShippingCost] = useState(0);
   const [servicesByProduct, setServicesByProduct] = useState<Record<string, string[]>>({});
   const [contactForm, setContactForm] = useState<ContactForm>({ firstName: '', lastName: '', email: '', phone: '' });
   const [submitted, setSubmitted] = useState(false);
 
+  const finishOrderSuccess = () => {
+    clearCart();
+    sessionStorage.removeItem('pendingQuoteRequest');
+    sessionStorage.removeItem('pendingQuoteAfterSignup');
+    localStorage.removeItem('shippingCost');
+    localStorage.removeItem('shippingCostMassif');
+    localStorage.removeItem('shippingCostTotem');
+    localStorage.removeItem('shippingCostOther');
+    localStorage.removeItem('massifInstallFee');
+    localStorage.removeItem('totemInstallFee');
+    localStorage.removeItem('massifShippingBreakdown');
+    localStorage.removeItem('totemShippingBreakdown');
+    localStorage.removeItem('complianceResults');
+    setSubmitted(true);
+  };
+
   useEffect(() => {
     const addr = localStorage.getItem('deliveryAddress');
     if (addr) setDeliveryAddress(JSON.parse(addr));
-    // v1 : frais de livraison exclus du total (module conservé ailleurs)
-    setShippingCost(0);
-    localStorage.setItem('shippingCost', '0');
     const services = sessionStorage.getItem('servicesSpecifiques');
     if (services) {
       const parsed = JSON.parse(services);
-      if (Array.isArray(parsed)) {
-        // legacy format — impossible de connaître le produit, on ignore
-      } else {
+      if (!Array.isArray(parsed)) {
         setServicesByProduct(parsed);
       }
     }
   }, []);
 
   useEffect(() => {
-    if (items.length === 0) navigate('/panier');
-  }, [items, navigate]);
+    if (!isLoggedIn || !session) return;
+    setContactForm((prev) => ({
+      firstName: prev.firstName || session.first_name || '',
+      lastName: prev.lastName || session.last_name || '',
+      email: prev.email || session.email || '',
+      phone: prev.phone || session.mobile_phone || session.fixe_phone || '',
+    }));
+    if (sessionStorage.getItem('pendingQuoteAfterSignup') === '1') {
+      sessionStorage.removeItem('pendingQuoteAfterSignup');
+      clearAuthSignupPrefill();
+      const raw = sessionStorage.getItem('pendingQuoteRequest');
+      if (raw) {
+        try {
+          const pending = JSON.parse(raw);
+          createClientOrder({
+            contact: pending.contact,
+            deliveryAddress: pending.deliveryAddress,
+            items: pending.items || [],
+            shippingCost: pending.shippingCost || 0,
+            massifInstallFee: pending.massifInstallFee || 0,
+            totemInstallFee: pending.totemInstallFee || 0,
+            massifShipping: pending.massifShipping,
+            totalHT: pending.totalHT,
+          })
+            .then(() => finishOrderSuccess())
+            .catch(() => finishOrderSuccess());
+          return;
+        } catch {
+          /* fallthrough */
+        }
+      }
+      finishOrderSuccess();
+    }
+  }, [isLoggedIn, session]);
 
-  /* ---- Groupement par type ---- */
+  useEffect(() => {
+    if (submitted) return;
+    if (items.length === 0) navigate('/panier');
+  }, [items, navigate, submitted]);
+
   const itemsByType = items.reduce<Record<string, typeof items>>((acc, item) => {
     const t = item.type;
     if (!acc[t]) acc[t] = [];
@@ -160,44 +231,101 @@ export function ChiffrageFinalPage() {
   }, {});
   const productTypes = Object.keys(itemsByType);
 
-  /* ---- Massifs & camions ---- */
   const massifItems = itemsByType['massif'] ?? [];
   const hasMassif = massifItems.length > 0;
-  const totalMassifWeight = massifItems.reduce((s, i) => s + (i.details?.weight ?? 0) * i.quantity, 0);
-  const trucksCount = totalMassifWeight > 0 ? Math.ceil(totalMassifWeight / TRUCK_CAPACITY_KG) : 0;
-  const truckFills: number[] = [];
-  if (trucksCount > 0) {
-    let remaining = totalMassifWeight;
-    for (let i = 0; i < trucksCount; i++) {
-      const load = Math.min(remaining, TRUCK_CAPACITY_KG);
-      truckFills.push(Math.round((load / TRUCK_CAPACITY_KG) * 100));
-      remaining -= load;
-    }
-  }
 
-  /* ---- Totaux ---- */
+  const massifShipping = useMemo(
+    () =>
+      computeMassifShippingBySupplier(
+        massifItems,
+        deliveryAddress?.postalCode,
+        deliveryAddress?.country || 'France',
+      ),
+    [massifItems, deliveryAddress?.postalCode, deliveryAddress?.country],
+  );
+
+  const massifInstallFee = hasMassif && isMassifInstallationSelected() ? MASSIF_INSTALLATION_EUR : 0;
+  const totemQty = countTotemUnits(items);
+  const hasTotem = totemQty > 0;
+  const totemInstallFee = hasTotem && isTotemInstallationSelected() ? TOTEM_INSTALLATION_EUR : 0;
+
+  const totemShipping = useMemo(
+    () =>
+      computeTotemShipping(
+        totemQty,
+        deliveryAddress?.postalCode,
+        deliveryAddress?.country || 'France',
+      ),
+    [totemQty, deliveryAddress?.postalCode, deliveryAddress?.country],
+  );
+
+  const hasPanels = (itemsByType['panels'] ?? []).length > 0;
+  const panelShipStored = hasPanels ? Number(localStorage.getItem('shippingCostOther') || '0') : 0;
+  const massifShipAmount = massifShipping.shippingTotal;
+  const totemShipAmount = hasTotem ? totemShipping.shippingTotal : 0;
+  const shippingCost = massifShipAmount + totemShipAmount + panelShipStored;
+
+  useEffect(() => {
+    if (!hasPanels) {
+      localStorage.setItem('shippingCostOther', '0');
+    }
+    localStorage.setItem('shippingCost', String(shippingCost + massifInstallFee + totemInstallFee));
+    localStorage.setItem('totemInstallFee', String(totemInstallFee));
+    localStorage.setItem('shippingCostMassif', String(massifShipAmount));
+    localStorage.setItem('shippingCostTotem', String(totemShipAmount));
+    localStorage.setItem('totemShippingBreakdown', JSON.stringify(totemShipping));
+  }, [
+    shippingCost,
+    massifInstallFee,
+    totemInstallFee,
+    massifShipAmount,
+    totemShipAmount,
+    hasPanels,
+    totemShipping,
+  ]);
+
   const totalProductsHT = getTotalPrice();
   const totemItems = itemsByType['totem'] ?? [];
   const totemSubtotal = totemItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totalTotemQty = totemItems.reduce((s, i) => s + i.quantity, 0);
-  const totemDiscount = totalTotemQty >= 5 ? totemSubtotal * 0.1 : 0;
+  const totalTotemQty = totemQty;
+  const totemDiscount = totemVolumeDiscountAmount(totemSubtotal, totalTotemQty);
+  const totemDiscountPct = totemVolumeDiscountPercentLabel(totalTotemQty);
 
-  /* Répartition des frais de livraison proportionnelle au prix par type */
+  const massifProductsHT = massifItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const shippingByType: Record<string, number> = {};
-  if (totalProductsHT > 0) {
-    productTypes.forEach(t => {
-      const typeTotal = itemsByType[t].reduce((s, i) => s + i.price * i.quantity, 0);
-      shippingByType[t] = (typeTotal / totalProductsHT) * shippingCost;
-    });
-  }
+  if (hasMassif) shippingByType.massif = massifShipAmount;
+  if (hasTotem) shippingByType.totem = totemShipAmount;
+  const restShip = Math.max(0, shippingCost - massifShipAmount - totemShipAmount);
+  const panelAndOtherHT = Math.max(
+    0,
+    totalProductsHT - massifProductsHT - totemSubtotal,
+  );
+  productTypes.forEach((t) => {
+    if (t === 'massif' || t === 'totem') return;
+    const typeTotal = itemsByType[t].reduce((s, i) => s + i.price * i.quantity, 0);
+    shippingByType[t] = panelAndOtherHT > 0 ? (typeTotal / panelAndOtherHT) * restShip : 0;
+  });
 
-  const totalHT = totalProductsHT - totemDiscount + shippingCost;
+  const totalHT = totalProductsHT - totemDiscount + shippingCost + massifInstallFee + totemInstallFee;
   const totalTTC = totalHT * 1.2;
 
-  // Partenaires uniques actifs dans le panier (dédupliqués par nom)
   const activePartners: Partner[] = [];
   const seenNames = new Set<string>();
-  productTypes.forEach(type => {
+  productTypes.forEach((type) => {
+    if (type === 'massif') {
+      const names = uniqueSupplierNames(massifItems as never);
+      const label = names.length ? names.join(', ') : 'Fournisseur';
+      if (!seenNames.has(label)) {
+        seenNames.add(label);
+        activePartners.push({
+          name: label,
+          role: `Consultant ${label}`,
+          note: `Un consultant ${label} vous rappellera sous 48h pour valider les détails et organiser la livraison des massifs.`,
+          accentClass: 'bg-amber-600',
+        });
+      }
+      return;
+    }
     const partner = PARTNERS[type];
     if (partner && !seenNames.has(partner.name)) {
       seenNames.add(partner.name);
@@ -205,19 +333,65 @@ export function ChiffrageFinalPage() {
     }
   });
 
-  const handleContact = (field: keyof ContactForm, value: string) =>
-    setContactForm(prev => ({ ...prev, [field]: value }));
+  const supplierLabelForType = (type: string) => {
+    if (type === 'massif') return massifSupplierLabel(massifItems);
+    return PARTNERS[type]?.name ?? 'Notre équipe';
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleContact = (field: keyof ContactForm, value: string) =>
+    setContactForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.firstName || !contactForm.lastName || !contactForm.email || !contactForm.phone) {
       alert('Veuillez remplir tous les champs pour être recontacté.');
       return;
     }
-    setSubmitted(true);
+
+    const payload = {
+      contact: contactForm,
+      deliveryAddress,
+      items,
+      shippingCost,
+      massifInstallFee,
+      totemInstallFee,
+      massifShipping: massifShipping.groups,
+      totalHT,
+      createdAt: new Date().toISOString(),
+    };
+    sessionStorage.setItem('pendingQuoteRequest', JSON.stringify(payload));
+
+    if (!isLoggedIn) {
+      writeAuthSignupPrefill({
+        email: contactForm.email,
+        first_name: contactForm.firstName,
+        last_name: contactForm.lastName,
+        mobile_phone: contactForm.phone,
+        company_name: deliveryAddress?.company || '',
+        deliveryAddress,
+      });
+      sessionStorage.setItem('pendingQuoteAfterSignup', '1');
+      openAuth('buyer', { mode: 'signup' as AuthMode });
+      return;
+    }
+
+    try {
+      await createClientOrder({
+        contact: contactForm,
+        deliveryAddress: deliveryAddress ?? undefined,
+        items,
+        shippingCost,
+        massifInstallFee,
+        totemInstallFee,
+        massifShipping: massifShipping.groups,
+        totalHT,
+      });
+      finishOrderSuccess();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Impossible d'enregistrer la commande.");
+    }
   };
 
-  /* ---- Succès ---- */
   if (submitted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -227,12 +401,12 @@ export function ChiffrageFinalPage() {
           </div>
           <h2 className="text-2xl font-semibold text-foreground mb-3">Demande envoyée !</h2>
           <div className="space-y-2 mb-6">
-            {activePartners.map(p => (
+            {activePartners.map((p) => (
               <p key={p.name} className="text-muted-foreground text-sm">{p.note}</p>
             ))}
           </div>
           <Button onClick={() => navigate('/')} className="bg-foreground hover:bg-secondary text-white w-full">
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Button>
         </div>
       </div>
@@ -243,8 +417,6 @@ export function ChiffrageFinalPage() {
     <div className="min-h-screen bg-background">
       <ProgressSteps currentStep={4} />
       <div className="max-w-7xl mx-auto pt-[var(--header-height)] px-4 pb-20">
-
-        {/* En-tête */}
         <div className="mb-8">
           <button
             onClick={() => navigate('/livraison')}
@@ -264,38 +436,35 @@ export function ChiffrageFinalPage() {
           </p>
         </div>
 
-        {/* Layout 2 colonnes */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-          {/* ─── Colonne gauche (scrollable) ─── */}
           <div className="flex-1 min-w-0 space-y-5">
-
-            {/* Produits groupés par type */}
-            {productTypes.map(type => {
+            {productTypes.map((type) => {
               const typeItems = itemsByType[type];
-              const typeTotal = typeItems.reduce((s, i) => s + i.price * i.quantity, 0);
               const typeShipping = shippingByType[type] ?? 0;
               return (
                 <div key={type} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                  {/* En-tête section */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/40">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/40 gap-3">
                     <div className="flex items-center gap-2">
                       <ShoppingBag className="w-4 h-4 text-primary" />
                       <h2 className="text-foreground">{TYPE_LABELS[type] ?? type}</h2>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Building2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground text-right">
+                      <Building2 className="w-3.5 h-3.5 shrink-0" />
                       <span>Fournisseur :</span>
-                      <span className="font-semibold text-foreground">{SUPPLIER_LABELS[type] ?? 'Notre équipe'}</span>
+                      <span className="font-semibold text-foreground">{supplierLabelForType(type)}</span>
                     </div>
                   </div>
 
-                  {/* Liste des items */}
                   <div className="divide-y divide-border">
-                    {typeItems.map(item => (
+                    {typeItems.map((item) => (
                       <div key={item.id} className="flex items-start justify-between px-6 py-4">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-foreground">{item.name}</p>
+                          {item.details?.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                              {String(item.details.description)}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground mt-0.5">Qté : {item.quantity}</p>
                           {item.type === 'massif' && item.details?.weight && (
                             <p className="text-xs text-muted-foreground">
@@ -315,14 +484,12 @@ export function ChiffrageFinalPage() {
                         <div className="text-right ml-4">
                           {item.price > 0
                             ? <p className="text-sm font-semibold text-foreground">{fmt(item.price * item.quantity)} € HT</p>
-                            : <p className="text-sm text-muted-foreground">Sur devis</p>
-                          }
+                            : <p className="text-sm text-muted-foreground">Sur devis</p>}
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Services sélectionnés pour ce produit */}
                   {(() => {
                     const param = TYPE_TO_PRODUCT_PARAM[type];
                     const svc = param ? (servicesByProduct[param] ?? []) : [];
@@ -333,23 +500,27 @@ export function ChiffrageFinalPage() {
                           <Package className="w-3.5 h-3.5" /> Services inclus
                         </p>
                         <div className="flex flex-wrap gap-1.5">
-                          {svc.map(s => (
+                          {svc.map((s) => (
                             <span key={s} className="flex items-center gap-1 text-xs bg-primary text-white px-2.5 py-1 rounded-full">
                               <CheckCircle className="w-3 h-3" />
                               {SERVICE_LABELS[s] ?? s}
                             </span>
                           ))}
                         </div>
+                        {type === 'massif' && svc.includes('installation') && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Installation massifs : {fmt(MASSIF_INSTALLATION_EUR)} € HT
+                          </p>
+                        )}
                       </div>
                     );
                   })()}
 
-                  {/* Pied de section : remise + transport */}
                   <div className="px-6 py-3 bg-muted/30 border-t border-border space-y-2">
                     {type === 'totem' && totemDiscount > 0 && (
                       <div className="flex justify-between text-xs text-emerald-700">
                         <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" /> Remise volume (5+ totems)
+                          <CheckCircle className="w-3 h-3" /> Remise volume ({totemDiscountPct})
                         </span>
                         <span className="font-semibold">−{fmt(totemDiscount)} €</span>
                       </div>
@@ -359,7 +530,7 @@ export function ChiffrageFinalPage() {
                         <Truck className="w-3.5 h-3.5" /> Transport {TYPE_LABELS[type]}
                       </span>
                       <span className="font-medium text-foreground">
-                        {shippingCost > 0 ? `${fmt(typeShipping)} € HT` : 'Sur devis'}
+                        {typeShipping > 0 ? `${fmt(typeShipping)} € HT` : '—'}
                       </span>
                     </div>
                   </div>
@@ -367,54 +538,115 @@ export function ChiffrageFinalPage() {
               );
             })}
 
-            {/* Jauge camion — massifs */}
-            {hasMassif && totalMassifWeight > 0 && (
-              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/40">
+            {hasMassif && massifShipping.groups.length > 0 && (
+              <div className="bg-card rounded-xl shadow-sm border border-border px-6 py-5">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-primary" />
-                    <h2 className="text-foreground">Remplissage du camion</h2>
+                    <h2 className="text-foreground">Remplissage camion — massifs</h2>
                   </div>
-                  <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {trucksCount} camion{trucksCount > 1 ? 's' : ''} nécessaire{trucksCount > 1 ? 's' : ''}
+                  <span className="text-xs bg-muted text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                    {massifShipping.trucksTotal} camion{massifShipping.trucksTotal > 1 ? 's' : ''} nécessaire{massifShipping.trucksTotal > 1 ? 's' : ''}
                   </span>
                 </div>
 
-                <div className="px-6 py-5 space-y-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Poids total', value: `${(totalMassifWeight / 1000).toFixed(2)} t` },
-                      { label: 'Capacité / camion', value: `${(TRUCK_CAPACITY_KG / 1000).toFixed(0)} t` },
-                      { label: 'Nb. camions', value: String(trucksCount) },
-                    ].map(stat => (
-                      <div key={stat.label} className="bg-muted rounded-lg p-3 text-center">
-                        <p className="text-xs text-muted-foreground">{stat.label}</p>
-                        <p className="font-semibold text-foreground mt-0.5">{stat.value}</p>
-                      </div>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {[
+                    { label: 'Poids total', value: `${(massifShipping.totalWeightKg / 1000).toFixed(2)} t` },
+                    { label: 'Capacité / camion', value: '24 t' },
+                    { label: 'Nb. camions', value: String(massifShipping.trucksTotal) },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-muted/50 rounded-lg px-3 py-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm font-semibold text-foreground">{value}</p>
+                    </div>
+                  ))}
+                </div>
 
-                  <div className="space-y-3">
-                    {truckFills.map((pct, i) => (
-                      <TruckGauge key={i} fillPct={pct} truckIndex={i} totalTrucks={trucksCount} />
-                    ))}
-                  </div>
-
-                  {trucksCount > 1 && (
-                    <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800">
-                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-                      <p>
-                        Votre commande nécessite <strong>{trucksCount} camions</strong>.
-                        Les frais de transport seront ajustés par votre consultant Alkern.
+                <div className="space-y-4">
+                  {massifShipping.groups.map((g) => (
+                    <div key={g.supplierKey} className="space-y-2">
+                      {massifShipping.groups.length > 1 && (
+                        <p className="text-xs font-semibold text-foreground">{g.supplierName}</p>
+                      )}
+                      {g.truckFills.map((pct, i) => (
+                        <TruckGauge
+                          key={`${g.supplierKey}-${i}`}
+                          fillPct={pct}
+                          truckIndex={i}
+                          totalTrucks={g.trucksCount}
+                          label={massifShipping.groups.length > 1 ? g.supplierName : undefined}
+                        />
+                      ))}
+                      <p className="text-[11px] text-muted-foreground">
+                        {g.trucksCount} × 200 € + {g.trucksCount} × {g.distanceKm} km
+                        {g.tonnageFee > 0
+                          ? ` + ${MASSIF_PER_TON_EXTRA_EUR} €/t (${fmt(g.tonnageFee)} €)`
+                          : ''}{' '}
+                        = <strong>{fmt(g.shippingTotal)} €</strong>
                       </p>
                     </div>
-                  )}
+                  ))}
+                </div>
+
+                {massifShipping.trucksTotal > 1 && (
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800 mt-4">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                    <p>
+                      Votre commande nécessite <strong>{massifShipping.trucksTotal} camions</strong>
+                      {massifShipping.groups.length > 1
+                        ? ` répartis sur ${massifShipping.groups.length} fournisseurs`
+                        : ''}
+                      . Les massifs ne sont jamais mélangés avec les totems.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasTotem && totemShipping.trucksCount > 0 && (
+              <div className="bg-card rounded-xl shadow-sm border border-border px-6 py-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <h2 className="text-foreground">Remplissage camion — totems ({TOTEM_ORIGIN_LABEL})</h2>
+                  </div>
+                  <span className="text-xs bg-muted text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                    {totemShipping.trucksCount} camion{totemShipping.trucksCount > 1 ? 's' : ''} · max {TOTEM_TRUCK_CAPACITY}/camion
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {[
+                    { label: 'Totems', value: String(totemQty) },
+                    { label: 'Capacité / camion', value: `${TOTEM_TRUCK_CAPACITY} totems` },
+                    { label: 'Nb. camions', value: String(totemShipping.trucksCount) },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-muted/50 rounded-lg px-3 py-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm font-semibold text-foreground">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  {totemShipping.truckFills.map((pct, i) => (
+                    <TruckGauge
+                      key={`totem-truck-${i}`}
+                      fillPct={pct}
+                      truckIndex={i}
+                      totalTrucks={totemShipping.trucksCount}
+                    />
+                  ))}
+                  <p className="text-[11px] text-muted-foreground pt-1">
+                    {totemShipping.trucksCount} × ({TOTEM_TRUCK_BASE_EUR} € +{' '}
+                    {totemShipping.distanceKm} km × {TOTEM_PER_KM_EUR} €) ={' '}
+                    <strong>{fmt(totemShipping.shippingTotal)} €</strong>
+                  </p>
                 </div>
               </div>
             )}
 
-
-            {/* Adresse de livraison */}
             <div className="bg-card rounded-xl shadow-sm border border-border px-6 py-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -437,33 +669,18 @@ export function ChiffrageFinalPage() {
                   {deliveryAddress.street2 && <p>{deliveryAddress.street2}</p>}
                   <p>{deliveryAddress.postalCode} {deliveryAddress.city}</p>
                   <p>{deliveryAddress.country}</p>
-                  {deliveryAddress.specialInstructions && (
-                    <p className="mt-2 italic text-xs">{deliveryAddress.specialInstructions}</p>
-                  )}
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground italic">Adresse non renseignée</p>
-                  <button
-                    onClick={() => navigate('/livraison')}
-                    className="text-xs text-primary hover:text-primary/70 underline underline-offset-2 transition-colors"
-                  >
-                    Saisir une adresse
-                  </button>
-                </div>
+                <p className="text-sm text-muted-foreground italic">Adresse non renseignée</p>
               )}
             </div>
-
           </div>
 
-          {/* ─── Colonne droite sticky ─── */}
           <div className="w-full lg:w-[340px] shrink-0 sticky top-24 self-start space-y-4">
-
-            {/* Chiffrage estimatif */}
             <div className="bg-card rounded-xl shadow-sm border border-border px-5 py-5">
               <h3 className="text-foreground mb-4">Chiffrage estimatif</h3>
               <div className="space-y-2.5 text-sm">
-                {productTypes.map(type => {
+                {productTypes.map((type) => {
                   const typeTotal = itemsByType[type].reduce((s, i) => s + i.price * i.quantity, 0);
                   if (typeTotal === 0) return null;
                   return (
@@ -475,7 +692,7 @@ export function ChiffrageFinalPage() {
                 })}
                 {totemDiscount > 0 && (
                   <div className="flex justify-between text-emerald-700 text-xs">
-                    <span>Remise volume</span>
+                    <span>Remise volume ({totemDiscountPct})</span>
                     <span className="font-medium">−{fmt(totemDiscount)} €</span>
                   </div>
                 )}
@@ -485,6 +702,42 @@ export function ChiffrageFinalPage() {
                     {shippingCost > 0 ? `${fmt(shippingCost)} €` : '—'}
                   </span>
                 </div>
+                {totemShipAmount > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground pl-1">
+                    <span>Totems {TOTEM_ORIGIN_LABEL} · {totemShipping.trucksCount} camion{totemShipping.trucksCount > 1 ? 's' : ''}</span>
+                    <span>{fmt(totemShipAmount)} €</span>
+                  </div>
+                )}
+                {massifShipAmount > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground pl-1">
+                    <span>Massifs · {massifShipping.trucksTotal} camion{massifShipping.trucksTotal > 1 ? 's' : ''}</span>
+                    <span>{fmt(massifShipAmount)} €</span>
+                  </div>
+                )}
+                {panelShipStored > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground pl-1">
+                    <span>Panneaux</span>
+                    <span>{fmt(panelShipStored)} €</span>
+                  </div>
+                )}
+                {totemInstallFee > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Installation totems</span>
+                    <span className="font-medium text-foreground">{fmt(totemInstallFee)} €</span>
+                  </div>
+                )}
+                {massifInstallFee > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Installation massifs</span>
+                    <span className="font-medium text-foreground">{fmt(massifInstallFee)} €</span>
+                  </div>
+                )}
+                {hasMassif && massifShipping.tonnageFeeTotal > 0 && (
+                  <div className="flex justify-between text-muted-foreground text-xs">
+                    <span>Coût exceptionnel ({MASSIF_PER_TON_EXTRA_EUR} €/t)</span>
+                    <span className="font-medium text-foreground">{fmt(massifShipping.tonnageFeeTotal)} €</span>
+                  </div>
+                )}
                 <div className="border-t border-border pt-2.5 mt-1 space-y-1.5">
                   <div className="flex justify-between font-semibold text-foreground">
                     <span>Total HT</span><span>{fmt(totalHT)} €</span>
@@ -498,20 +751,18 @@ export function ChiffrageFinalPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-3 italic">
-                Chiffrage indicatif — les tarifs seront confirmés lors de l'échange.
+                Chiffrage indicatif — les tarifs seront confirmés lors de l&apos;échange.
               </p>
             </div>
 
-            {/* Finaliser votre commande */}
             <div className="bg-foreground rounded-xl shadow-lg px-5 py-5 text-white">
               <div className="flex items-center gap-2 mb-3">
                 <Phone className="w-4 h-4 opacity-80" />
                 <h3 className="text-white">Finaliser votre demande</h3>
               </div>
 
-              {/* Un badge par partenaire */}
               <div className="space-y-2 mb-4">
-                {activePartners.map(p => (
+                {activePartners.map((p) => (
                   <div key={p.name} className="rounded-lg overflow-hidden">
                     <div className={`flex items-center gap-2 px-3 py-1.5 ${p.accentClass}`}>
                       <Building2 className="w-3.5 h-3.5 shrink-0" />
@@ -533,7 +784,7 @@ export function ChiffrageFinalPage() {
                       <Input
                         id="fn"
                         value={contactForm.firstName}
-                        onChange={e => handleContact('firstName', e.target.value)}
+                        onChange={(e) => handleContact('firstName', e.target.value)}
                         className="pl-8 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/60"
                         placeholder="Jean"
                         required
@@ -545,7 +796,7 @@ export function ChiffrageFinalPage() {
                     <Input
                       id="ln"
                       value={contactForm.lastName}
-                      onChange={e => handleContact('lastName', e.target.value)}
+                      onChange={(e) => handleContact('lastName', e.target.value)}
                       className="h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/60"
                       placeholder="Dupont"
                       required
@@ -561,7 +812,7 @@ export function ChiffrageFinalPage() {
                       id="email"
                       type="email"
                       value={contactForm.email}
-                      onChange={e => handleContact('email', e.target.value)}
+                      onChange={(e) => handleContact('email', e.target.value)}
                       className="pl-8 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/60"
                       placeholder="jean.dupont@email.fr"
                       required
@@ -577,7 +828,7 @@ export function ChiffrageFinalPage() {
                       id="phone"
                       type="tel"
                       value={contactForm.phone}
-                      onChange={e => handleContact('phone', e.target.value)}
+                      onChange={(e) => handleContact('phone', e.target.value)}
                       className="pl-8 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/60"
                       placeholder="06 00 00 00 00"
                       required
@@ -590,11 +841,12 @@ export function ChiffrageFinalPage() {
                   className="w-full bg-white text-foreground hover:bg-white/90 h-10 text-sm font-semibold mt-1"
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Envoyer ma demande
+                  {isLoggedIn
+                    ? 'Envoyer ma demande'
+                    : 'Créer un compte pour envoyer une demande'}
                 </Button>
               </form>
             </div>
-
           </div>
         </div>
       </div>

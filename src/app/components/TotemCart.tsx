@@ -7,6 +7,10 @@ import { DeliveryAddressForm, DeliveryAddress } from './DeliveryAddressForm';
 import type { TotemItem } from './TotemCalculator';
 import { TOTEM_PRICES } from './TotemCalculator';
 import { jsPDF } from 'jspdf';
+import {
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountPercentLabel,
+} from '../lib/totemDiscount';
 
 interface TotemCartProps {
   items: TotemItem[];
@@ -81,13 +85,12 @@ export function TotemCart({
     return total;
   };
 
-  // Calculer la remise
+  // Calculer la remise volume totems
   const calculateDiscount = () => {
     if (purchaseType === 'fabrication') {
       const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-      if (totalQuantity >= 5) {
-        return calculateSubtotal() * 0.05; // 5% de remise
-      }
+      const subtotal = calculateSubtotal();
+      return totemVolumeDiscountAmount(subtotal, totalQuantity);
     }
     return 0;
   };
@@ -150,7 +153,7 @@ export function TotemCart({
       
       if (hasDiscount) {
         doc.setTextColor(0, 150, 0);
-        doc.text(`Remise 5%: -${discount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € HT`, 20, yPos);
+        doc.text(`Remise ${totemVolumeDiscountPercentLabel(totalQuantity)}: -${discount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € HT`, 20, yPos);
         yPos += 7;
         doc.setTextColor(0, 0, 0);
       }
@@ -363,7 +366,7 @@ export function TotemCart({
 
                   {hasDiscount && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-green-700">Remise (5%)</span>
+                      <span className="text-green-700">Remise ({totemVolumeDiscountPercentLabel(totalQuantity)})</span>
                       <span className="font-medium text-green-700">-{discount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € HT</span>
                     </div>
                   )}

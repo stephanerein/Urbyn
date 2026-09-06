@@ -11,6 +11,7 @@ export interface TotemFamily {
   min_price: number
   currency: string
   product_count: number
+  min_dimensions_label?: string | null
   breadcrumb: string[]
 }
 
@@ -67,6 +68,8 @@ export interface TotemProductDetail {
   detail_bullets: string[]
   fiche_document_key: string | null
   fiche_available: boolean
+  company_name?: string | null
+  company_tva?: string | null
 }
 
 export function fetchTotemFamilies(offer: TotemOffer = 'Acquisition'): Promise<TotemFamiliesResponse> {
@@ -86,6 +89,71 @@ export function fetchTotemFamilyProducts(
 
 export function fetchTotemProductDetail(productId: number): Promise<TotemProductDetail> {
   return apiFetch(`/api/v1/client-portal/totem/products/${productId}`)
+}
+
+export type TotemWindSheetProductIn = {
+  cart_item_id?: string
+  product_id?: number | null
+  product_name?: string | null
+  client_sku?: string | null
+  format?: string | null
+}
+
+export type TotemWindSheetProductOut = {
+  cart_item_id: string | null
+  product_id: number | null
+  product_name: string | null
+  sheet_header: string | null
+  supported: boolean
+  matched: boolean
+  value: number | string | null
+  message: string | null
+}
+
+export type TotemWindSheetLookupResponse = {
+  region_sheet: string
+  terrain_sheet: string
+  write_ok: boolean
+  settle_ms: number
+  products: TotemWindSheetProductOut[]
+}
+
+/** Écrit Région+Terrain sur Google Sheets puis lit la valeur totem (ligne 46). */
+export function lookupTotemWindSheet(payload: {
+  wind_zone: number
+  terrain: string
+  products: TotemWindSheetProductIn[]
+}): Promise<TotemWindSheetLookupResponse> {
+  return apiFetch('/api/v1/client-portal/totem/wind-sheet-lookup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export type TotemBallast = {
+  product_id: number
+  product_name: string
+  client_sku: string | null
+  admin_sku: string | null
+  description: string | null
+  price: number
+  currency: string
+  poids: number | null
+  company_name?: string | null
+  company_tva?: string | null
+}
+
+export type TotemBallastsResponse = {
+  catalog_id: number
+  catalog_path: string[]
+  count: number
+  ballasts: TotemBallast[]
+  default_ballast: TotemBallast | null
+}
+
+/** Lests 25 kg du catalogue [Totem/Accessoire]. */
+export function fetchTotemBallasts(): Promise<TotemBallastsResponse> {
+  return apiFetch('/api/v1/client-portal/totem/ballasts')
 }
 
 export function formatPriceEur(value: number): string {

@@ -11,6 +11,13 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 import { useCart } from '../../context/CartContext';
 import { imgCaissonBois80 as image_Celize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Celize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Celize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Celize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
+import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping';
+import {
+  totemCatalogEntryPrice,
+  totemUnitPriceAfterDiscount,
+  totemVolumeDiscountAmount,
+  totemVolumeDiscountBanner,
+} from '../../lib/totemDiscount';
 
 const POSTAL_RULES: Record<string, { pattern: RegExp; example: string }> = {
   France:     { pattern: /^\d{5}$/, example: '75011' },
@@ -91,7 +98,7 @@ const TOTEM_DATA = {
   }
 };
 
-const INSTALLATION_PRICE = 1690;
+const INSTALLATION_PRICE = TOTEM_INSTALLATION_EUR;
 
 export function TotemConfigPage() {
   const { format } = useParams<{ format: string }>();
@@ -113,17 +120,7 @@ export function TotemConfigPage() {
     }
   }, [quantity]);
 
-  const installationServiceSelected = (): boolean => {
-    try {
-      const saved = sessionStorage.getItem('servicesSpecifiques');
-      if (!saved) return false;
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed.includes('installation');
-      return Array.isArray(parsed['totem']) && parsed['totem'].includes('installation');
-    } catch {
-      return false;
-    }
-  };
+  const installationServiceSelected = (): boolean => isTotemInstallationSelected();
 
   const [installationEnabled, setInstallationEnabled] = useState(installationServiceSelected);
   const [deliveryFormOpen, setDeliveryFormOpen] = useState(false);
@@ -183,14 +180,6 @@ export function TotemConfigPage() {
         quantity: panelsQuantity,
         details: { itemType: 'panels', format, panelSize: formatData.panelSize, panelPrice: formatData.panelPrice },
       }] : []),
-      ...(installationEnabled ? [{
-        id: 'installation-caisson-bois',
-        type: 'totem' as const,
-        name: 'Installation complète',
-        price: INSTALLATION_PRICE,
-        quantity: 1,
-        details: { itemType: 'installation' },
-      }] : []),
     ];
     addItems(batch);
   };
@@ -206,18 +195,16 @@ export function TotemConfigPage() {
       total += INSTALLATION_PRICE;
     }
 
-    // Appliquer la remise si 5+ totems
+    // Remise volume sur les totems (5→10%, 10+→15%)
     const totalQuantity = getTotalTotemQuantity() + quantity;
-    if (totalQuantity >= 5) {
-      const totemCost = formatData.price * quantity;
-      const discount = totemCost * 0.1;
-      total -= discount;
-    }
+    const totemCost = formatData.price * quantity;
+    total -= totemVolumeDiscountAmount(totemCost, totalQuantity);
 
     return total;
   };
 
   const totalQuantity = getTotalTotemQuantity() + quantity;
+  const discountBanner = totemVolumeDiscountBanner(totalQuantity);
 
   return (
     <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4">
@@ -245,9 +232,14 @@ export function TotemConfigPage() {
           <div className="p-8">
             <h1 className="text-3xl font-bold mb-2 text-black">{formatData.label}</h1>
             <div className="mb-6">
-              <p className="text-base font-semibold text-black">{formatData.price}€ HT</p>
+              <p className="text-base font-semibold text-black">
+                {totemCatalogEntryPrice(formatData.price)}€ HT
+              </p>
               
-              <p className="text-sm text-black mt-1">Prix unitaire dès 5 unités : {Math.round(formatData.price * 0.9)}€ HT</p>
+              <p className="text-sm text-black mt-1">
+                Catalogue {formatData.price}€ · Dès 5 : {totemUnitPriceAfterDiscount(formatData.price, 5)}€
+                (−10%) · Dès 10 : {totemUnitPriceAfterDiscount(formatData.price, 10)}€ (−15%)
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -321,15 +313,15 @@ export function TotemConfigPage() {
                     className="border border-gray-300 text-black"
                   />
                   <div className={`mt-2 text-xs p-2 rounded border-2 ${
-                    totalQuantity >= 5
+                    discountBanner.applied
                       ? 'bg-green-50 border-green-500 text-green-900'
                       : 'bg-gray-50 border-gray-300 text-black'
                   }`}>
                     <Info className="w-3 h-3 inline mr-1" />
-                    {totalQuantity >= 5 ? (
-                      <strong>Remise de 10% appliquée sur les totems !</strong>
+                    {discountBanner.applied ? (
+                      <strong>{discountBanner.message}</strong>
                     ) : (
-                      <>Commandez 5 totems ou plus et bénéficiez de 10% de remise sur les totems</>
+                      <>{discountBanner.message}</>
                     )}
                   </div>
                 </div>
@@ -510,35 +502,38 @@ export function TotemConfigPage() {
                   </CardContent>
                 </Card>
 
-                {/* Installation */}
+                                {/* Installation — lecture seule (choix à l'étape services) */}
                 <Card className="border border-gray-300 bg-gray-50">
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3 mb-3">
-                      <Checkbox
-                        id="installation"
-                        checked={installationEnabled}
-                        onCheckedChange={(checked) => setInstallationEnabled(checked as boolean)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor="installation" className="text-black font-bold cursor-pointer flex items-center gap-2">
-                          Installation complète
-                        </Label>
-                        <p className="text-sm font-bold text-black mt-2">
-                          + {INSTALLATION_PRICE}€ HT
+                    {installationEnabled ? (
+                      <>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-black font-bold">Installation complète</p>
+                            <p className="text-sm font-bold text-black mt-1">+ {INSTALLATION_PRICE}€ HT</p>
+                          </div>
+                          <span className="text-[11px] font-semibold bg-black text-white px-2.5 py-1 rounded-full shrink-0">
+                            Sélectionnée
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">
+                          Choix fait à l&apos;étape services — non modifiable ici.
                         </p>
-                      </div>
-                    </div>
-
-                    <div className="pl-7">
-                      <p className="text-xs text-black mb-2">
-                        <strong>L'installation complète comprend :</strong>
+                        <div>
+                          <p className="text-xs text-black mb-2">
+                            <strong>L&apos;installation complète comprend :</strong>
+                          </p>
+                          <ul className="text-xs text-black space-y-1 ml-4">
+                            <li>• <strong>Pilotage / Scénographie :</strong> établissement des plans d&apos;intervention, coordination des intervenants, suivi de chantier</li>
+                            <li>• <strong>Installation :</strong> mise en place, nivellement, fixation sécurisée et tests de stabilité</li>
+                          </ul>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Installation non sélectionnée à l&apos;étape services.
                       </p>
-                      <ul className="text-xs text-black space-y-1 ml-4">
-                        <li>• <strong>Pilotage / Scénographie :</strong> établissement des plans d'intervention, coordination des intervenants, suivi de chantier</li>
-                        <li>• <strong>Installation :</strong> mise en place, nivellement, fixation sécurisée et tests de stabilité</li>
-                      </ul>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
 

@@ -4,41 +4,42 @@ import { Button } from '../../components/ui/button';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { ProgressSteps } from '../../components/ProgressSteps';
 import { imgCaissonBoisVignette as totemCaissonBoisImg, imgTotemSignIzNoir as totemSignIzImg } from '../../assets/images';
+import { totemCatalogEntryPrice } from '../../lib/totemDiscount';
 
 const TOTEM_MODELS = {
   'caisson-bois': {
     name: 'Totem Caisson Bois',
     description: 'Totem en structure bois avec panneaux interchangeables — 4 formats disponibles',
     image: totemCaissonBoisImg,
-    startPrice: { acquisition: '2 650€', location: null },
+    startPrice: { acquisition: 2650, location: null as number | null },
     modesDisponibles: ['acquisition'],
   },
   'gabion': {
     name: 'Totem Gabion',
     description: 'Totem design en gabion métallique avec remplissage minéral',
     image: 'https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800&q=80',
-    startPrice: { acquisition: '1 800€', location: null },
+    startPrice: { acquisition: 1800, location: null as number | null },
     modesDisponibles: ['acquisition'],
   },
   'liz': {
     name: 'Totem LIZ',
     description: 'Totem triptyque haut de gamme avec panneaux orientables',
     image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80',
-    startPrice: { acquisition: '2 600€', location: null },
+    startPrice: { acquisition: 2600, location: null as number | null },
     modesDisponibles: ['acquisition'],
   },
   'sign-iz': {
     name: 'Totem Sign-IZ',
     description: 'Totem compact et modulaire — disponible à l\'acquisition et à la location',
     image: totemSignIzImg,
-    startPrice: { acquisition: '1 980€', location: '290€' },
+    startPrice: { acquisition: 2200, location: 290 as number | null },
     modesDisponibles: ['acquisition', 'location'],
   },
   'caisson-bois-120': {
     name: 'Totem Caisson Bois 120',
     description: 'Totem en structure bois, format 120 cm — disponible à la location',
     image: totemCaissonBoisImg,
-    startPrice: { acquisition: null, location: '320€' },
+    startPrice: { acquisition: null as number | null, location: 320 as number | null },
     modesDisponibles: ['location'],
   },
 };
@@ -108,7 +109,11 @@ export function TotemModelPage() {
                     <span className="font-bold text-sm text-black">
                       {(() => {
                         const price = model.startPrice[totemMode];
-                        return price ? `À partir de ${price} HT` : 'Sur devis';
+                        if (price == null) return 'Sur devis';
+                        // Location : prix affiché tel quel ; acquisition : entrée −15 %
+                        const display =
+                          totemMode === 'location' ? price : totemCatalogEntryPrice(price);
+                        return `À partir de ${display.toLocaleString('fr-FR')}€ HT`;
                       })()}
                     </span>
                   </div>
