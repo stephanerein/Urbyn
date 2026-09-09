@@ -20,11 +20,25 @@ propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urb
 Retirée des routes, du sitemap et du script de pré-rendu.
 
 **Réalisations** (`/realisations` + `/realisations/:slug`) : portfolio de projets, données dans
-`src/app/data/realisations.ts` (tableau `REALISATIONS` — titre, catégorie, photo(s), texte).
-Ajouter une réalisation = ajouter une entrée à ce tableau, la page de détail
-(`RealisationDetailPage.tsx`) est générique et n'a pas besoin d'être dupliquée.
-⚠️ Les 3 entrées actuelles sont des **exemples génériques** ("modèle", pas de vrai projet
-client) — à remplacer par de vraies réalisations (photos + texte réels) dès que disponibles.
+`src/app/data/realisations.ts` (tableau `REALISATIONS` — titre, catégorie, photo(s), chapô,
+données clés, sections). Ajouter une réalisation = ajouter une entrée à ce tableau, la page de
+détail (`RealisationDetailPage.tsx`) est générique et n'a pas besoin d'être dupliquée. Penser à
+déclarer le nouveau slug dans `prerender.mjs` et `public/sitemap.xml`.
+
+Les textes (chapô, sections, données clés) acceptent des liens au format `[libellé](url)`,
+rendus par `src/app/components/RichText.tsx` : une URL commençant par « / » devient un lien
+interne React Router (maillage intrasite), les autres des liens externes en `target="_blank"`
+avec `rel="noopener noreferrer"`. Le balisage est retiré automatiquement de la meta description.
+
+Le tableau ne contient que des **réalisations réelles** (Monaco, Luminiscence) : les 3 entrées
+d'exemple ont été retirées, ainsi que leurs pages de détail, leurs entrées de pré-rendu et leurs
+URL de sitemap. Ne jamais y remettre de contenu « modèle » : tout ce qui est dans ce tableau est
+publié tel quel.
+
+**Marque** : le site ne doit contenir aucune référence à « Celize », y compris dans les noms de
+fichiers images (ils apparaissent dans les URL servies en production). Vérification :
+`grep -ri celize --exclude-dir=node_modules --exclude-dir=dist . | grep -v SEO_GOVERNANCE`
+doit ne rien retourner (seul ce document cite la marque, pour énoncer la règle).
 
 ---
 
@@ -58,7 +72,7 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
 | Habillage Thermique | `/habillage-thermique` | Habillage Thermique — Protection solaire & performance énergétique | Breadcrumb |
 | Réalisations (liste) | `/realisations` | Réalisations | Breadcrumb |
-| Réalisations (détail, ×3 exemples) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
+| Réalisations (détail, ×2 réelles) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
 | Contact | `/contact` | Contact | Breadcrumb |
 | Configurateur | `/definir-besoin` | Configurez votre projet | — |

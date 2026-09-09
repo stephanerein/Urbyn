@@ -10,7 +10,7 @@ import { ArrowRight, Check, Info, Package, ChevronRight } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 import { useCart } from '../../context/CartContext';
-import { imgCaissonBois80 as image_Celize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Celize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Celize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Celize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
+import { imgCaissonBois80 as image_Urbanize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Urbanize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Urbanize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Urbanize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
 import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping';
 import {
   totemCatalogEntryPrice,
@@ -40,7 +40,7 @@ const TOTEM_DATA = {
     footprint: '<1 m²',
     panelSize: '80 x 150 cm',
     panelPrice: 120,
-    image: image_Celize_caisson_bois_800_rendu3D_01,
+    image: image_Urbanize_caisson_bois_800_rendu3D_01,
     features: [
       'Structure en acier avec peinture époxy',
       'Panneaux amovibles 80x150cm',
@@ -56,7 +56,7 @@ const TOTEM_DATA = {
     footprint: '1,16 m²',
     panelSize: '120 x 150 cm',
     panelPrice: 180,
-    image: image_Celize_caisson_bois_1200_rendu3D_01,
+    image: image_Urbanize_caisson_bois_1200_rendu3D_01,
     features: [
       'Structure en acier avec peinture époxy',
       'Panneaux amovibles 120x150cm',
@@ -72,7 +72,7 @@ const TOTEM_DATA = {
     footprint: '1,5 m²',
     panelSize: '160 x 150 cm',
     panelPrice: 240,
-    image: image_Celize_caisson_bois_1600_rendu3D_01,
+    image: image_Urbanize_caisson_bois_1600_rendu3D_01,
     features: [
       'Structure en acier avec peinture époxy',
       'Panneaux amovibles 160x150cm',
@@ -88,7 +88,7 @@ const TOTEM_DATA = {
     footprint: '1,9 m²',
     panelSize: '200 x 150 cm',
     panelPrice: 300,
-    image: image_Celize_caisson_bois_2000_rendu3D_01,
+    image: image_Urbanize_caisson_bois_2000_rendu3D_01,
     features: [
       'Structure en acier avec peinture époxy',
       'Panneaux amovibles 200x150cm',

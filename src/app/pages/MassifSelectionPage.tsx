@@ -149,7 +149,8 @@ export function MassifSelectionPage() {
   const [apiProducts, setApiProducts] = useState<MassifProduct[]>([]);
   const [lastPayload, setLastPayload] = useState<object | null>(null);
 
-  const [helperOpen, setHelperOpen] = useState(false);
+  // Section « Aide au dimensionnement » ouverte par défaut à l'arrivée sur la page.
+  const [helperOpen, setHelperOpen] = useState(true);
   const [helperHeight, setHelperHeight] = useState<HelperHeight | null>(null);
   const [helperTypology, setHelperTypology] = useState<HelperTypology | null>(null);
 
