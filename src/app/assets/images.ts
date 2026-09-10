@@ -30,6 +30,10 @@ export { default as imgMonacoIriseTerrasse } from '../../imports/monaco-habillag
 // ── Réalisation Lyon — Totem Arty bois pour Luminiscence ────────────────────
 export { default as imgLuminiscenceTotemArty } from '../../imports/luminiscence-totem-arty-lyon.jpg';
 
+// ── Réalisation Toulouse — palissade JR « Inside Out » aux Abattoirs ────────
+export { default as imgJrInsideOutFace }   from '../../imports/jr-inside-out-palissade-face.jpg';
+export { default as imgJrInsideOutAerien } from '../../imports/jr-inside-out-palissade-aerien.jpg';
+
 // ── Paiement ─────────────────────────────────────────────────────────────────
 export { default as imgVisa }       from '../../imports/visa.svg';
 export { default as imgMasterCard } from '../../imports/master-card.svg';

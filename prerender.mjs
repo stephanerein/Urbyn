@@ -17,6 +17,7 @@ const ROUTES = [
   '/habillage-urbain',
   '/habillage-thermique',
   '/realisations',
+  '/realisations/jr-inside-out-palissade-abattoirs-toulouse',
   '/realisations/habillage-urbain-irise-monaco',
   '/realisations/luminiscence-totem-arty-lyon',
   '/a-propos',

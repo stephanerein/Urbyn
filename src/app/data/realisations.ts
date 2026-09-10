@@ -4,6 +4,8 @@ import {
   imgMonacoIrisePonton,
   imgMonacoIriseTerrasse,
   imgLuminiscenceTotemArty,
+  imgJrInsideOutFace,
+  imgJrInsideOutAerien,
 } from '../assets/images';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +60,52 @@ export interface Realisation {
 }
 
 export const REALISATIONS: Realisation[] = [
+  {
+    slug: 'jr-inside-out-palissade-abattoirs-toulouse',
+    title: 'JR et « Inside Out » : une palissade au service de l\'art aux Abattoirs de Toulouse',
+    category: 'Habillage Urbain — Palissade',
+    // La vue de face (paysage) sert de couverture et d'ouverture ; la vue
+    // aérienne (portrait) illustre la première section et donne l'échelle.
+    cover: imgJrInsideOutFace,
+    images: [imgJrInsideOutFace, imgJrInsideOutAerien],
+    description:
+      "Nous avons eu l'honneur d'être mécène de l'exposition « Le musée imaginaire d'Oli », " +
+      "organisée par [les Abattoirs de Toulouse](https://www.lesabattoirs.org/). Ce lieu " +
+      "culturel emblématique a aussi accueilli le projet « Inside Out » de l'artiste de " +
+      "renom [JR](https://www.jr-art.net/fr/), sur l'esplanade Daniel Cordier." +
+      "\n\n" +
+      "Dans le cadre de ce projet participatif, nous avons conçu et installé une " +
+      "[palissade](/palissade) sur mesure de 29 mètres linéaires. Réalisée en recto-verso " +
+      "et haute de 2,5 mètres, cette structure a offert un support idéal pour la création " +
+      "de la fresque. Elle répondait à la fois aux contraintes techniques et aux exigences " +
+      "esthétiques du projet.",
+    facts: [
+      { label: 'Lieu', value: 'Les Abattoirs, Toulouse' },
+      { label: 'Artiste', value: '[JR](https://www.jr-art.net/fr/)' },
+      { label: 'Palissade', value: '29 m linéaires, 2,5 m de haut' },
+      { label: 'Dates', value: '5–6 décembre 2024' },
+    ],
+    sections: [
+      {
+        title: 'Une œuvre participative ancrée dans Toulouse',
+        body:
+          "Pendant deux jours, les Toulousains ont été invités à participer activement au " +
+          "projet artistique de JR. Les jeudi 5 décembre et vendredi 6 décembre 2024, " +
+          "l'artiste a immortalisé des visages à l'aide de son camion photo, transformant " +
+          "l'espace en une véritable expérience collective et artistique.",
+      },
+      {
+        title: 'La contribution technique',
+        body:
+          "Notre expertise a permis de créer un support technique adapté à ce projet " +
+          "ambitieux. La palissade a été conçue pour s'intégrer harmonieusement dans " +
+          "l'environnement tout en offrant une surface stable et fonctionnelle pour " +
+          "l'artiste. Cette réalisation reflète notre engagement envers l'art et notre " +
+          "capacité à répondre aux exigences techniques des projets artistiques les plus " +
+          "uniques.",
+      },
+    ],
+  },
   {
     slug: 'habillage-urbain-irise-monaco',
     title: 'Un habillage urbain irisé à Monaco',
