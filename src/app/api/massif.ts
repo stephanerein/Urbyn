@@ -148,3 +148,26 @@ export interface MassifManillesResponse {
 export function fetchMassifManilles(): Promise<MassifManillesResponse> {
   return apiFetch('/api/v1/client-portal/massif/manilles')
 }
+
+export interface MassifPalette {
+  product_id: number
+  product_name: string
+  admin_sku: string
+  client_sku: string | null
+  description: string | null
+  price: number
+  currency: string
+  company_name: string | null
+  company_tva: string | null
+  poids: number | null
+}
+
+export interface MassifPaletteResponse {
+  catalog_id: number
+  catalog_path: string[]
+  palette: MassifPalette | null
+}
+
+export function fetchMassifPalette(): Promise<MassifPaletteResponse> {
+  return apiFetch('/api/v1/client-portal/massif/palette')
+}
