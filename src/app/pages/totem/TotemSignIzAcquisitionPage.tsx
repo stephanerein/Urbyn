@@ -67,7 +67,7 @@ const installationServiceSelected = (): boolean => {
 
 export function TotemSignIzAcquisitionPage() {
   const navigate = useNavigate();
-  const { addItems, items, openSidebar } = useCart();
+  const { addItems, items, closeSidebar } = useCart();
 
   const [quantity, setQuantity] = useState(1);
   const [panelsEnabled, setPanelsEnabled] = useState(false);
@@ -121,26 +121,42 @@ export function TotemSignIzAcquisitionPage() {
     const existing = localStorage.getItem('deliveryAddress');
     localStorage.setItem('deliveryAddress', JSON.stringify({ ...(existing ? JSON.parse(existing) : {}), ...deliveryData }));
 
+    const totemId = 'totem-sign-iz-acquisition'
     const batch = [
       {
-        id: 'totem-sign-iz-acquisition',
+        id: totemId,
         type: 'totem' as const,
         name: 'Totem Sign-IZ',
         price: BASE_PRICE,
         quantity,
-        details: { itemType: 'totem', format: 'sign-iz', mode: 'acquisition', basePrice: BASE_PRICE },
+        details: {
+          itemType: 'totem',
+          format: 'sign-iz',
+          mode: 'acquisition',
+          basePrice: BASE_PRICE,
+          panelSize: PANEL_SIZE,
+          panelPrice: PANEL_PRICE,
+        },
       },
       ...(panelsEnabled ? [{
-        id: 'panels-sign-iz',
+        id: `panels-for-${totemId}`,
         type: 'totem' as const,
         name: 'Panneaux imprimés laminé anti-UV',
         price: PANEL_PRICE,
         quantity: panelsQuantity,
-        details: { itemType: 'panels', format: 'sign-iz', panelSize: PANEL_SIZE, panelPrice: PANEL_PRICE },
+        details: {
+          itemType: 'panels',
+          format: 'sign-iz',
+          forTotemId: totemId,
+          forTotemName: 'Totem Sign-IZ',
+          panelSize: PANEL_SIZE,
+          panelPrice: PANEL_PRICE,
+        },
       }] : []),
     ];
     addItems(batch);
-    openSidebar();
+    closeSidebar();
+    navigate('/panier');
   };
 
   return (

@@ -22,6 +22,7 @@ import {
   type MassifProduct,
 } from '../api/massif';
 import { ApiError } from '../api/client';
+import { resolveManilleNeed } from '../lib/massifManille';
 
 type WizardStep = 'weight' | 'family' | 'dimension';
 
@@ -44,10 +45,15 @@ function productAttributes(
     }
   }
   for (const attr of product.free_attributes ?? []) {
-    if (!attr.value?.trim()) continue;
-    // Nécessaire pour matching Manille sur l'écran qty
-    if (/manille/i.test(attr.name || '')) {
-      rows.push({ label: attr.name, value: attr.value });
+    if (!attr.value?.trim() && attr.value !== '0') continue;
+    const name = attr.name || '';
+    // Manille Type, Manille Nombre, Nb de massif / palette, etc.
+    if (
+      /manille/i.test(name) ||
+      /palette/i.test(name) ||
+      /nb\s*de\s*massif/i.test(name)
+    ) {
+      rows.push({ label: name.replace(/\s+/g, ' ').trim(), value: String(attr.value).trim() });
     }
   }
   return rows;
@@ -147,7 +153,6 @@ export function MassifSelectionPage() {
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiProducts, setApiProducts] = useState<MassifProduct[]>([]);
-  const [lastPayload, setLastPayload] = useState<object | null>(null);
 
   const [helperOpen, setHelperOpen] = useState(false);
   const [helperHeight, setHelperHeight] = useState<HelperHeight | null>(null);
@@ -230,7 +235,6 @@ export function MassifSelectionPage() {
 
     const filter = weightFilterFromBand(band);
     const payload = { catalog_id: catalog.id, ...filter };
-    setLastPayload(payload);
     setApiLoading(true);
     try {
       const data = await fetchMassifProducts(payload);
@@ -264,6 +268,12 @@ export function MassifSelectionPage() {
     if (!selectedCatalog || !selectedProduct) return;
     const familyType = catalogToMassifType(selectedCatalog) ?? 'cubique';
     const defaultOption: MassifOption = familyType === 'cubique' ? 'reservation' : 'aucun';
+    const attributes = productAttributes(selectedProduct, selectedCatalog.id);
+    const manilleNeed = resolveManilleNeed({
+      attributes,
+      free_attributes: selectedProduct.free_attributes,
+      mandatory_attributes: selectedProduct.mandatory_attributes,
+    });
     const config = {
       items: [
         {
@@ -275,7 +285,9 @@ export function MassifSelectionPage() {
           product: selectedProduct,
           catalogId: selectedCatalog.id,
           catalogName: selectedCatalog.name,
-          attributes: productAttributes(selectedProduct, selectedCatalog.id),
+          attributes,
+          manilleType: manilleNeed?.type ?? null,
+          manilleNombre: manilleNeed?.qty ?? null,
           fromApi: true,
         },
       ],
@@ -695,17 +707,6 @@ export function MassifSelectionPage() {
                     );
                   })}
                 </div>
-              )}
-
-              {lastPayload && !apiLoading && (
-                <details className="mt-6 text-xs text-gray-400">
-                  <summary className="cursor-pointer hover:text-gray-600">
-                    Payload envoyé à l&apos;API
-                  </summary>
-                  <pre className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-auto text-[11px]">
-                    {JSON.stringify(lastPayload, null, 2)}
-                  </pre>
-                </details>
               )}
 
               <Button
