@@ -1,4 +1,4 @@
-import { imgCaissonBois80 as image_Celize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Celize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Celize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Celize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
+import { imgCaissonBois80 as image_Urbanize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Urbanize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Urbanize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Urbanize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../../components/ui/card';
@@ -15,7 +15,7 @@ const CAISSON_FORMATS = {
     dimensions: 'L 88,4 cm x H 210,5 cm x P 90 cm',
     weight: '215 kg',
     footprint: '<1 m²',
-    image: image_Celize_caisson_bois_800_rendu3D_01
+    image: image_Urbanize_caisson_bois_800_rendu3D_01
   },
   '120': {
     label: 'Caisson Bois 120',
@@ -24,7 +24,7 @@ const CAISSON_FORMATS = {
     weight: '325 kg',
     footprint: '1,16 m²',
     popular: true,
-    image: image_Celize_caisson_bois_1200_rendu3D_01
+    image: image_Urbanize_caisson_bois_1200_rendu3D_01
   },
   '160': {
     label: 'Caisson Bois 160',
@@ -32,7 +32,7 @@ const CAISSON_FORMATS = {
     dimensions: 'L 169,2 cm x H 210,5 cm x P 90 cm',
     weight: '432 kg',
     footprint: '1,5 m²',
-    image: image_Celize_caisson_bois_1600_rendu3D_01
+    image: image_Urbanize_caisson_bois_1600_rendu3D_01
   },
   '200': {
     label: 'Caisson Bois 200',
@@ -40,7 +40,7 @@ const CAISSON_FORMATS = {
     dimensions: 'L 209,8 cm x H 210,5 cm x P 90 cm',
     weight: '495 kg',
     footprint: '1,9 m²',
-    image: image_Celize_caisson_bois_2000_rendu3D_01
+    image: image_Urbanize_caisson_bois_2000_rendu3D_01
   }
 };
 

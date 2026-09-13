@@ -1,4 +1,26 @@
 {
+  "redirects": [
+    {
+      "source": "/realisations/totem-sign-iz-salon-professionnel",
+      "destination": "/realisations",
+      "statusCode": 301
+    },
+    {
+      "source": "/realisations/palissade-chantier-habillage-graphique",
+      "destination": "/realisations",
+      "statusCode": 301
+    },
+    {
+      "source": "/realisations/massif-beton-securisation-evenement",
+      "destination": "/realisations",
+      "statusCode": 301
+    },
+    {
+      "source": "/urbyn",
+      "destination": "/",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
