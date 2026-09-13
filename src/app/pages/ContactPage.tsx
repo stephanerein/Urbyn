@@ -37,7 +37,6 @@ export function ContactPage() {
         <Button
           variant="outline"
           onClick={() => navigate('/')}
-          className="border-2 border-black"
         >
           ← Retour à l'accueil
         </Button>
@@ -50,7 +49,7 @@ export function ContactPage() {
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Formulaire */}
-        <Card className="border-2 border-black">
+        <Card className="shadow-sm">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-6 text-black">Envoyez-nous un message</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,7 +60,7 @@ export function ContactPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="border-2 border-black"
+                  className="border-gray-300"
                   required
                 />
               </div>
@@ -73,7 +72,7 @@ export function ContactPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="border-2 border-black"
+                  className="border-gray-300"
                   required
                 />
               </div>
@@ -85,7 +84,7 @@ export function ContactPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="border-2 border-black"
+                  className="border-gray-300"
                   required
                 />
               </div>
@@ -97,7 +96,7 @@ export function ContactPage() {
                   type="text"
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="border-2 border-black"
+                  className="border-gray-300"
                   required
                 />
               </div>
@@ -108,7 +107,7 @@ export function ContactPage() {
                   id="message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full min-h-32 p-3 border-2 border-black rounded-md"
+                  className="w-full min-h-32 p-3 border border-gray-300 rounded-md bg-input-background outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                   required
                 />
               </div>
@@ -122,7 +121,7 @@ export function ContactPage() {
 
         {/* Informations de contact */}
         <div className="space-y-6">
-          <Card className="border-2 border-black">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <Mail className="w-6 h-6 text-black mt-1" />
@@ -134,7 +133,7 @@ export function ContactPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-black">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <Phone className="w-6 h-6 text-black mt-1" />
@@ -146,7 +145,7 @@ export function ContactPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-black">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-black mt-1" />
@@ -163,7 +162,7 @@ export function ContactPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-black">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-black mt-1" />
