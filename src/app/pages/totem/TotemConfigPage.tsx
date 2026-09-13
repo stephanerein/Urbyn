@@ -13,8 +13,6 @@ import { useCart } from '../../context/CartContext';
 import { imgCaissonBois80 as image_Celize_caisson_bois_800_rendu3D_01, imgCaissonBois120 as image_Celize_caisson_bois_1200_rendu3D_01, imgCaissonBois160 as image_Celize_caisson_bois_1600_rendu3D_01, imgCaissonBois200 as image_Celize_caisson_bois_2000_rendu3D_01 } from '../../assets/images';
 import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping';
 import {
-  totemCatalogEntryPrice,
-  totemUnitPriceAfterDiscount,
   totemVolumeDiscountAmount,
   totemVolumeDiscountBanner,
 } from '../../lib/totemDiscount';
@@ -249,12 +247,7 @@ export function TotemConfigPage() {
             <h1 className="text-3xl font-bold mb-2 text-black">{formatData.label}</h1>
             <div className="mb-6">
               <p className="text-base font-semibold text-black">
-                {totemCatalogEntryPrice(formatData.price)}€ HT
-              </p>
-              
-              <p className="text-sm text-black mt-1">
-                Catalogue {formatData.price}€ · Dès 5 : {totemUnitPriceAfterDiscount(formatData.price, 5)}€
-                (−10%) · Dès 10 : {totemUnitPriceAfterDiscount(formatData.price, 10)}€ (−15%)
+                {formatData.price}€ HT
               </p>
             </div>
 

@@ -15,7 +15,6 @@ import { SEOMeta, productSchema, breadcrumbSchema } from '../../components/SEOMe
 import { FicheTechniqueButton } from '../../components/FicheTechniqueButton';
 import { TOTEM_INSTALLATION_EUR, isTotemInstallationSelected } from '../../lib/massifShipping';
 import {
-  totemCatalogEntryPrice,
   totemUnitPriceAfterDiscount,
   totemVolumeDiscountBanner,
 } from '../../lib/totemDiscount';
@@ -195,11 +194,7 @@ export function TotemSignIzAcquisitionPage() {
             <div>
               <h1 className="text-3xl font-bold mb-1 text-black">Totem Sign-IZ</h1>
               <p className="text-base font-semibold text-black">
-                {totemCatalogEntryPrice(BASE_PRICE)}€ HT
-              </p>
-              <p className="text-sm text-black mt-1">
-                Catalogue {BASE_PRICE}€ · Dès 5 : {totemUnitPriceAfterDiscount(BASE_PRICE, 5)}€ (−10%)
-                · Dès 10 : {totemUnitPriceAfterDiscount(BASE_PRICE, 10)}€ (−15%)
+                {BASE_PRICE}€ HT
               </p>
             </div>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
