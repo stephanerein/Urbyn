@@ -45,8 +45,6 @@ import {
   resolveTotemRoadDistanceKm,
 } from '../../lib/totemShipping'
 import {
-  totemCatalogEntryPrice,
-  totemUnitPriceAfterDiscount,
   totemVolumeDiscountAmount,
   totemVolumeDiscountBanner,
   totemVolumeDiscountPercentLabel,
@@ -368,12 +366,7 @@ export function TotemProductDetailPage() {
                     {product.product_name.replace(/^totem\s+/i, '')}
                   </h1>
                   <p className="text-base font-semibold text-black">
-                    {formatPriceEur(totemCatalogEntryPrice(product.price))}€ HT
-                  </p>
-                  <p className="text-sm text-black mt-1">
-                    Prix catalogue : {formatPriceEur(product.price)}€ HT · Dès 5 (−10%) :{' '}
-                    {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 5))}€ · Dès 10
-                    (−15%) : {formatPriceEur(totemUnitPriceAfterDiscount(product.price, 10))}€
+                    {formatPriceEur(product.price)}€ HT
                   </p>
                 </div>
                 <span className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full capitalize">
