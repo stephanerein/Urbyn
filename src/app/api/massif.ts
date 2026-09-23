@@ -99,17 +99,19 @@ function normalizeMassifOffer(offer?: string | null): MassifOffer {
 
 /** Lit l'offre massif courante (URL / session) — défaut Acquisition. */
 export function resolveMassifOfferFromSession(): MassifOffer {
+  if (typeof window === 'undefined') return 'Acquisition'
   try {
-    const fromSession = (sessionStorage.getItem('massifMode') || '').trim().toLowerCase()
+    const store = window.sessionStorage
+    const fromSession = (store.getItem('massifMode') || '').trim().toLowerCase()
     if (fromSession === 'location') return 'Location'
-    const raw = sessionStorage.getItem('servicesSpecifiques')
+    const raw = store.getItem('servicesSpecifiques')
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, string[]>
       const services = parsed['massif-beton'] ?? []
       if (services.includes('location')) return 'Location'
     }
   } catch {
-    /* ignore */
+    /* SSR / private mode */
   }
   return 'Acquisition'
 }
