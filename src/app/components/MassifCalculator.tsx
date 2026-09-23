@@ -24,6 +24,9 @@ import {
   maxManilleQtyByType,
   normalizeManilleType,
   resolveManilleNeed,
+  consolidateManilleNeeds,
+  findCoveringManilleType,
+  manilleCapacityCovers,
 } from '../lib/massifManille';
 import {
   MASSIF_PALETTE_CART_ID,
@@ -301,14 +304,22 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
   useEffect(() => {
     let cancelled = false;
-    fetchMassifManilles()
+    const offer = (() => {
+      try {
+        const mode = (sessionStorage.getItem('massifMode') || '').toLowerCase();
+        return mode === 'location' ? 'Location' : 'Acquisition';
+      } catch {
+        return 'Acquisition';
+      }
+    })();
+    fetchMassifManilles({ offer })
       .then((res) => {
         if (!cancelled) setManilles(res.manilles ?? []);
       })
       .catch(() => {
         if (!cancelled) setManilles([]);
       });
-    fetchMassifPalette()
+    fetchMassifPalette({ offer })
       .then((res) => {
         if (!cancelled) setPaletteProduct(res.palette ?? null);
       })
@@ -408,26 +419,48 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   const resolveManilleForItem = (it: ItemState): MassifManille | null => {
     const t = manilleTypeOfItem(it);
     if (!t) return null;
-    return manilleByType.get(normalizeManilleType(t)) ?? null;
+    // Préférer une manille déjà au panier / en catalogue qui couvre la capacité
+    const availableTypes = [
+      ...cartManilleTypes,
+      ...manilles.map((m) => m.manille_type),
+    ];
+    const coverType = findCoveringManilleType(t, availableTypes) ?? t;
+    return (
+      manilleByType.get(normalizeManilleType(coverType)) ??
+      manilleByType.get(normalizeManilleType(t)) ??
+      null
+    );
   };
 
   /** Manille cochée pour ce massif (panier mutualisé OU choix local). */
   const isManilleChecked = (it: ItemState): boolean => {
+    const needType = manilleTypeOfItem(it);
+    if (!needType) return false;
+    // Déjà couvert par une manille panier de capacité ≥
+    for (const cartType of cartManilleTypes) {
+      if (manilleCapacityCovers(cartType, needType)) return true;
+    }
     const manille = resolveManilleForItem(it);
     if (!manille) return false;
     const key = normalizeManilleType(manille.manille_type);
-    if (cartManilleTypes.has(key)) return true;
-    return Boolean(wantedManilleTypes[key]);
+    return Boolean(wantedManilleTypes[key] || wantedManilleTypes[normalizeManilleType(needType)]);
   };
 
   const toggleManille = (it: ItemState, nextChecked: boolean) => {
+    const needType = manilleTypeOfItem(it);
+    if (!needType) return;
     const manille = resolveManilleForItem(it);
     if (!manille) return;
     const key = normalizeManilleType(manille.manille_type);
+    const needKey = normalizeManilleType(needType);
     const cartId = manilleCartId(manille.manille_type);
 
     if (nextChecked) {
-      setWantedManilleTypes((prev) => ({ ...prev, [key]: true }));
+      // Si déjà couvert par une manille plus forte au panier → rien à ajouter
+      for (const cartType of cartManilleTypes) {
+        if (manilleCapacityCovers(cartType, needType)) return;
+      }
+      setWantedManilleTypes((prev) => ({ ...prev, [key]: true, [needKey]: true }));
       return;
     }
 
@@ -435,9 +468,17 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
     setWantedManilleTypes((prev) => {
       const copy = { ...prev };
       delete copy[key];
+      delete copy[needKey];
       return copy;
     });
-    if (cartItems.some((c) => c.id === cartId || (c.details?.itemType === 'manille' && manilleTypesMatch(String(c.details?.manilleType || ''), manille.manille_type)))) {
+    if (
+      cartItems.some(
+        (c) =>
+          c.id === cartId ||
+          (c.details?.itemType === 'manille' &&
+            manilleTypesMatch(String(c.details?.manilleType || ''), manille.manille_type)),
+      )
+    ) {
       removeCartItem(cartId);
     }
   };
@@ -506,7 +547,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
     return map;
   }, [cartItems]);
 
-  /** Max par type = panier massifs + sélection courante (pas de somme). */
+  /** Max par type = panier massifs + sélection courante, consolidé par capacité. */
   const combinedManilleNeeds = useMemo(() => {
     const lines: Array<{
       manilleType?: string | null;
@@ -532,10 +573,15 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
         mandatory_attributes: it.product?.mandatory_attributes,
       });
     }
-    return maxManilleQtyByType(lines);
-  }, [cartItems, completedItems]);
+    const raw = maxManilleQtyByType(lines);
+    const coverTypes = [
+      ...cartManilleTypes,
+      ...Object.keys(wantedManilleTypes).filter((k) => wantedManilleTypes[k]),
+    ];
+    return consolidateManilleNeeds([...raw.values()], coverTypes);
+  }, [cartItems, completedItems, cartManilleTypes, wantedManilleTypes]);
 
-  /** Manilles cochées sur cet écran, 1 ligne par type (qty = max mutualisé). */
+  /** Manilles cochées sur cet écran, 1 ligne par type consolidé (qty = max mutualisé). */
   const selectedManilles = useMemo(() => {
     const map = new Map<string, { manille: MassifManille; qty: number }>();
     for (const it of completedItems) {

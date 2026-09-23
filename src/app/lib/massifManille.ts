@@ -21,6 +21,32 @@ export function manilleTypesMatch(
   return Boolean(na && nb && na === nb)
 }
 
+/**
+ * Capacité en tonnes depuis un type manille (« 2,5t », « 1.3 T », « Manille 2,5 tonnes »).
+ */
+export function parseManilleCapacityTons(type: string | null | undefined): number | null {
+  const raw = (type || '').trim().toLowerCase().replace(/\s+/g, '')
+  if (!raw) return null
+  const m =
+    raw.match(/(\d+(?:[.,]\d+)?)t(?:onnes?)?/) ||
+    raw.match(/^(\d+(?:[.,]\d+)?)$/)
+  if (!m) return null
+  const n = Number(String(m[1]).replace(',', '.'))
+  return Number.isFinite(n) ? n : null
+}
+
+/** True si la manille `haveType` peut servir à la place de `needType` (capacité ≥). */
+export function manilleCapacityCovers(
+  haveType: string | null | undefined,
+  needType: string | null | undefined,
+): boolean {
+  if (manilleTypesMatch(haveType, needType)) return true
+  const have = parseManilleCapacityTons(haveType)
+  const need = parseManilleCapacityTons(needType)
+  if (have == null || need == null) return false
+  return have + 1e-9 >= need
+}
+
 type AttrBag = { name: string; value: string }
 
 function collectAttrBags(sources: {
@@ -172,4 +198,85 @@ export function maxManilleQtyByType(
     }
   }
   return map
+}
+
+/**
+ * Consolide les besoins manille : une capacité déjà présente (panier / sélection)
+ * couvre les besoins plus faibles → pas d'achat de manille plus petite.
+ *
+ * Ex. panier a 2,5t → besoin 1,3t absorbé dans 2,5t (qty = max).
+ */
+export function consolidateManilleNeeds(
+  needs: Array<{ type: string; qty: number }>,
+  coverTypes: string[] = [],
+): Map<string, { type: string; qty: number }> {
+  const raw = maxManilleQtyByType(needs.map((n) => ({ type: n.type, qty: n.qty })))
+  if (raw.size === 0) return raw
+
+  const covers = coverTypes
+    .map((t) => ({
+      type: t,
+      key: normalizeManilleType(t),
+      cap: parseManilleCapacityTons(t) ?? -1,
+    }))
+    .filter((c) => c.key)
+    .sort((a, b) => b.cap - a.cap)
+
+  // Les besoins eux-mêmes peuvent se couvrir (ex. 2,5t + 1,3t → 2,5t seul)
+  const needCovers = [...raw.values()]
+    .map((n) => ({
+      type: n.type,
+      key: normalizeManilleType(n.type),
+      cap: parseManilleCapacityTons(n.type) ?? -1,
+    }))
+    .sort((a, b) => b.cap - a.cap)
+
+  const available = [...covers]
+  for (const n of needCovers) {
+    if (!available.some((c) => c.key === n.key)) available.push(n)
+  }
+  available.sort((a, b) => b.cap - a.cap)
+
+  const out = new Map<string, { type: string; qty: number }>()
+  for (const need of raw.values()) {
+    const needCap = parseManilleCapacityTons(need.type) ?? -1
+    // Plus petite capacité disponible qui couvre encore le besoin
+    const covering =
+      available
+        .filter((c) => c.cap + 1e-9 >= needCap)
+        .sort((a, b) => a.cap - b.cap)[0] ?? null
+
+    const targetType = covering?.type ?? need.type
+    const targetKey = normalizeManilleType(targetType)
+    const prev = out.get(targetKey)
+    if (!prev || need.qty > prev.qty) {
+      out.set(targetKey, { type: targetType, qty: need.qty })
+    }
+  }
+  return out
+}
+
+/** Parmi des types disponibles, celui qui couvre `needType` (préfère le plus petit suffisant). */
+export function findCoveringManilleType(
+  needType: string | null | undefined,
+  availableTypes: string[],
+): string | null {
+  if (!needType) return null
+  const needCap = parseManilleCapacityTons(needType)
+  const scored = availableTypes
+    .map((t) => ({
+      type: t,
+      cap: parseManilleCapacityTons(t),
+      exact: manilleTypesMatch(t, needType),
+    }))
+    .filter((x) => {
+      if (x.exact) return true
+      if (needCap == null || x.cap == null) return false
+      return x.cap + 1e-9 >= needCap
+    })
+    .sort((a, b) => {
+      if (a.exact !== b.exact) return a.exact ? -1 : 1
+      return (a.cap ?? 0) - (b.cap ?? 0)
+    })
+  return scored[0]?.type ?? null
 }

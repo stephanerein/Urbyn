@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { fetchCartSnapshot, saveCartSnapshot } from '../api/cart'
 import { isBuyer } from '../lib/session'
-import { fetchMassifPalette, type MassifPalette } from '../api/massif'
+import { fetchMassifPalette, resolveMassifOfferFromSession, type MassifPalette } from '../api/massif'
 import {
   MASSIF_PALETTE_CART_ID,
   extractNbMassifPerPalette,
@@ -19,6 +19,8 @@ import {
   maxManilleQtyByType,
   normalizeManilleType,
   resolveManilleNeed,
+  consolidateManilleNeeds,
+  manilleCapacityCovers,
 } from '../lib/massifManille'
 import { maxPanelsForTotemQty, panelsCartId } from '../lib/totemPanels'
 import { useAuth } from './AuthContext'
@@ -175,12 +177,13 @@ function syncMassifPaletteLine(
 
 /**
  * Resynchronise les quantités manille déjà présentes dans le panier :
- * qty = max(Manille Nombre) parmi tous les massifs pour ce type.
- * Retire la ligne si plus aucun massif ne nécessite ce type.
+ * - qty = max(Manille Nombre) parmi les massifs couverts par ce type
+ * - une manille plus forte absorbe les besoins plus faibles (2,5t couvre 1,3t)
+ * - retire les lignes devenues inutiles
  */
 function syncMassifManilleLines(items: CartItem[]): CartItem[] {
   const massifs = items.filter(isMassifProductCartLine)
-  const needs = maxManilleQtyByType(
+  const rawNeeds = maxManilleQtyByType(
     massifs.map((m) => ({
       manilleType: m.details?.manilleType,
       manilleNombre: m.details?.manilleNombre,
@@ -188,8 +191,16 @@ function syncMassifManilleLines(items: CartItem[]): CartItem[] {
     })),
   )
 
+  const cartTypes = items
+    .filter((i) => i.details?.itemType === 'manille')
+    .map((i) => String(i.details?.manilleType || ''))
+    .filter(Boolean)
+
+  const needs = consolidateManilleNeeds([...rawNeeds.values()], cartTypes)
+
   let changed = false
   const next: CartItem[] = []
+
   for (const item of items) {
     if (item.details?.itemType !== 'manille') {
       next.push(item)
@@ -198,6 +209,7 @@ function syncMassifManilleLines(items: CartItem[]): CartItem[] {
     const key = normalizeManilleType(String(item.details?.manilleType || ''))
     const need = key ? needs.get(key) : undefined
     if (!need || need.qty <= 0) {
+      // Absorbé par une manille plus forte → retirer
       changed = true
       continue
     }
@@ -217,6 +229,9 @@ function syncMassifManilleLines(items: CartItem[]): CartItem[] {
       },
     })
   }
+
+  // Si un besoin consolidé n'a plus de ligne panier (ex. upgrade 1,3→2,5 déjà présent),
+  // l'ajout initial reste via la config massif / checkbox.
   return changed ? next : items
 }
 
@@ -460,7 +475,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Produit Palette massif (pour upsert ligne mutualisée)
   useEffect(() => {
     let cancelled = false
-    fetchMassifPalette()
+    fetchMassifPalette({ offer: resolveMassifOfferFromSession() })
       .then((res) => {
         if (cancelled || !res.palette) return
         paletteTemplateRef.current = res.palette

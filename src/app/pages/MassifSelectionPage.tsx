@@ -1,6 +1,6 @@
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ArrowLeft, ArrowRight, Check, Loader2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -19,6 +19,7 @@ import {
   fetchMassifProducts,
   fetchMassifWeightBands,
   type MassifLeafCatalog,
+  type MassifOffer,
   type MassifProduct,
 } from '../api/massif';
 import { ApiError } from '../api/client';
@@ -139,6 +140,28 @@ function getMassifRecommendation(height: HelperHeight, typology: HelperTypology)
 // ── Composant ─────────────────────────────────────────────────────────────────
 export function MassifSelectionPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const massifOffer: MassifOffer = useMemo(() => {
+    const fromQuery = (searchParams.get('offer') || '').trim().toLowerCase();
+    if (fromQuery === 'location') return 'Location';
+    if (fromQuery === 'acquisition' || fromQuery === 'aquisition') return 'Acquisition';
+
+    const fromSession = (sessionStorage.getItem('massifMode') || '').trim().toLowerCase();
+    if (fromSession === 'location') return 'Location';
+
+    try {
+      const raw = sessionStorage.getItem('servicesSpecifiques');
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string[]>;
+        const services = parsed['massif-beton'] ?? [];
+        if (services.includes('location')) return 'Location';
+      }
+    } catch {
+      /* ignore */
+    }
+    return 'Acquisition';
+  }, [searchParams]);
 
   const [step, setStep] = useState<WizardStep>('weight');
   const [selectedBandId, setSelectedBandId] = useState<string | null>(null);
@@ -174,7 +197,7 @@ export function MassifSelectionPage() {
   // Charge les fourchettes de poids réellement peuplées après import catalogue
   useEffect(() => {
     let cancelled = false;
-    fetchMassifWeightBands()
+    fetchMassifWeightBands({ offer: massifOffer })
       .then((data) => {
         if (cancelled) return;
         const keys = new Set(
@@ -190,7 +213,7 @@ export function MassifSelectionPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [massifOffer]);
 
   // Familles (feuilles) filtrées par le poids sélectionné
   useEffect(() => {
@@ -202,7 +225,7 @@ export function MassifSelectionPage() {
     setCatalogsLoading(true);
     setCatalogsError(null);
     const filter = weightFilterFromBand(selectedBand);
-    fetchMassifLeafCatalogs(filter)
+    fetchMassifLeafCatalogs({ ...filter, offer: massifOffer })
       .then((data) => {
         if (!cancelled) setCatalogs(data.catalogs ?? []);
       })
@@ -219,7 +242,7 @@ export function MassifSelectionPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedBand]);
+  }, [selectedBand, massifOffer]);
 
   const handleCatalogSelect = async (
     catalog: MassifLeafCatalog,
@@ -235,7 +258,7 @@ export function MassifSelectionPage() {
     setStep('dimension');
 
     const filter = weightFilterFromBand(band);
-    const payload = { catalog_id: catalog.id, ...filter };
+    const payload = { catalog_id: catalog.id, ...filter, offer: massifOffer };
     setApiLoading(true);
     try {
       const data = await fetchMassifProducts(payload);
@@ -276,6 +299,7 @@ export function MassifSelectionPage() {
       mandatory_attributes: selectedProduct.mandatory_attributes,
     });
     const config = {
+      offer: massifOffer,
       items: [
         {
           id: `massif-${familyType}-${selectedProduct.product_id}`,
@@ -529,7 +553,7 @@ export function MassifSelectionPage() {
               {catalogsLoading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
                   <Loader2 className="w-8 h-8 animate-spin text-black" />
-                  <p className="text-sm">Chargement des catalogues Massif Type…</p>
+                  <p className="text-sm">Chargement des catalogues Massif…</p>
                 </div>
               )}
 
@@ -545,7 +569,7 @@ export function MassifSelectionPage() {
 
               {!catalogsLoading && !catalogsError && catalogs.length === 0 && (
                 <div className="text-center py-12 text-gray-500 border border-dashed border-gray-200 rounded-xl">
-                  <p className="text-sm">Aucun catalogue feuille sous « Massif Type ».</p>
+                  <p className="text-sm">Aucun catalogue feuille sous « Massif / {massifOffer} ».</p>
                 </div>
               )}
 
