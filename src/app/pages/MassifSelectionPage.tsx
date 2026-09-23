@@ -21,6 +21,7 @@ import {
   type MassifLeafCatalog,
   type MassifOffer,
   type MassifProduct,
+  resolveMassifOfferFromSession,
 } from '../api/massif';
 import { ApiError } from '../api/client';
 import { resolveManilleNeed } from '../lib/massifManille';
@@ -146,21 +147,7 @@ export function MassifSelectionPage() {
     const fromQuery = (searchParams.get('offer') || '').trim().toLowerCase();
     if (fromQuery === 'location') return 'Location';
     if (fromQuery === 'acquisition' || fromQuery === 'aquisition') return 'Acquisition';
-
-    const fromSession = (sessionStorage.getItem('massifMode') || '').trim().toLowerCase();
-    if (fromSession === 'location') return 'Location';
-
-    try {
-      const raw = sessionStorage.getItem('servicesSpecifiques');
-      if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, string[]>;
-        const services = parsed['massif-beton'] ?? [];
-        if (services.includes('location')) return 'Location';
-      }
-    } catch {
-      /* ignore */
-    }
-    return 'Acquisition';
+    return resolveMassifOfferFromSession();
   }, [searchParams]);
 
   const [step, setStep] = useState<WizardStep>('weight');

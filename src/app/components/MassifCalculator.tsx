@@ -33,7 +33,7 @@ import {
   extractNbMassifPerPalette,
   totalPalettesForMassifs,
 } from '../lib/massifPalette';
-import { fetchMassifManilles, fetchMassifPalette, type MassifManille, type MassifPalette } from '../api/massif';
+import { fetchMassifManilles, fetchMassifPalette, resolveMassifOfferFromSession, type MassifManille, type MassifPalette } from '../api/massif';
 import massifImg from 'figma:asset/massif-beton-cubique.png';
 import massifLegoImg from 'figma:asset/massif-beton-lego.png';
 
@@ -304,14 +304,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
   useEffect(() => {
     let cancelled = false;
-    const offer = (() => {
-      try {
-        const mode = (sessionStorage.getItem('massifMode') || '').toLowerCase();
-        return mode === 'location' ? 'Location' : 'Acquisition';
-      } catch {
-        return 'Acquisition';
-      }
-    })();
+    const offer = resolveMassifOfferFromSession();
     fetchMassifManilles({ offer })
       .then((res) => {
         if (!cancelled) setManilles(res.manilles ?? []);
