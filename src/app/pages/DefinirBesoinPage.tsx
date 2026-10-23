@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { Card, CardContent } from '../components/ui/card';
 import type { LucideIcon } from 'lucide-react';
-import { Signpost, HardHat, Box, Wind, FileText, Building2, LayoutGrid, PanelTop, Umbrella, Sparkles, CloudSun } from 'lucide-react';
+import { Signpost, UtilityPole, HardHat, Box, Wind, FileText, Building2, LayoutGrid, PanelTop, Umbrella, Sparkles, CloudSun } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import palissadeImg from 'figma:asset/palissade-bois.png';
 import totemImg from 'figma:asset/totem-urbain.png';
@@ -19,7 +19,7 @@ interface ProductCard {
   title: string;
   description: string;
   icon: LucideIcon;
-  image: string;
+  image?: string;
 }
 
 export function DefinirBesoinPage() {
@@ -40,6 +40,12 @@ export function DefinirBesoinPage() {
       description: 'Signalétique verticale pour expositions',
       icon: Signpost,
       image: totemImg
+    },
+    {
+      id: 'poteau',
+      title: 'Poteau',
+      description: "Support d'éclairage, de caméras de sécurité et de câbles aériens",
+      icon: UtilityPole
     }
   ];
 
@@ -150,21 +156,26 @@ export function DefinirBesoinPage() {
           <p className="text-black text-xs mb-4 leading-tight">
             {product.description}
           </p>
-          <div className="relative h-32 overflow-hidden rounded-lg">
-            <ImageWithFallback
-              src={product.image}
-              alt={product.title}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-          </div>
+          {product.image && (
+            <div className="relative h-32 overflow-hidden rounded-lg">
+              <ImageWithFallback
+                src={product.image}
+                alt={product.title}
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     );
   };
 
   const handleProductSelect = (productId: string) => {
-    if (productId === 'echafaudage' || productId === 'facade') {
-      const libelle = productId === 'echafaudage' ? "L'habillage d'échafaudage" : "L'habillage de façade";
+    if (productId === 'echafaudage' || productId === 'facade' || productId === 'poteau') {
+      const libelle =
+        productId === 'echafaudage' ? "L'habillage d'échafaudage"
+        : productId === 'facade' ? "L'habillage de façade"
+        : 'Le poteau';
       toast.info("Service bientôt disponible", {
         description: `${libelle} est un service sur mesure. Contactez notre bureau d'étude via le chat pour plus d'informations.`
       });
