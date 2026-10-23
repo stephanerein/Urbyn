@@ -10,6 +10,9 @@ import palissadeImg from 'figma:asset/palissade-bois.png';
 import totemImg from 'figma:asset/totem-urbain.png';
 import massifImg from 'figma:asset/massif-beton-cubique.png';
 import echafaudageImg from 'figma:asset/echafaudage.png';
+import ombrageFacadeImg from 'figma:asset/solution-ombrage-facade.jpeg';
+import ombragePatioImg from 'figma:asset/solution-ombrage-patio.jpeg';
+import cielDeRueImg from 'figma:asset/ciel-de-rue.jpg';
 
 interface ProductCard {
   id: string;
@@ -89,26 +92,29 @@ export function DefinirBesoinPage() {
   ];
 
   // Solutions d'ombrage : pas encore de catalogue ni de tarif en ligne, elles
-  // sont chiffrées sur mesure. Les cartes n'ont pas de visuel tant que nous
-  // n'avons pas de photos des produits.
+  // sont chiffrées sur mesure. Les cartes sans photo disponible n'affichent
+  // que leur icône.
   const ensembleOmbrage = [
     {
       id: 'ombrage-facade',
       title: "Solution d'ombrage pour façade",
       description: 'Réduction de la chaleur reçue par le bâti',
-      icon: PanelTop
+      icon: PanelTop,
+      image: ombrageFacadeImg
     },
     {
       id: 'ombrage-patio',
       title: "Solution d'ombrage pour patio",
       description: 'Réduction de la chaleur reçue par les patios',
-      icon: Umbrella
+      icon: Umbrella,
+      image: ombragePatioImg
     },
     {
       id: 'ciel-de-rue',
       title: 'Ciel de Rue',
-      description: 'Ombrage urbain pour rendre un passage de rue agréable',
-      icon: CloudSun
+      description: 'Ombrage urbain pour rendre un passage de rue agréable sous la chaleur du soleil',
+      icon: CloudSun,
+      image: cielDeRueImg
     },
     {
       id: 'film-solaire',
@@ -245,6 +251,15 @@ export function DefinirBesoinPage() {
                         <p className="text-black text-xs leading-tight">
                           {solution.description}
                         </p>
+                      )}
+                      {'image' in solution && solution.image && (
+                        <div className="relative h-32 overflow-hidden rounded-lg mt-4">
+                          <ImageWithFallback
+                            src={solution.image}
+                            alt={solution.title}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                        </div>
                       )}
                     </CardContent>
                   </Card>
