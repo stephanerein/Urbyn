@@ -98,14 +98,14 @@ export function MentionsLegalesPage() {
               et structures extérieures ;
             </li>
             <li>
-              <strong>Habillage Thermique</strong> : toiles de protection pour façades, toiles de
-              protection pour patios, films solaires pour vitrages.
+              <strong>Solutions d'ombrage</strong> : toiles d'ombrage pour façades, toiles d'ombrage
+              pour patios, Ciel de Rue, films solaires pour vitrages.
             </li>
           </ul>
           <p className="mt-4">
             Le Site donne également accès à <strong>Urbyn</strong>, la plateforme en ligne
             d'Atelier Urbanize permettant d'obtenir une estimation instantanée pour des produits
-            relevant de l'Habillage Urbain comme de l'Habillage Thermique. L'Éditeur s'efforce de fournir des informations
+            relevant de l'Habillage Urbain comme des Solutions d'ombrage. L'Éditeur s'efforce de fournir des informations
             aussi précises que possible, mais ne pourra être tenu responsable des omissions,
             inexactitudes ou carences dans la mise à jour, qu'elles soient de son fait ou du fait
             de tiers partenaires.

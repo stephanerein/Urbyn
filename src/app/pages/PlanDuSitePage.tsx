@@ -26,7 +26,7 @@ const SECTIONS: SiteSection[] = [
     title: 'Expertise',
     links: [
       { label: 'Habillage Urbain', to: '/habillage-urbain' },
-      { label: 'Habillage Thermique', to: '/habillage-thermique' },
+      { label: "Solutions d'ombrage", to: '/solutions-ombrage' },
     ],
   },
   {
@@ -60,7 +60,7 @@ export function PlanDuSitePage() {
     <>
       <SEOMeta
         title="Plan du site"
-        description="Retrouvez toutes les pages du site Atelier Urbanize : Habillage Urbain, Habillage Thermique, configurateur Urbyn et informations légales."
+        description="Retrouvez toutes les pages du site Atelier Urbanize : Habillage Urbain, Solutions d'ombrage, configurateur Urbyn et informations légales."
         url="/plan-du-site"
         jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Plan du site', url: '/plan-du-site' }])}
       />

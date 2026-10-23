@@ -15,7 +15,7 @@ import { render } from './dist-server/entry-server.js';
 const ROUTES = [
   '/',
   '/habillage-urbain',
-  '/habillage-thermique',
+  '/solutions-ombrage',
   '/realisations',
   '/realisations/jr-inside-out-palissade-abattoirs-toulouse',
   '/realisations/habillage-urbain-irise-monaco',

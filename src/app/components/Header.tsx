@@ -88,7 +88,7 @@ export function Header() {
                       <Link to="/habillage-urbain">Urbaine</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/habillage-thermique">Thermique</Link>
+                      <Link to="/solutions-ombrage">Ombrage</Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

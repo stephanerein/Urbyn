@@ -3,24 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { Card, CardContent } from '../components/ui/card';
-import { Signpost, HardHat, Box, Wind, FileText, Building2, LayoutGrid, PanelTop, Umbrella, Sparkles } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { Signpost, HardHat, Box, Wind, FileText, Building2, LayoutGrid, PanelTop, Umbrella, Sparkles, CloudSun } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import palissadeImg from 'figma:asset/palissade-bois.png';
 import totemImg from 'figma:asset/totem-urbain.png';
 import massifImg from 'figma:asset/massif-beton-cubique.png';
 import echafaudageImg from 'figma:asset/echafaudage.png';
 
+interface ProductCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  image: string;
+}
+
 export function DefinirBesoinPage() {
   const navigate = useNavigate();
 
-  const ensemble1 = [
+  // Produits catalogués, avec parcours d'estimation en ligne.
+  const ensembleProduits = [
+    {
+      id: 'massif-beton',
+      title: 'Massif béton',
+      description: 'Lestage et stabilisation',
+      icon: Box,
+      image: massifImg
+    },
     {
       id: 'totem',
       title: 'Totem',
       description: 'Signalétique verticale pour expositions',
       icon: Signpost,
       image: totemImg
-    },
+    }
+  ];
+
+  const ensembleUrbain = [
     {
       id: 'palissade',
       title: 'Palissade',
@@ -29,18 +49,18 @@ export function DefinirBesoinPage() {
       image: palissadeImg
     },
     {
-      id: 'facade-echafaudage',
-      title: 'Façade et Échafaudage',
+      id: 'echafaudage',
+      title: 'Échafaudage',
       description: 'Habillage par bâche imprimée',
       icon: Building2,
       image: echafaudageImg
     },
     {
-      id: 'massif-beton',
-      title: 'Massif béton',
-      description: 'Lestage et stabilisation',
-      icon: Box,
-      image: massifImg
+      id: 'facade',
+      title: 'Façade',
+      description: 'Habillage par bâche imprimée',
+      icon: Building2,
+      image: echafaudageImg
     },
     {
       id: 'panneau-chantier',
@@ -68,21 +88,27 @@ export function DefinirBesoinPage() {
     }
   ];
 
-  // Habillage thermique : pas encore de catalogue ni de tarif en ligne, ces
-  // solutions sont chiffrées sur mesure. Les cartes n'ont pas de visuel tant
-  // que nous n'avons pas de photos des produits.
-  const ensembleThermique = [
+  // Solutions d'ombrage : pas encore de catalogue ni de tarif en ligne, elles
+  // sont chiffrées sur mesure. Les cartes n'ont pas de visuel tant que nous
+  // n'avons pas de photos des produits.
+  const ensembleOmbrage = [
     {
-      id: 'toile-facade',
-      title: 'Toile de protection pour façade',
+      id: 'ombrage-facade',
+      title: "Solution d'ombrage pour façade",
       description: 'Réduction de la chaleur reçue par le bâti',
       icon: PanelTop
     },
     {
-      id: 'toile-patio',
-      title: 'Toile de protection pour patio',
+      id: 'ombrage-patio',
+      title: "Solution d'ombrage pour patio",
       description: 'Réduction de la chaleur reçue par les patios',
       icon: Umbrella
+    },
+    {
+      id: 'ciel-de-rue',
+      title: 'Ciel de Rue',
+      description: 'Ombrage urbain pour rendre un passage de rue agréable',
+      icon: CloudSun
     },
     {
       id: 'film-solaire',
@@ -92,18 +118,49 @@ export function DefinirBesoinPage() {
     }
   ];
 
-  const handleThermiqueSelect = () => {
+  const handleOmbrageSelect = () => {
     toast.info('Chiffrage sur mesure', {
       description:
-        "L'habillage thermique est étudié au cas par cas. Décrivez-nous votre projet et nous revenons vers vous avec une proposition."
+        "Ces solutions sont étudiées au cas par cas. Décrivez-nous votre projet et nous revenons vers vous avec une proposition."
     });
     navigate('/contact');
   };
 
+  const renderProductCard = (product: ProductCard) => {
+    const Icon = product.icon;
+    return (
+      <Card
+        key={product.id}
+        onClick={() => handleProductSelect(product.id)}
+        className="cursor-pointer transition-all hover:shadow-2xl group bg-white overflow-hidden border-2 border-slate-200 hover:border-black"
+      >
+        <CardContent className="p-4 text-center">
+          <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
+            <Icon className="w-7 h-7 text-black" strokeWidth={2.5} />
+          </div>
+          <h4 className="text-base font-bold mb-2 text-black group-hover:underline">
+            {product.title}
+          </h4>
+          <p className="text-black text-xs mb-4 leading-tight">
+            {product.description}
+          </p>
+          <div className="relative h-32 overflow-hidden rounded-lg">
+            <ImageWithFallback
+              src={product.image}
+              alt={product.title}
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const handleProductSelect = (productId: string) => {
-    if (productId === 'facade-echafaudage') {
+    if (productId === 'echafaudage' || productId === 'facade') {
+      const libelle = productId === 'echafaudage' ? "L'habillage d'échafaudage" : "L'habillage de façade";
       toast.info("Service bientôt disponible", {
-        description: "L'habillage Façade et Échafaudage est un service sur mesure. Contactez notre bureau d'étude via le chat pour plus d'informations."
+        description: `${libelle} est un service sur mesure. Contactez notre bureau d'étude via le chat pour plus d'informations.`
       });
       return;
     }
@@ -146,55 +203,35 @@ export function DefinirBesoinPage() {
             Sélectionnez le type de solution souhaitée pour obtenir une estimation instantanée
           </p>
 
-          {/* Ensemble 1 : Produits */}
+          {/* Ensemble 1 : Produits catalogués */}
           <div className="mb-16">
-            <h2 className="text-2xl font-bold mb-8 text-black">Solutions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              {ensemble1.map((product) => {
-                const Icon = product.icon;
-                return (
-                  <Card
-                    key={product.id}
-                    onClick={() => handleProductSelect(product.id)}
-                    className="cursor-pointer transition-all hover:shadow-2xl group bg-white overflow-hidden border-2 border-slate-200 hover:border-black"
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                        <Icon className="w-7 h-7 text-black" strokeWidth={2.5} />
-                      </div>
-                      <h4 className="text-base font-bold mb-2 text-black group-hover:underline">
-                        {product.title}
-                      </h4>
-                      <p className="text-black text-xs mb-4 leading-tight">
-                        {product.description}
-                      </p>
-                      <div className="relative h-32 overflow-hidden rounded-lg">
-                        <ImageWithFallback
-                          src={product.image}
-                          alt={`${product.title}`}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <h2 className="text-2xl font-bold mb-8 text-black">Produits</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {ensembleProduits.map(renderProductCard)}
             </div>
           </div>
 
-          {/* Ensemble 2 : Habillage thermique */}
+          {/* Ensemble 2 : Habillage urbain */}
           <div className="mb-16">
-            <h2 className="text-2xl font-bold mb-2 text-black">Habillage thermique</h2>
+            <h2 className="text-2xl font-bold mb-8 text-black">Habillage urbain</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {ensembleUrbain.map(renderProductCard)}
+            </div>
+          </div>
+
+          {/* Ensemble 3 : Solutions d'ombrage */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold mb-2 text-black">Solutions d'ombrage</h2>
             <p className="text-sm text-gray-600 mb-8">
               Solutions chiffrées sur mesure — décrivez-nous votre projet
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {ensembleThermique.map((solution) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {ensembleOmbrage.map((solution) => {
                 const Icon = solution.icon;
                 return (
                   <Card
                     key={solution.id}
-                    onClick={handleThermiqueSelect}
+                    onClick={handleOmbrageSelect}
                     className="cursor-pointer transition-all hover:shadow-2xl group bg-white overflow-hidden border-2 border-slate-200 hover:border-black"
                   >
                     <CardContent className="p-6 text-center">
@@ -204,9 +241,11 @@ export function DefinirBesoinPage() {
                       <h4 className="text-base font-bold mb-2 text-black group-hover:underline">
                         {solution.title}
                       </h4>
-                      <p className="text-black text-xs leading-tight">
-                        {solution.description}
-                      </p>
+                      {solution.description && (
+                        <p className="text-black text-xs leading-tight">
+                          {solution.description}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -214,7 +253,7 @@ export function DefinirBesoinPage() {
             </div>
           </div>
 
-          {/* Ensemble 3 : Services d'étude */}
+          {/* Ensemble 4 : Services d'étude */}
           <div>
             <h2 className="text-2xl font-bold mb-8 text-black">Accompagnements</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">

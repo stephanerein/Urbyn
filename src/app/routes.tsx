@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { HabillageUrbainPage } from './pages/HabillageUrbainPage';
-import { HabillageThermiquePage } from './pages/HabillageThermiquePage';
+import { SolutionsOmbragePage } from './pages/SolutionsOmbragePage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
 import { ServicesSpecifiquesPage } from './pages/ServicesSpecifiquesPage';
@@ -82,7 +82,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/habillage-urbain" element={<HabillageUrbainPage />} />
-      <Route path="/habillage-thermique" element={<HabillageThermiquePage />} />
+      <Route path="/solutions-ombrage" element={<SolutionsOmbragePage />} />
       <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
       <Route path="/services-additionnels/:product" element={<ServicesAdditionnelsPage />} />
       <Route path="/services-specifiques/:product" element={<ServicesSpecifiquesPage />} />
