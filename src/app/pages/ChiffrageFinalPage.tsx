@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
-  MapPin, ShoppingBag, Package, Truck, CheckCircle,
+  MapPin, ShoppingBag, Package, Truck, CheckCircle, Loader2,
   Phone, Mail, User, Layers, AlertTriangle, Send, ArrowLeft, Building2
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -165,7 +165,7 @@ function massifSupplierLabel(items: { details?: Record<string, unknown> }[]): st
 
 export function ChiffrageFinalPage() {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { items, getTotalPrice, clearCart, addItems } = useCart();
   const { isLoggedIn, session, openAuth } = useAuth();
 
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress | null>(null);
@@ -173,6 +173,8 @@ export function ChiffrageFinalPage() {
   const [servicesByProduct, setServicesByProduct] = useState<Record<string, string[]>>({});
   const [contactForm, setContactForm] = useState<ContactForm>({ firstName: '', lastName: '', email: '', phone: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const sendingRef = useRef(false);
   const [sellsyNote, setSellsyNote] = useState<string | null>(null);
   const [totemRoadKm, setTotemRoadKm] = useState<number | null>(null);
 
@@ -252,12 +254,16 @@ export function ChiffrageFinalPage() {
       phone: prev.phone || session.mobile_phone || session.fixe_phone || '',
     }));
     if (sessionStorage.getItem('pendingQuoteAfterSignup') === '1') {
+      if (sendingRef.current) return;
       sessionStorage.removeItem('pendingQuoteAfterSignup');
       clearAuthSignupPrefill();
       const raw = sessionStorage.getItem('pendingQuoteRequest');
       if (raw) {
         try {
           const pending = JSON.parse(raw);
+          sendingRef.current = true;
+          setSubmitting(true);
+          clearCart();
           createClientOrder({
             contact: pending.contact,
             deliveryAddress: pending.deliveryAddress,
@@ -270,7 +276,11 @@ export function ChiffrageFinalPage() {
             ...pricingFlags(pending.deliveryAddress),
           })
             .then((order) => finishOrderSuccess(sellsyNoteFrom(order)))
-            .catch(() => finishOrderSuccess());
+            .catch(() => {
+              sendingRef.current = false;
+              setSubmitting(false);
+              alert("Impossible d'enregistrer la demande. Réessayez.");
+            });
           return;
         } catch {
           /* fallthrough */
@@ -281,9 +291,9 @@ export function ChiffrageFinalPage() {
   }, [isLoggedIn, session]);
 
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || submitting) return;
     if (items.length === 0) navigate('/panier');
-  }, [items, navigate, submitted]);
+  }, [items, navigate, submitted, submitting]);
 
   const itemsByType = items.reduce<Record<string, typeof items>>((acc, item) => {
     const t = item.type;
@@ -451,6 +461,7 @@ export function ChiffrageFinalPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sendingRef.current) return;
     if (!contactForm.firstName || !contactForm.lastName || !contactForm.email || !contactForm.phone) {
       alert('Veuillez remplir tous les champs pour être recontacté.');
       return;
@@ -484,11 +495,16 @@ export function ChiffrageFinalPage() {
       return;
     }
 
+    const cartSnapshot = items;
+    sendingRef.current = true;
+    setSubmitting(true);
+    clearCart();
+
     try {
       const order = await createClientOrder({
         contact: contactForm,
         deliveryAddress: deliveryAddress ?? undefined,
-        items,
+        items: cartSnapshot,
         shippingCost,
         massifInstallFee,
         massifDechargementFee,
@@ -499,9 +515,26 @@ export function ChiffrageFinalPage() {
       });
       finishOrderSuccess(sellsyNoteFrom(order));
     } catch (err) {
+      sendingRef.current = false;
+      setSubmitting(false);
+      if (cartSnapshot.length > 0) addItems(cartSnapshot);
       alert(err instanceof Error ? err.message : "Impossible d'enregistrer la commande.");
     }
   };
+
+  if (submitting && !submitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="bg-card rounded-2xl shadow-lg p-10 max-w-md w-full text-center border border-border">
+          <Loader2 className="w-10 h-10 text-foreground animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-foreground mb-3">Envoi en cours</h2>
+          <p className="text-sm text-muted-foreground">
+            Création du devis et envoi du mail. Merci de patienter, le bouton n&apos;est plus actif.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -511,8 +544,11 @@ export function ChiffrageFinalPage() {
             <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
           <h2 className="text-2xl font-semibold text-foreground mb-3">Demande envoyée !</h2>
+          <p className="text-sm text-foreground mb-4">
+            Consultez vos e-mails : le devis est en pièce jointe. Votre panier a été vidé et la demande apparaît dans votre historique.
+          </p>
           {sellsyNote ? (
-            <p className="text-sm text-foreground mb-4">{sellsyNote}</p>
+            <p className="text-sm text-muted-foreground mb-4">{sellsyNote}</p>
           ) : null}
           <div className="space-y-2 mb-6">
             {activePartners.map((p) => (
@@ -990,7 +1026,8 @@ export function ChiffrageFinalPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-white text-foreground hover:bg-white/90 h-10 text-sm font-semibold mt-1"
+                  disabled={submitting}
+                  className="w-full bg-white text-foreground hover:bg-white/90 h-10 text-sm font-semibold mt-1 disabled:opacity-60"
                 >
                   <Send className="w-4 h-4 mr-2" />
                   {isLoggedIn
