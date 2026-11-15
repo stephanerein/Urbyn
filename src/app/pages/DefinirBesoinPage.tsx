@@ -130,7 +130,13 @@ export function DefinirBesoinPage() {
     }
   ];
 
-  const handleOmbrageSelect = () => {
+  const handleOmbrageSelect = (solutionId: string) => {
+    // Le patio dispose d'un parcours de chiffrage en ligne, qui s'ouvre sur la
+    // présentation des deux solutions.
+    if (solutionId === 'ombrage-patio') {
+      navigate('/solutions-ombrage/patio/solutions');
+      return;
+    }
     toast.info('Chiffrage sur mesure', {
       description:
         "Ces solutions sont étudiées au cas par cas. Décrivez-nous votre projet et nous revenons vers vous avec une proposition."
@@ -248,7 +254,7 @@ export function DefinirBesoinPage() {
                 return (
                   <Card
                     key={solution.id}
-                    onClick={handleOmbrageSelect}
+                    onClick={() => handleOmbrageSelect(solution.id)}
                     className="cursor-pointer transition-all hover:shadow-2xl group bg-white overflow-hidden border-2 border-slate-200 hover:border-black"
                   >
                     <CardContent className="p-6 text-center">

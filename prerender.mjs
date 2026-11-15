@@ -16,6 +16,7 @@ const ROUTES = [
   '/',
   '/habillage-urbain',
   '/solutions-ombrage',
+  '/solutions-ombrage/patio/solutions',
   '/realisations',
   '/realisations/jr-inside-out-palissade-abattoirs-toulouse',
   '/realisations/habillage-urbain-irise-monaco',

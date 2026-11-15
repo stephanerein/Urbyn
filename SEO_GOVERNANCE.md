@@ -71,6 +71,7 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | Accueil (Atelier Urbanize) | `/` | Excellence en Consulting Urbain | Organization, Breadcrumb |
 | Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
 | Solutions d'ombrage | `/solutions-ombrage` | Solutions d'ombrage — Protection solaire & confort urbain | Breadcrumb |
+| Couverture de patio — repliable ou fixe | `/solutions-ombrage/patio/solutions` | Couverture de patio : repliable ou fixe ? | Breadcrumb |
 | Réalisations (liste) | `/realisations` | Réalisations | Breadcrumb |
 | Réalisations (détail, ×2 réelles) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
@@ -106,6 +107,8 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | `/palissade/resultats` | Résultat dynamique de session |
 
 ### Pages non-couvertes (flow intermédiaire, pas nécessaires au référencement)
+
+`PatioConfigPage` et `PatioEstimationPage` (`/solutions-ombrage/patio`, `…/estimation`) : saisie et chiffrage, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
 
 `TotemConfigPage`, `TotemFormatPage`, `TotemComparePage`, `TotemModelPage`, `TotemSignIzPage`, `TotemCompliancePage`, `PalissadeHabillagePage`, `PalissadeMontagePage`, `MassifCalculatorPage`, `ServicesAdditionnelsPage`, `ServicesSpecifiquesPage`, `SelectServicePage`, `ChiffrageFinalPage`, `SitemapPage`
 

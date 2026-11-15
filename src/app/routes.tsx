@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { HabillageUrbainPage } from './pages/HabillageUrbainPage';
 import { SolutionsOmbragePage } from './pages/SolutionsOmbragePage';
+import { PatioSolutionsPage } from './pages/ombrage/PatioSolutionsPage';
+import { PatioConfigPage } from './pages/ombrage/PatioConfigPage';
+import { PatioEstimationPage } from './pages/ombrage/PatioEstimationPage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
 import { ServicesSpecifiquesPage } from './pages/ServicesSpecifiquesPage';
@@ -83,6 +86,9 @@ export function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/habillage-urbain" element={<HabillageUrbainPage />} />
       <Route path="/solutions-ombrage" element={<SolutionsOmbragePage />} />
+      <Route path="/solutions-ombrage/patio/solutions" element={<PatioSolutionsPage />} />
+      <Route path="/solutions-ombrage/patio" element={<PatioConfigPage />} />
+      <Route path="/solutions-ombrage/patio/estimation" element={<PatioEstimationPage />} />
       <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
       <Route path="/services-additionnels/:product" element={<ServicesAdditionnelsPage />} />
       <Route path="/services-specifiques/:product" element={<ServicesSpecifiquesPage />} />
