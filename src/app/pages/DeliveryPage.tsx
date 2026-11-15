@@ -12,6 +12,7 @@ import {
   computeMassifServiceFees,
   TOTEM_INSTALLATION_EUR,
   computeMassifShippingBySupplier,
+  massifLinesWithSupplierOrigin,
   isMassifInstallationSelected,
   isTotemInstallationSelected,
 } from '../lib/massifShipping';
@@ -27,6 +28,8 @@ import {
   totemVolumeDiscountAmount,
   totemVolumeDiscountPercentLabel,
 } from '../lib/totemDiscount';
+import { quoteCart, type CartOrigin } from '../api/pricing';
+import { cartLinesFromItems, pricingContextFromSession } from '../lib/orderPricing';
 
 // Paris — point de départ pour panneaux seuls (hors totems / massifs)
 const PARIS = { lat: 48.8414, lng: 2.2879 }; // 75015 fallback
@@ -52,6 +55,7 @@ export function DeliveryPage() {
   });
 
   const [totemRoadKm, setTotemRoadKm] = useState<number | null>(null);
+  const [massifOrigins, setMassifOrigins] = useState<CartOrigin[]>([]);
   const [panelShippingCost, setPanelShippingCost] = useState<number | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
 
@@ -71,14 +75,46 @@ export function DeliveryPage() {
   // Transport panneaux séparés uniquement s'il n'y a pas de totems (sinon inclus dans le camion totem)
   const hasPanelsOnly = hasPanelItems && !hasTotem;
 
+  useEffect(() => {
+    const lines = cartLinesFromItems(items);
+    if (!lines.length || !deliveryAddress.postalCode.trim()) {
+      setMassifOrigins([]);
+      return;
+    }
+    let cancelled = false;
+    quoteCart({
+      lines,
+      context: pricingContextFromSession(
+        deliveryAddress.postalCode,
+        deliveryAddress.city || '',
+        deliveryAddress.country || 'France',
+      ),
+    })
+      .then((quote) => {
+        if (!cancelled) setMassifOrigins(quote.origins ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setMassifOrigins([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [items, deliveryAddress.postalCode, deliveryAddress.city, deliveryAddress.country]);
+
+  const massifRoute = useMemo(
+    () => massifLinesWithSupplierOrigin(massifItems, massifOrigins),
+    [massifItems, massifOrigins],
+  );
+
   const massifShipping = useMemo(
     () =>
       computeMassifShippingBySupplier(
-        massifItems,
+        massifRoute.items,
         deliveryAddress.postalCode,
         deliveryAddress.country || 'France',
+        { distanceKmByOrigin: massifRoute.distanceKmByOrigin },
       ),
-    [massifItems, deliveryAddress.postalCode, deliveryAddress.country],
+    [massifRoute, deliveryAddress.postalCode, deliveryAddress.country],
   );
 
   const totemShipping = useMemo(
@@ -160,6 +196,7 @@ export function DeliveryPage() {
   ]);
 
   const massifShipAmount = hasMassif ? massifShipping.shippingTotal : 0;
+  const energySurcharge = hasMassif ? massifShipping.tonnageFeeTotal : 0;
   const totemShipAmount = hasTotem ? totemShipping.shippingTotal : 0;
   const panelShipAmount = hasPanelsOnly ? panelShippingCost ?? 0 : 0;
   const shippingCost = massifShipAmount + totemShipAmount + panelShipAmount;
@@ -240,7 +277,7 @@ export function DeliveryPage() {
   const totemDiscountPct = totemVolumeDiscountPercentLabel(totalTotemQty);
   const productsHT = getTotalPrice() - totemDiscount;
   const shipping = shippingCost;
-  const totalHT = productsHT + shipping + installFees;
+  const totalHT = productsHT + energySurcharge + shipping + installFees;
   const totalTTC = totalHT * 1.2;
 
   return (
@@ -281,6 +318,19 @@ export function DeliveryPage() {
                       € HT
                     </span>
                   </div>
+
+                  {energySurcharge > 0 && (
+                    <div className="flex justify-between text-sm mb-3">
+                      <span className="text-black">Surcharge énergie</span>
+                      <span className="font-bold text-black">
+                        {energySurcharge.toLocaleString('fr-FR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        €
+                      </span>
+                    </div>
+                  )}
 
                   <div className="pb-2">
                     <div className="flex justify-between text-sm">

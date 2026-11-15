@@ -25,6 +25,16 @@ export interface PricingOffer {
   added_total: number
   added_shipping: number
   order_total: number
+  origin_zip?: string
+  origin_city?: string
+}
+
+export interface CartOrigin {
+  product_id: number
+  supplier_tva: string
+  zip: string
+  city: string
+  distance_km: number
 }
 
 export interface EstimateResult {
@@ -49,6 +59,7 @@ export interface CartQuote {
   total: number
   delay_days: number
   massif_trucks: number
+  origins?: CartOrigin[]
 }
 
 export function estimateProduct(body: {

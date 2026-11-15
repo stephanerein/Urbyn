@@ -177,6 +177,17 @@ export interface CatalogCsvImportResult {
   errors: CatalogCsvImportRowError[]
 }
 
+export interface AppExcelImportResult {
+  applied: boolean
+  sku_rows: number
+  products_written: number
+  products_deleted: number
+  catalogs_deleted: number
+  offers_written: number
+  subscriptions_written: number
+  errors: CatalogCsvImportRowError[]
+}
+
 export interface SupplierOffersCsvImportResult {
   mode: CatalogCsvImportMode
   applied: boolean
@@ -302,4 +313,28 @@ export async function downloadAdminCsv(path: string, filename: string): Promise<
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
+}
+
+export function importAppExcel(file: File): Promise<AppExcelImportResult> {
+  const token = loadAdminToken()
+  const form = new FormData()
+  form.append('file', file)
+  return fetch(`${getApiBase()}/api/v1/admin/app-export/excel`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  }).then(async (response) => {
+    if (!response.ok) {
+      let message = response.statusText
+      try {
+        const body = await response.json()
+        if (body.detail?.message) message = body.detail.message
+        else if (typeof body.detail === 'string') message = body.detail
+      } catch {
+        /* ignore */
+      }
+      throw new ApiError(message, response.status)
+    }
+    return response.json() as Promise<AppExcelImportResult>
+  })
 }

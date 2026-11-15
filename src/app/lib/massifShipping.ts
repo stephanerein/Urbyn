@@ -2,9 +2,9 @@
  * Livraison massifs béton — mutualisée par fournisseur + adresse d'origine.
  *
  * - Capacité camion : 26 T, un seul camion jusqu'à 26 T + 5 %
- * - (2/0,75) € / km par camion
- * - 3,4 € / tonne transportée
- * - plancher : max(300/0,75 €, ce prix) par groupe
+ * - 2,6 € / km par camion
+ * - plancher : max(600 €, camions × 2,6 € × km), arrondi à la dizaine supérieure
+ * - surcharge énergie : 3,4 € × poids de la commande arrondi à la tonne supérieure
  * - Déchargement massif : 490 € forfaitaires
  * - Installation massif : 65 € par unité manipulée (palette ou massif seul)
  *
@@ -15,9 +15,23 @@ import { totalHandlingUnitsForMassifs } from './massifPalette'
 
 export const MASSIF_TRUCK_CAPACITY_KG = 26_000
 export const MASSIF_TRUCK_TOLERANCE = 1.05
-export const MASSIF_PER_KM_EUR = 2 / 0.75
-export const MASSIF_SHIPPING_MIN_EUR = 300 / 0.75
+export const MASSIF_PER_KM_EUR = 2.6
+
+/** Arrondi à la dizaine d'euros supérieure. Un multiple de 10 reste tel quel. */
+export function roundUpToTenEuros(value: number): number {
+  if (value <= 0) return 0
+  const cents = Math.round(value * 100)
+  return Math.ceil(cents / 1000) * 10
+}
+export const MASSIF_SHIPPING_MIN_EUR = 600
 export const MASSIF_PER_TON_EXTRA_EUR = 3.4
+
+/** Poids facturé pour la surcharge énergie : tonne supérieure. */
+export function billedEnergyTons(totalWeightKg: number): number {
+  if (totalWeightKg <= 0) return 0
+  const grams = Math.round(totalWeightKg * 1000)
+  return Math.ceil(grams / 1_000_000)
+}
 /** Déchargement : forfait, quel que soit le nombre de massifs. */
 export const MASSIF_DECHARGEMENT_EUR = 490
 /** Installation : par unité manipulée (une palette, ou un massif non palettisé). */
@@ -113,7 +127,41 @@ export type MassifCartLike = {
     company_tva?: string | null
     companyZip?: string | null
     company_zip?: string | null
+    supplierTva?: string | null
   }
+}
+
+export type MassifOriginFact = {
+  product_id: number
+  supplier_tva: string
+  zip: string
+  distance_km: number
+}
+
+/** Remplace le code postal figé (souvent le siège Urbanize) par l'origine du fournisseur choisi. */
+export function massifLinesWithSupplierOrigin<T extends MassifCartLike>(
+  items: T[],
+  origins: MassifOriginFact[],
+): { items: T[]; distanceKmByOrigin: Record<string, number> } {
+  const byKey = new Map<string, MassifOriginFact>()
+  const distanceKmByOrigin: Record<string, number> = {}
+  for (const origin of origins) {
+    const zip = (origin.zip || '').trim()
+    if (!zip) continue
+    byKey.set(`${origin.product_id}@@${origin.supplier_tva}`, origin)
+    if (origin.distance_km > 0) distanceKmByOrigin[zip] = origin.distance_km
+  }
+  const next = items.map((item) => {
+    const details = item.details || {}
+    const tva = (details.supplierTva || details.companyTva || '').trim()
+    const fact = details.productId ? byKey.get(`${details.productId}@@${tva}`) : undefined
+    if (!fact) return item
+    return {
+      ...item,
+      details: { ...details, companyZip: fact.zip, company_zip: fact.zip },
+    }
+  })
+  return { items: next, distanceKmByOrigin }
 }
 
 function isMassifProductLine(item: MassifCartLike): boolean {
@@ -255,7 +303,7 @@ export function computeMassifShippingBySupplier(
   items: MassifCartLike[],
   deliveryPostalCode: string | null | undefined,
   deliveryCountry = 'France',
-  options?: { includeTonnageFee?: boolean },
+  options?: { includeTonnageFee?: boolean; distanceKmByOrigin?: Record<string, number> },
 ): {
   groups: SupplierTruckGroup[]
   trucksTotal: number
@@ -281,14 +329,17 @@ export function computeMassifShippingBySupplier(
     )
     const { trucksCount, truckFills } = trucksForWeight(totalWeightKg)
     const zip = originZipOf(list[0])
-    const distanceKm = estimateDistanceKm(zip, deliveryPostalCode, deliveryCountry)
+    const roadKm = options?.distanceKmByOrigin?.[zip]
+    const distanceKm =
+      typeof roadKm === 'number' && roadKm > 0
+        ? roadKm
+        : estimateDistanceKm(zip, deliveryPostalCode, deliveryCountry)
     const truckFee = 0
     const distanceFee = trucksCount * distanceKm * MASSIF_PER_KM_EUR
     const tonnageFee = includeTonnageFee
-      ? Math.round((totalWeightKg / 1000) * MASSIF_PER_TON_EXTRA_EUR * 100) / 100
+      ? Math.round(billedEnergyTons(totalWeightKg) * MASSIF_PER_TON_EXTRA_EUR * 100) / 100
       : 0
-    const shippingTotal =
-      Math.round(Math.max(MASSIF_SHIPPING_MIN_EUR, distanceFee + tonnageFee) * 100) / 100
+    const shippingTotal = roundUpToTenEuros(Math.max(MASSIF_SHIPPING_MIN_EUR, distanceFee))
     groups.push({
       supplierKey: key,
       supplierName: supplierNameOf(list[0]),
@@ -305,12 +356,17 @@ export function computeMassifShippingBySupplier(
     })
   }
 
+  const totalWeightKg = groups.reduce((s, g) => s + g.totalWeightKg, 0)
+  const tonnageFeeTotal = includeTonnageFee
+    ? Math.round(billedEnergyTons(totalWeightKg) * MASSIF_PER_TON_EXTRA_EUR * 100) / 100
+    : 0
+
   return {
     groups,
     trucksTotal: groups.reduce((s, g) => s + g.trucksCount, 0),
     shippingTotal: groups.reduce((s, g) => s + g.shippingTotal, 0),
-    tonnageFeeTotal: groups.reduce((s, g) => s + g.tonnageFee, 0),
-    totalWeightKg: groups.reduce((s, g) => s + g.totalWeightKg, 0),
+    tonnageFeeTotal,
+    totalWeightKg,
   }
 }
 

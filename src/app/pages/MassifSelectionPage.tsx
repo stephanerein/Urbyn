@@ -246,11 +246,6 @@ function MassifProductChoice({
         </div>
         <div className="text-right shrink-0">
           <p className="font-bold text-sm">{product.poids} kg</p>
-          {product.price > 0 && (
-            <p className={cn('text-xs mt-0.5', selected ? 'text-gray-300' : 'text-gray-500')}>
-              {product.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} {product.currency}
-            </p>
-          )}
         </div>
       </div>
     </button>

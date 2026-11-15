@@ -10,6 +10,7 @@ import {
   computeMassifServiceFees,
   TOTEM_INSTALLATION_EUR,
   computeMassifShippingBySupplier,
+  massifLinesWithSupplierOrigin,
   isMassifInstallationSelected,
   isTotemInstallationSelected,
   truckDedicatedLabel,
@@ -274,14 +275,20 @@ export function CartPage() {
   const totemDiscountPct  = totemVolumeDiscountPercentLabel(totalTotemQty);
   const productsHT        = productItems.reduce((s, i) => s + i.price * i.quantity, 0) - totemDiscount;
 
+  const massifRoute = useMemo(
+    () => massifLinesWithSupplierOrigin(massifItems, serverQuote?.origins ?? []),
+    [massifItems, serverQuote],
+  );
+
   const massifShipping = useMemo(
     () =>
       computeMassifShippingBySupplier(
-        massifItems,
+        massifRoute.items,
         savedDeliveryAddress?.postalCode,
         savedDeliveryAddress?.country || 'France',
+        { distanceKmByOrigin: massifRoute.distanceKmByOrigin },
       ),
-    [massifItems, savedDeliveryAddress?.postalCode, savedDeliveryAddress?.country],
+    [massifRoute, savedDeliveryAddress?.postalCode, savedDeliveryAddress?.country],
   );
 
   const totemShipping = useMemo(
@@ -300,6 +307,7 @@ export function CartPage() {
   const totemInstallFee =
     totemItems.length > 0 && isTotemInstallationSelected() ? TOTEM_INSTALLATION_EUR : 0;
   const massifShipAmount = massifItems.length > 0 ? massifShipping.shippingTotal : 0;
+  const energySurcharge = massifItems.length > 0 ? massifShipping.tonnageFeeTotal : 0;
   const totemShipAmount = totemItems.length > 0 ? totemShipping.shippingTotal : 0;
   // Panneaux seuls (sans totems) — sinon les panneaux voyagent avec les totems
   const hasPanelsOnlyShip = panelItems.length > 0 && totemItems.length === 0;
@@ -340,7 +348,8 @@ export function CartPage() {
   const dechargementShown = massifDechargementFee;
   const massifInstallShown = massifInstallFee;
   const totemInstallShown = totemInstallFee;
-  const totalHT = productsHT + shippingCost + massifDechargementFee + massifInstallFee + totemInstallFee;
+  const totalHT =
+    productsHT + energySurcharge + shippingCost + massifDechargementFee + massifInstallFee + totemInstallFee;
   const tva      = totalHT * 0.2;
   const totalTTC = totalHT * 1.2;
 
@@ -888,6 +897,18 @@ export function CartPage() {
                   <span>Sous-total produits HT</span>
                   <span>{productsShown.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</span>
                 </div>
+                {energySurcharge > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Surcharge énergie</span>
+                    <span>
+                      {energySurcharge.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      €
+                    </span>
+                  </div>
+                )}
                 {(shippingCost > 0 || massifItems.length > 0 || totemItems.length > 0) && (
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-gray-600">

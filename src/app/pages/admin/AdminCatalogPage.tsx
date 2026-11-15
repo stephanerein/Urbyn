@@ -10,6 +10,7 @@ import {
   importAdminCatalogCsv,
   importAdminSubscriptionsCsv,
   importAdminSupplierOffersCsv,
+  importAppExcel,
   setAdminCatalogAttributeMandatory,
   updateAdminCatalog,
   type AdminCatalogNode,
@@ -17,6 +18,7 @@ import {
   type CatalogCsvImportMode,
   type CatalogCsvImportResult,
   type CatalogProductAttribute,
+  type AppExcelImportResult,
   type SubscriptionsCsvImportResult,
   type SupplierOffersCsvImportResult,
 } from '../../api/admin'
@@ -161,6 +163,11 @@ export function AdminCatalogPage() {
   const [subsResult, setSubsResult] = useState<SubscriptionsCsvImportResult | null>(null)
   const [offersExporting, setOffersExporting] = useState(false)
   const [subsExporting, setSubsExporting] = useState(false)
+  const [appExportOpen, setAppExportOpen] = useState(true)
+  const [appFile, setAppFile] = useState<File | null>(null)
+  const [appExporting, setAppExporting] = useState(false)
+  const [appImporting, setAppImporting] = useState(false)
+  const [appResult, setAppResult] = useState<AppExcelImportResult | null>(null)
 
   const q = search.trim().toLowerCase()
   const displayTree = useMemo(() => filterTree(roots, q), [roots, q])
@@ -429,6 +436,43 @@ export function AdminCatalogPage() {
     }
   }
 
+  async function handleAppExport() {
+    setAppExporting(true)
+    setError(null)
+    try {
+      await downloadAdminCsv('/api/v1/admin/app-export/excel', 'APP_EXPORT.xlsx')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur export APP EXPORT')
+    } finally {
+      setAppExporting(false)
+    }
+  }
+
+  async function handleAppImport() {
+    if (!appFile) return
+    setAppImporting(true)
+    setError(null)
+    setSuccess(null)
+    setAppResult(null)
+    try {
+      const result = await importAppExcel(appFile)
+      setAppResult(result)
+      if (result.applied) {
+        setSuccess(
+          `APP EXPORT : ${result.products_written} produits écrits, ${result.products_deleted} retirés, ${result.catalogs_deleted} catalogues supprimés, ${result.offers_written} offres, ${result.subscriptions_written} abonnements.`,
+        )
+        setAppFile(null)
+        await reloadTree()
+      } else {
+        setError('Import APP EXPORT bloqué. Rien n’a été écrit.')
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur import APP EXPORT')
+    } finally {
+      setAppImporting(false)
+    }
+  }
+
   async function handleSubsExport() {
     setSubsExporting(true)
     setError(null)
@@ -600,6 +644,81 @@ export function AdminCatalogPage() {
               ) : null}
             </article>
           </div>
+        ) : null}
+      </div>
+      <div className="admin-catalog-import-bar">
+        <button
+          type="button"
+          className="admin-btn admin-btn--soft"
+          onClick={() => setAppExportOpen((v) => !v)}
+        >
+          {appExportOpen ? 'Fermer APP EXPORT' : 'APP EXPORT'}
+        </button>
+        {appExportOpen ? (
+          <article className="admin-csv-import admin-app-export">
+            <h3>APP EXPORT</h3>
+            <p className="admin-catalog__hint">
+              Un classeur : feuille SKU (référence, chemins Urbyn, prix et coefficient Urbanize),
+              feuille Abonnement, feuille Fournisseurs, puis une feuille par catalogue racine.
+              Les colonnes liées sont des égalités vers la feuille SKU. L’import lit la valeur
+              affichée et remplace la base. Les catalogues racine absents du fichier, et leurs
+              enfants, sont supprimés.
+            </p>
+            <div
+              className={`admin-csv-dropzone ${appFile ? 'has-file' : ''}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                const next = e.dataTransfer.files?.[0]
+                if (next && next.name.toLowerCase().endsWith('.xlsx')) {
+                  setAppFile(next)
+                  setAppResult(null)
+                }
+              }}
+            >
+              <p>
+                {appFile
+                  ? `Fichier : ${appFile.name}`
+                  : 'Glissez-déposez un Excel .xlsx, ou cliquez pour parcourir'}
+              </p>
+              <input
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={(e) => {
+                  const next = e.target.files?.[0]
+                  if (next) {
+                    setAppFile(next)
+                    setAppResult(null)
+                  }
+                }}
+              />
+            </div>
+            <div className="admin-csv-import__actions">
+              <button
+                type="button"
+                className="admin-btn admin-btn--soft"
+                disabled={appExporting}
+                onClick={() => void handleAppExport()}
+              >
+                {appExporting ? 'Export…' : 'Exporter l’Excel'}
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn--primary"
+                disabled={appImporting || !appFile}
+                onClick={() => void handleAppImport()}
+              >
+                {appImporting ? 'Remplacement…' : 'Importer et remplacer'}
+              </button>
+              {appResult?.applied ? (
+                <p className="admin-catalog__hint">
+                  {appResult.sku_rows} SKU · {appResult.products_written} produits ·{' '}
+                  {appResult.catalogs_deleted} catalogues supprimés
+                </p>
+              ) : null}
+            </div>
+            {appResult && !appResult.applied ? <CsvErrorList items={appResult.errors} /> : null}
+          </article>
         ) : null}
       </div>
       <main className="admin-catalog">

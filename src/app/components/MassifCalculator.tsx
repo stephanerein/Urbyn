@@ -9,10 +9,11 @@ import { Trash2, ArrowRight, Info, ChevronLeft, ChevronRight, Check, ShoppingCar
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { cn } from './ui/utils';
 import { useCart } from '../context/CartContext';
+import { usePostalCities } from '../lib/postalCities';
 import {
   MASSIF_PER_KM_EUR,
-  MASSIF_PER_TON_EXTRA_EUR,
   MASSIF_SHIPPING_MIN_EUR,
+  roundUpToTenEuros,
   computeMassifShippingBySupplier,
   estimateDistanceKm,
   mergeMassifCartAndDraft,
@@ -215,7 +216,7 @@ export function familyImage(type: MassifType): any {
   return type === 'lego' ? massifLegoImg : massifImg;
 }
 
-/** Estimation livraison massif : camions × (2/0,75) €/km + 3,4 €/t, plancher 400 €. */
+/** Estimation livraison massif : max(600 €, camions × 2,6 €/km), dizaine supérieure. */
 export function estimateMassifDelivery(opts: {
   totalWeightKg: number;
   trucksCount: number;
@@ -225,16 +226,8 @@ export function estimateMassifDelivery(opts: {
 }): number {
   const distanceKm = estimateDistanceKm(opts.supplierZip, opts.postalCode, opts.country);
   const trucks = Math.max(1, opts.trucksCount);
-  const raw = trucks * distanceKm * MASSIF_PER_KM_EUR + (opts.totalWeightKg / 1000) * MASSIF_PER_TON_EXTRA_EUR;
-  return Math.round(Math.max(MASSIF_SHIPPING_MIN_EUR, raw) * 100) / 100;
-}
-
-function formatEuro(value: number, currency = 'EUR') {
-  return value.toLocaleString('fr-FR', {
-    style: 'currency',
-    currency: currency === 'EUR' ? 'EUR' : currency,
-    minimumFractionDigits: 2,
-  });
+  const raw = trucks * distanceKm * MASSIF_PER_KM_EUR;
+  return roundUpToTenEuros(Math.max(MASSIF_SHIPPING_MIN_EUR, raw));
 }
 
 function formatDimCm(val: number | null | undefined) {
@@ -286,6 +279,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   const { addItems, removeItem: removeCartItem, items: cartItems } = useCart();
 
   const [deliveryPostalCode, setDeliveryPostalCode] = useState('');
+  const [deliveryCity, setDeliveryCity] = useState('');
   const [deliveryCountry, setDeliveryCountry] = useState('France');
   const [deliveryInfoValidated, setDeliveryInfoValidated] = useState(false);
   const [deliveryFormOpen, setDeliveryFormOpen] = useState(false);
@@ -299,16 +293,30 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   /** Types manille explicitement voulus sur cet écran (clé = manilleType normalisé). */
   const [wantedManilleTypes, setWantedManilleTypes] = useState<Record<string, boolean>>({});
   const [paletteProduct, setPaletteProduct] = useState<MassifPalette | null>(null);
+  const { cities: postalCities, loading: postalCitiesLoading, france: postalInFrance } =
+    usePostalCities(deliveryPostalCode, deliveryCountry);
 
   useEffect(() => {
     const saved = localStorage.getItem('deliveryInfo');
     if (saved) {
-      const { postalCode, country } = JSON.parse(saved);
+      const { postalCode, country, city } = JSON.parse(saved);
+      const savedCountry = country ?? 'France';
       setDeliveryPostalCode(postalCode ?? '');
-      setDeliveryCountry(country ?? 'France');
-      setDeliveryInfoValidated(true);
+      setDeliveryCity(city ?? '');
+      setDeliveryCountry(savedCountry);
+      const needsCity = savedCountry === 'France' || savedCountry === 'FR';
+      setDeliveryInfoValidated(Boolean(postalCode) && (!needsCity || Boolean(city)));
     }
   }, []);
+
+  useEffect(() => {
+    if (postalCities.length === 0) return;
+    if (postalCities.length === 1) {
+      setDeliveryCity(postalCities[0]);
+      return;
+    }
+    setDeliveryCity((current) => (current && postalCities.includes(current) ? current : ''));
+  }, [postalCities]);
 
   useEffect(() => {
     let cancelled = false;
@@ -609,6 +617,8 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   const nbMassifPerPaletteOfItem = (it: ItemState): number =>
     extractNbMassifPerPalette({
       attributes: it.attributes,
+      free_attributes: it.product?.free_attributes,
+      mandatory_attributes: it.product?.mandatory_attributes,
     });
 
   /** Palettes obligatoires pour la sélection courante (mutualisées). */
@@ -631,14 +641,6 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   const productsAndManilleTotal =
     totalPrice + manilleSelectionExtra + selectionPaletteTotal;
 
-  const cartMassifWeight = useMemo(
-    () =>
-      cartItems
-        .filter(isMassifCartLine)
-        .reduce((sum, i) => sum + (i.details?.weight ?? 0) * i.quantity, 0),
-    [cartItems],
-  );
-
   const shippingBySupplier = useMemo(() => {
     const draftItems = completedItems.map((it) => ({
       id:
@@ -655,20 +657,18 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
         itemType: 'massif' as const,
         productId: it.product?.product_id,
         weight: itemUnitWeight(it),
-        companyName: it.product?.company_name,
-        companyTva: it.product?.company_tva,
-        companyZip: it.product?.company_zip,
+        companyName: 'Sélection',
+        companyTva: 'estimation',
+        companyZip: 'estimation',
       },
     }));
-    const existingMassifs = cartItems.filter(isMassifCartLine);
-    const merged = mergeMassifCartAndDraft(existingMassifs, draftItems);
     return computeMassifShippingBySupplier(
-      merged,
+      draftItems,
       deliveryPostalCode,
       deliveryCountry,
       { includeTonnageFee: true },
     );
-  }, [completedItems, cartItems, deliveryPostalCode, deliveryCountry]);
+  }, [completedItems, deliveryPostalCode, deliveryCountry]);
 
   const truckFills = useMemo(() => {
     if (shippingBySupplier.groups.length > 0) {
@@ -676,11 +676,9 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
         g.truckFills.map((pct) => Math.round(pct)),
       );
     }
-    if (totalWeight === 0 && cartMassifWeight === 0) return [0];
-    return trucksForWeight(totalWeight + cartMassifWeight).truckFills.map((pct) =>
-      Math.round(pct),
-    );
-  }, [shippingBySupplier, totalWeight, cartMassifWeight]);
+    if (totalWeight === 0) return [0];
+    return trucksForWeight(totalWeight).truckFills.map((pct) => Math.round(pct));
+  }, [shippingBySupplier, totalWeight]);
 
   const deliveryEstimate = useMemo(() => {
     if (!deliveryInfoValidated) return null;
@@ -696,6 +694,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
     name: string
     unitPrice: number
     addedTotal: number
+    originZip?: string
   }) => {
     if (!completedItems.length) return;
 
@@ -706,12 +705,13 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
       JSON.stringify({
         ...existingAddress,
         postalCode: deliveryPostalCode,
+        city: deliveryCity,
         country: deliveryCountry,
       }),
     );
     localStorage.setItem(
       'deliveryInfo',
-      JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }),
+      JSON.stringify({ postalCode: deliveryPostalCode, city: deliveryCity, country: deliveryCountry }),
     );
 
     const cartPayload = completedItems.map((it) => {
@@ -735,7 +735,13 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
             sku: it.product.admin_sku,
             description: it.product.description ?? null,
             weight: it.product.poids,
-            attributes: it.attributes ?? [],
+            attributes: [
+              ...(it.attributes ?? []),
+              ...(it.product?.free_attributes ?? []).map((attr) => ({
+                name: attr.name,
+                value: attr.value,
+              })),
+            ],
             nbMassifPerPalette,
             manilleType: manilleNeed?.type ?? null,
             manilleNombre: manilleNeed?.qty ?? null,
@@ -746,7 +752,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
             supplierName: supplier?.name ?? null,
             supplierTva: supplier?.tva ?? null,
             addedTotal: supplier?.addedTotal ?? null,
-            companyZip: it.product.company_zip ?? null,
+            companyZip: supplier?.originZip || it.product.company_zip || null,
             companyCity: it.product.company_city ?? null,
             companyCountry: it.product.company_country ?? null,
             totalWeight: it.product.poids * it.quantity,
@@ -910,7 +916,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
         product_id: target.product.product_id,
         quantity: target.quantity,
         cart: cartLinesFromItems(cartItems),
-        context: pricingContextFromSession(deliveryPostalCode, '', deliveryCountry),
+        context: pricingContextFromSession(deliveryPostalCode, deliveryCity, deliveryCountry),
       });
       setEstimateResult(result);
     } catch (err) {
@@ -927,6 +933,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
       name: offer.supplier_name,
       unitPrice: offer.unit_price,
       addedTotal: offer.added_total,
+      originZip: offer.origin_zip || undefined,
     });
     setItems((prev) => prev.map((it) => ({ ...it, quantity: 1 })));
   };
@@ -1076,15 +1083,12 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                   const dataSet = item.type ? getDataSet(item.type) : MASSIF_DATA_CUBIQUE;
                   const data =
                     !item.fromApi && item.dimension ? dataSet[item.dimension] : null;
-                  const price = itemUnitPrice(item);
                   const weight = itemUnitWeight(item);
                   const spec =
                     data && item.option ? (data.specs[item.option] ?? '') : '';
                   const familyMeta = item.type
                     ? ALL_FAMILIES.find((f) => f.type === item.type)
                     : null;
-                  const lineTotal = price * item.quantity;
-                  const currency = item.product?.currency || 'EUR';
 
                   return (
                     <Card key={item.id} className="border border-gray-300 bg-gray-50">
@@ -1543,16 +1547,11 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                                     +
                                   </button>
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                  <p className="font-bold text-black">
-                                    {formatEuro(lineTotal)}
+                                {data && (
+                                  <p className="text-xs text-gray-500">
+                                    {(data.weight * item.quantity / 1000).toFixed(2)} t
                                   </p>
-                                  {data && (
-                                    <p className="text-xs text-gray-500">
-                                      {(data.weight * item.quantity / 1000).toFixed(2)} t
-                                    </p>
-                                  )}
-                                </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1563,7 +1562,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                 })}
               </div>
 
-              {/* Jauge camion — mutualisée panier + sélection (même fournisseur) */}
+              {/* Jauge camion — sélection seule, comme un nouveau fournisseur */}
               {shippingBySupplier.totalWeightKg > 0 && (
                 <Card className="border border-gray-200 bg-gray-50">
                   <CardContent className="p-4">
@@ -1572,20 +1571,10 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                       {Math.max(1, shippingBySupplier.trucksTotal)} camion
                       {shippingBySupplier.trucksTotal > 1 ? 's' : ''} · 26 T)
                     </h4>
-                    {cartMassifWeight > 0 && (
-                      <p className="text-[11px] text-gray-600 mb-3">
-                        Mutualisé avec le panier : {(cartMassifWeight / 1000).toFixed(2)} t déjà
-                        présents
-                        {totalWeight > 0
-                          ? ` + ${(totalWeight / 1000).toFixed(2)} t sélection`
-                          : ''}
-                        .
-                      </p>
-                    )}
                     <div className="space-y-4">
                       {shippingBySupplier.groups.map((group, gi) => (
                         <div key={`${group.supplierKey}-${gi}`} className="space-y-2">
-                          {(shippingBySupplier.groups.length > 1 || cartMassifWeight > 0) && (
+                          {shippingBySupplier.groups.length > 1 && (
                             <p className="text-xs font-semibold text-gray-700">
                               {truckDedicatedLabel(group.productLabels)}
                               <span className="font-normal text-gray-500">
@@ -1649,7 +1638,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                         <div className="flex-1">
                           <div className="font-bold text-black text-sm">Livraison</div>
                           {deliveryInfoValidated && (
-                            <div className="text-sm mt-1 text-gray-600">{deliveryPostalCode}, {deliveryCountry}</div>
+                            <div className="text-sm mt-1 text-gray-600">{[deliveryPostalCode, deliveryCity].filter(Boolean).join(' ')}, {deliveryCountry}</div>
                           )}
                         </div>
                         <button
@@ -1667,7 +1656,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                             <Input
                               type="text"
                               value={deliveryPostalCode}
-                              onChange={e => { setDeliveryPostalCode(e.target.value); setPostalCodeError(false); }}
+                              onChange={e => { setDeliveryPostalCode(e.target.value); setDeliveryCity(''); setPostalCodeError(false); }}
                               placeholder={POSTAL_RULES[deliveryCountry]?.example ?? ''}
                               className={cn('border text-black', postalCodeError ? 'border-red-500' : 'border-gray-300')}
                             />
@@ -1677,6 +1666,21 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                               </p>
                             )}
                           </div>
+                          {postalInFrance && /^\d{5}$/.test(deliveryPostalCode.trim()) && (
+                            <div>
+                              <Label className="text-black text-sm mb-1 block">Ville <span className="text-red-500">*</span></Label>
+                              <Select value={deliveryCity || undefined} onValueChange={setDeliveryCity}>
+                                <SelectTrigger className="border border-gray-300 bg-white">
+                                  <SelectValue placeholder={postalCitiesLoading ? 'Recherche des communes…' : 'Choisissez la ville'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {postalCities.map((city) => (
+                                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
                           <div>
                             <Label className="text-black text-sm mb-1 block">Pays</Label>
                             <Select value={deliveryCountry} onValueChange={val => { setDeliveryCountry(val); setPostalCodeError(false); }}>
@@ -1694,16 +1698,16 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                           <Button
                             type="button"
                             onClick={() => {
-                              if (!validatePostalCode(deliveryPostalCode, deliveryCountry)) {
+                              if (!validatePostalCode(deliveryPostalCode, deliveryCountry) || (postalInFrance && !deliveryCity)) {
                                 setPostalCodeError(true);
                                 return;
                               }
                               setPostalCodeError(false);
                               setDeliveryInfoValidated(true);
                               setDeliveryFormOpen(false);
-                              localStorage.setItem('deliveryInfo', JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }));
+                              localStorage.setItem('deliveryInfo', JSON.stringify({ postalCode: deliveryPostalCode, city: deliveryCity, country: deliveryCountry }));
                             }}
-                            disabled={!deliveryPostalCode || !deliveryCountry}
+                            disabled={!deliveryPostalCode || !deliveryCountry || (postalInFrance && !deliveryCity)}
                             className="w-full bg-black hover:bg-gray-800 text-white"
                           >
                             Valider
@@ -1718,7 +1722,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
 
               {transportOn && !deliveryInfoValidated && (
                 <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-center">
-                  Veuillez renseigner votre code postal et votre pays dans la section{' '}
+                  Veuillez renseigner votre code postal, votre ville et votre pays dans la section{' '}
                   <strong>Localisation de livraison</strong> avant d&apos;estimer.
                 </p>
               )}

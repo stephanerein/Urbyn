@@ -17,6 +17,7 @@ import { ProgressSteps } from '../../components/ProgressSteps'
 import { FicheTechniqueButton } from '../../components/FicheTechniqueButton'
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback'
 import { useCart } from '../../context/CartContext'
+import { usePostalCities } from '../../lib/postalCities'
 import {
   imgCaissonBois80,
   imgCaissonBois120,
@@ -109,6 +110,7 @@ export function TotemProductDetailPage() {
   const [installationEnabled, setInstallationEnabled] = useState(installationServiceSelected)
   const [deliveryFormOpen, setDeliveryFormOpen] = useState(false)
   const [deliveryPostalCode, setDeliveryPostalCode] = useState('')
+  const [deliveryCity, setDeliveryCity] = useState('')
   const [deliveryCountry, setDeliveryCountry] = useState('France')
   const [deliveryInfoValidated, setDeliveryInfoValidated] = useState(false)
   const [estimateOpen, setEstimateOpen] = useState(false)
@@ -117,6 +119,8 @@ export function TotemProductDetailPage() {
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null)
   const transportOn = totemTransportSelected()
   const [postalCodeError, setPostalCodeError] = useState(false)
+  const { cities: postalCities, loading: postalCitiesLoading, france: postalInFrance } =
+    usePostalCities(deliveryPostalCode, deliveryCountry)
   const [totemRoadKm, setTotemRoadKm] = useState<number | null>(null)
 
   useEffect(() => {
@@ -163,12 +167,24 @@ export function TotemProductDetailPage() {
   useEffect(() => {
     const saved = localStorage.getItem('deliveryInfo')
     if (saved) {
-      const { postalCode, country } = JSON.parse(saved)
+      const { postalCode, country, city } = JSON.parse(saved)
+      const savedCountry = country ?? 'France'
       setDeliveryPostalCode(postalCode ?? '')
-      setDeliveryCountry(country ?? 'France')
-      setDeliveryInfoValidated(true)
+      setDeliveryCity(city ?? '')
+      setDeliveryCountry(savedCountry)
+      const needsCity = savedCountry === 'France' || savedCountry === 'FR'
+      setDeliveryInfoValidated(Boolean(postalCode) && (!needsCity || Boolean(city)))
     }
   }, [])
+
+  useEffect(() => {
+    if (postalCities.length === 0) return
+    if (postalCities.length === 1) {
+      setDeliveryCity(postalCities[0])
+      return
+    }
+    setDeliveryCity((current) => (current && postalCities.includes(current) ? current : ''))
+  }, [postalCities])
 
   // Distance route Évreux → CP (géocodage geo.api.gouv.fr + OSRM, même source que l’adresse)
   useEffect(() => {
@@ -340,7 +356,7 @@ export function TotemProductDetailPage() {
 
     localStorage.setItem(
       'deliveryInfo',
-      JSON.stringify({ postalCode: deliveryPostalCode, country: deliveryCountry }),
+      JSON.stringify({ postalCode: deliveryPostalCode, city: deliveryCity, country: deliveryCountry }),
     )
     localStorage.setItem('shippingCostTotem', String(totemShipping.shippingTotal))
     localStorage.setItem('totemShippingBreakdown', JSON.stringify(totemShipping))
@@ -362,7 +378,7 @@ export function TotemProductDetailPage() {
         product_id: product.product_id,
         quantity,
         cart: cartLinesFromItems(items),
-        context: pricingContextFromSession(deliveryPostalCode, '', deliveryCountry),
+        context: pricingContextFromSession(deliveryPostalCode, deliveryCity, deliveryCountry),
       })
       setEstimateResult(result)
     } catch (err) {
@@ -684,7 +700,7 @@ export function TotemProductDetailPage() {
                               <div className="font-bold text-black">Livraison</div>
                               {deliveryInfoValidated ? (
                                 <div className="text-sm mt-1 text-black">
-                                  {deliveryPostalCode}, {deliveryCountry}
+                                  {[deliveryPostalCode, deliveryCity].filter(Boolean).join(' ')}, {deliveryCountry}
                                 </div>
                               ) : null}
                             </div>
@@ -715,6 +731,7 @@ export function TotemProductDetailPage() {
                                   value={deliveryPostalCode}
                                   onChange={(e) => {
                                     setDeliveryPostalCode(e.target.value)
+                                    setDeliveryCity('')
                                     setPostalCodeError(false)
                                   }}
                                   placeholder={POSTAL_RULES[deliveryCountry]?.example ?? ''}
@@ -729,6 +746,31 @@ export function TotemProductDetailPage() {
                                   </p>
                                 ) : null}
                               </div>
+                              {postalInFrance && /^\d{5}$/.test(deliveryPostalCode.trim()) ? (
+                                <div>
+                                  <Label className="text-black text-sm mb-1 block">
+                                    Ville <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Select value={deliveryCity || undefined} onValueChange={setDeliveryCity}>
+                                    <SelectTrigger className="border border-gray-300 bg-white">
+                                      <SelectValue
+                                        placeholder={
+                                          postalCitiesLoading
+                                            ? 'Recherche des communes…'
+                                            : 'Choisissez la ville'
+                                        }
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {postalCities.map((city) => (
+                                        <SelectItem key={city} value={city}>
+                                          {city}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ) : null}
                               <div>
                                 <Label className="text-black text-sm mb-1 block">Pays</Label>
                                 <Select
@@ -761,7 +803,8 @@ export function TotemProductDetailPage() {
                                 type="button"
                                 onClick={() => {
                                   if (
-                                    !validatePostalCode(deliveryPostalCode, deliveryCountry)
+                                    !validatePostalCode(deliveryPostalCode, deliveryCountry) ||
+                                    (postalInFrance && !deliveryCity)
                                   ) {
                                     setPostalCodeError(true)
                                     return
@@ -773,11 +816,16 @@ export function TotemProductDetailPage() {
                                     'deliveryInfo',
                                     JSON.stringify({
                                       postalCode: deliveryPostalCode,
+                                      city: deliveryCity,
                                       country: deliveryCountry,
                                     }),
                                   )
                                 }}
-                                disabled={!deliveryPostalCode || !deliveryCountry}
+                                disabled={
+                                  !deliveryPostalCode ||
+                                  !deliveryCountry ||
+                                  (postalInFrance && !deliveryCity)
+                                }
                                 className="w-full bg-black hover:bg-gray-800 text-white"
                               >
                                 Valider

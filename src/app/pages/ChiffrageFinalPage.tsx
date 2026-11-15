@@ -15,6 +15,7 @@ import {
   computeMassifServiceFees,
   TOTEM_INSTALLATION_EUR,
   computeMassifShippingBySupplier,
+  massifLinesWithSupplierOrigin,
   isMassifInstallationSelected,
   isTotemInstallationSelected,
   truckDedicatedLabel,
@@ -36,8 +37,9 @@ import {
   clearAuthSignupPrefill,
   writeAuthSignupPrefill,
 } from '../lib/authSignupPrefill';
-import { createClientOrder } from '../api/orders';
-import { pricingContextFromSession } from '../lib/orderPricing';
+import { createClientOrder, type ClientOrderDetail } from '../api/orders';
+import { cartLinesFromItems, pricingContextFromSession } from '../lib/orderPricing';
+import { quoteCart, type CartOrigin } from '../api/pricing';
 
 interface DeliveryAddress {
   company?: string;
@@ -167,12 +169,26 @@ export function ChiffrageFinalPage() {
   const { isLoggedIn, session, openAuth } = useAuth();
 
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress | null>(null);
+  const [massifOrigins, setMassifOrigins] = useState<CartOrigin[]>([]);
   const [servicesByProduct, setServicesByProduct] = useState<Record<string, string[]>>({});
   const [contactForm, setContactForm] = useState<ContactForm>({ firstName: '', lastName: '', email: '', phone: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sellsyNote, setSellsyNote] = useState<string | null>(null);
   const [totemRoadKm, setTotemRoadKm] = useState<number | null>(null);
 
-  const finishOrderSuccess = () => {
+  const sellsyNoteFrom = (order: ClientOrderDetail): string | null => {
+    const raw = order.shipping_breakdown;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const sellsy = (raw as { sellsy?: { email_sent?: boolean; number?: string; message?: string } }).sellsy;
+    if (!sellsy) return null;
+    if (sellsy.email_sent) {
+      const label = sellsy.number ? ` ${sellsy.number}` : '';
+      return `Votre devis${label} a été envoyé à ${order.contact_email || 'votre adresse email'}.`;
+    }
+    return sellsy.message || "La demande est enregistrée. L'envoi du devis par email n'a pas abouti.";
+  };
+
+  const finishOrderSuccess = (note?: string | null) => {
     clearCart();
     sessionStorage.removeItem('pendingQuoteRequest');
     sessionStorage.removeItem('pendingQuoteAfterSignup');
@@ -188,6 +204,7 @@ export function ChiffrageFinalPage() {
     localStorage.removeItem('totemRoadDistanceCache_v2');
     localStorage.removeItem('totemRoadDistanceCache_v3');
     localStorage.removeItem('complianceResults');
+    setSellsyNote(note ?? null);
     setSubmitted(true);
   };
 
@@ -252,7 +269,7 @@ export function ChiffrageFinalPage() {
             totalHT: pending.totalHT,
             ...pricingFlags(pending.deliveryAddress),
           })
-            .then(() => finishOrderSuccess())
+            .then((order) => finishOrderSuccess(sellsyNoteFrom(order)))
             .catch(() => finishOrderSuccess());
           return;
         } catch {
@@ -279,14 +296,47 @@ export function ChiffrageFinalPage() {
   const massifItems = itemsByType['massif'] ?? [];
   const hasMassif = massifItems.length > 0;
 
+  useEffect(() => {
+    const lines = cartLinesFromItems(items);
+    const postal = deliveryAddress?.postalCode?.trim() || '';
+    if (!lines.length || !postal) {
+      setMassifOrigins([]);
+      return;
+    }
+    let cancelled = false;
+    quoteCart({
+      lines,
+      context: pricingContextFromSession(
+        postal,
+        deliveryAddress?.city || '',
+        deliveryAddress?.country || 'France',
+      ),
+    })
+      .then((quote) => {
+        if (!cancelled) setMassifOrigins(quote.origins ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setMassifOrigins([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [items, deliveryAddress?.postalCode, deliveryAddress?.city, deliveryAddress?.country]);
+
+  const massifRoute = useMemo(
+    () => massifLinesWithSupplierOrigin(massifItems, massifOrigins),
+    [massifItems, massifOrigins],
+  );
+
   const massifShipping = useMemo(
     () =>
       computeMassifShippingBySupplier(
-        massifItems,
+        massifRoute.items,
         deliveryAddress?.postalCode,
         deliveryAddress?.country || 'France',
+        { distanceKmByOrigin: massifRoute.distanceKmByOrigin },
       ),
-    [massifItems, deliveryAddress?.postalCode, deliveryAddress?.country],
+    [massifRoute, deliveryAddress?.postalCode, deliveryAddress?.country],
   );
 
   const massifFees = computeMassifServiceFees(massifItems);
@@ -312,6 +362,7 @@ export function ChiffrageFinalPage() {
     ? Number(localStorage.getItem('shippingCostOther') || '0')
     : 0;
   const massifShipAmount = massifShipping.shippingTotal;
+  const energySurcharge = massifItems.length > 0 ? massifShipping.tonnageFeeTotal : 0;
   const totemShipAmount = hasTotem ? totemShipping.shippingTotal : 0;
   const shippingCost = massifShipAmount + totemShipAmount + panelShipStored;
 
@@ -356,7 +407,14 @@ export function ChiffrageFinalPage() {
     shippingByType[t] = panelAndOtherHT > 0 ? (typeTotal / panelAndOtherHT) * restShip : 0;
   });
 
-  const totalHT = totalProductsHT - totemDiscount + shippingCost + massifDechargementFee + massifInstallFee + totemInstallFee;
+  const totalHT =
+    totalProductsHT -
+    totemDiscount +
+    energySurcharge +
+    shippingCost +
+    massifDechargementFee +
+    massifInstallFee +
+    totemInstallFee;
   const totalTTC = totalHT * 1.2;
 
   const activePartners: Partner[] = [];
@@ -427,7 +485,7 @@ export function ChiffrageFinalPage() {
     }
 
     try {
-      await createClientOrder({
+      const order = await createClientOrder({
         contact: contactForm,
         deliveryAddress: deliveryAddress ?? undefined,
         items,
@@ -439,7 +497,7 @@ export function ChiffrageFinalPage() {
         totalHT,
         ...pricingFlags(deliveryAddress),
       });
-      finishOrderSuccess();
+      finishOrderSuccess(sellsyNoteFrom(order));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Impossible d'enregistrer la commande.");
     }
@@ -453,6 +511,9 @@ export function ChiffrageFinalPage() {
             <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
           <h2 className="text-2xl font-semibold text-foreground mb-3">Demande envoyée !</h2>
+          {sellsyNote ? (
+            <p className="text-sm text-foreground mb-4">{sellsyNote}</p>
+          ) : null}
           <div className="space-y-2 mb-6">
             {activePartners.map((p) => (
               <p key={p.name} className="text-muted-foreground text-sm">{p.note}</p>
@@ -779,6 +840,12 @@ export function ChiffrageFinalPage() {
                   <div className="flex justify-between text-emerald-700 text-xs">
                     <span>Remise volume ({totemDiscountPct})</span>
                     <span className="font-medium">−{fmt(totemDiscount)} €</span>
+                  </div>
+                )}
+                {energySurcharge > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Surcharge énergie</span>
+                    <span className="font-medium text-foreground">{fmt(energySurcharge)} €</span>
                   </div>
                 )}
                 <div className="flex justify-between text-muted-foreground">

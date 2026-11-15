@@ -48,7 +48,9 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
   const [savingPick, setSavingPick] = useState(false)
   const [offersOpen, setOffersOpen] = useState(true)
   const [pickerOpen, setPickerOpen] = useState(true)
-  const [addresses, setAddresses] = useState<{ id: number; label: string; primary: boolean }[]>([])
+  const [addresses, setAddresses] = useState<
+    { id: number; label: string; primary: boolean; zip: string; city: string }[]
+  >([])
   const [groupAddress, setGroupAddress] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -70,11 +72,7 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
     )
   }
 
-  function applyGroups(
-    data: { groups: SupplierOfferGroup[] },
-    list = addresses,
-  ) {
-    const siege = siegeOf(list)
+  function applyGroups(data: { groups: SupplierOfferGroup[] }) {
     setGroups(data.groups)
     const next: Record<number, { price: string; delay: string }> = {}
     const chosen: Record<string, string> = {}
@@ -86,11 +84,7 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
         }
       }
       const key = group.catalog_ids.join('-') || group.catalog_label
-      chosen[key] = group.address_id
-        ? String(group.address_id)
-        : siege
-          ? String(siege.id)
-          : ''
+      chosen[key] = group.address_id ? String(group.address_id) : ''
     }
     setDrafts(next)
     setGroupAddress(chosen)
@@ -117,6 +111,8 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
             id: address.id,
             label: address.label!.trim(),
             primary: address.is_primary,
+            zip: (address.zip_code || '').trim(),
+            city: (address.city || '').trim(),
           }))
         const siege = siegeOf(list)
         const ordered = siege
@@ -146,12 +142,11 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
         }
       }
     }
-    const siege = siegeOf(addresses)
     const offerChanges: { product_id: number; price: number; delai_jours: number }[] = []
     const addressChanges: { address_id: number; catalog_ids: number[] }[] = []
     for (const group of groups) {
       const key = group.catalog_ids.join('-') || group.catalog_label
-      const selected = groupAddress[key] || (siege ? String(siege.id) : '')
+      const selected = groupAddress[key] || ''
       const stored = group.address_id ? String(group.address_id) : ''
       const addressId = Number(selected)
       if (
@@ -401,6 +396,9 @@ export function SupplierDashboard({ session }: SupplierDashboardProps) {
                               {addresses.map((address) => (
                                 <option key={address.id} value={address.id}>
                                   {address.label}
+                                  {address.zip || address.city
+                                    ? ` — ${[address.zip, address.city].filter(Boolean).join(' ')}`
+                                    : ''}
                                 </option>
                               ))}
                             </select>
