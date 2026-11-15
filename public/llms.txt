@@ -1,4 +1,4 @@
-# Atelier Urbanize — Habillage urbain & habillage thermique
+# Atelier Urbanize — Habillage urbain & solutions d'ombrage
 
 ## Qui sommes-nous ?
 
@@ -8,9 +8,9 @@ avec plus de 20 ans d'expérience :
 1. **Habillage Urbain** — conception, fabrication et location de mobilier urbain temporaire
    pour chantiers et événements : habillage d'échafaudage, habillage de mur, palissades,
    totems de communication urbaine, massifs béton, panneaux de chantier, structures extérieures.
-2. **Habillage Thermique** — solutions de protection solaire et de performance énergétique
-   des bâtiments : toiles de protection pour façades, toiles de protection pour patios,
-   films solaires pour vitrages
+2. **Solutions d'ombrage** — protection solaire et performance énergétique des bâtiments
+   comme de l'espace public : toiles d'ombrage pour façades, toiles d'ombrage pour patios,
+   Ciel de Rue (ombrage d'un passage de rue), films solaires pour vitrages
    (performance énergétique et luminosité préservée).
 
 Sur les deux domaines, Atelier Urbanize propose des prestations de conseil : déploiement de
@@ -21,7 +21,7 @@ permet d'obtenir une estimation instantanée et de commander en ligne.
 
 Site web principal : https://www.urbanize.site
 Habillage Urbain : https://plateform.urbanize.site/habillage-urbain
-Habillage Thermique : https://plateform.urbanize.site/habillage-thermique
+Solutions d'ombrage : https://plateform.urbanize.site/solutions-ombrage
 Configurateur / estimation en ligne : https://plateform.urbanize.site/definir-besoin
 Contact : info@urbanize.site
 
@@ -46,12 +46,14 @@ Massifs temporaires (cubique, lego, cylindrique) pour lestage et sécurisation.
 Installation, transport, conception graphique, production graphique, note de calcul,
 reportage photo, survey, conformité vent (Eurocode EN 1991-1-4).
 
-## Produits et services — Habillage Thermique
+## Produits et services — Solutions d'ombrage
 
-- **Toiles de protection solaire pour façades** — réduction de la chaleur reçue par le bâti,
+- **Toiles d'ombrage pour façades** — réduction de la chaleur reçue par le bâti,
   performances énergétiques élevées.
-- **Toiles de protection solaire pour patios** — réduction de la chaleur reçue par les patios,
+- **Toiles d'ombrage pour patios** — réduction de la chaleur reçue par les patios,
   performances énergétiques élevées.
+- **Ciel de Rue** — ombrage déployé dans l'espace urbain pour rendre un passage de rue
+  agréable.
 - **Films solaires pour vitrages** — amélioration de la performance énergétique tout en
   préservant la luminosité intérieure.
 

@@ -8,9 +8,9 @@ export function HomePage() {
   return (
     <>
       <SEOMeta
-        title="Habillage urbain & habillage thermique"
-        description="Atelier Urbanize conçoit et déploie vos projets d'habillage urbain (totems, palissades, massifs béton, échafaudages) et d'habillage thermique (protection solaire de façades, films solaires) : conseil, étude de structures, direction artistique et design produit."
-        keywords="Atelier Urbanize, habillage urbain, habillage thermique, protection solaire façade, film solaire vitrage, totem urbain, palissade chantier, massif béton, îlot de chaleur urbain"
+        title="Habillage urbain & solutions d'ombrage"
+        description="Atelier Urbanize conçoit et déploie vos projets d'habillage urbain (totems, palissades, massifs béton, échafaudages) et vos solutions d'ombrage (toiles d'ombrage pour façades et patios, Ciel de Rue, films solaires) : conseil, étude de structures, direction artistique et design produit."
+        keywords="Atelier Urbanize, habillage urbain, solution d'ombrage, toile d'ombrage, ciel de rue, protection solaire façade, film solaire vitrage, totem urbain, palissade chantier, massif béton, îlot de chaleur urbain"
         url="/"
         jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }])}
       />
@@ -70,15 +70,16 @@ export function HomePage() {
               <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-4">
                 <Sun className="w-6 h-6 text-black" strokeWidth={2.5} />
               </div>
-              <h3 className="font-bold text-lg mb-2 text-black">Habillage Thermique</h3>
+              <h3 className="font-bold text-lg mb-2 text-black">Solutions d'ombrage</h3>
               <p className="text-sm text-black mb-4">Des solutions pour protéger vos bâtiments de la chaleur et optimiser leur performance énergétique</p>
               <ul className="text-sm text-black space-y-2">
-                <li>• Toiles de protection pour façades — performances énergétiques spectaculaires</li>
-                <li>• Toiles de protection pour patios — performances énergétiques spectaculaires</li>
+                <li>• Toiles d'ombrage pour façades — performances énergétiques spectaculaires</li>
+                <li>• Toiles d'ombrage pour patios — performances énergétiques spectaculaires</li>
+                <li>• Ciel de Rue — ombrage urbain pour rendre un passage de rue agréable</li>
                 <li>• Films solaires pour vitrages — performance énergétique et luminosité préservée</li>
               </ul>
               <button
-                onClick={() => navigate('/habillage-thermique')}
+                onClick={() => navigate('/solutions-ombrage')}
                 className="mt-4 text-sm font-bold text-black inline-flex items-center gap-1 hover:gap-2 transition-all"
               >
                 En savoir plus <ArrowRight className="w-4 h-4" />
@@ -92,7 +93,7 @@ export function HomePage() {
       <section className="py-16 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-4 text-black">Nos prestations de conseil</h2>
-          <p className="text-center text-lg text-gray-600 mb-12">Un accompagnement de bout en bout, sur l'habillage urbain comme sur l'habillage thermique</p>
+          <p className="text-center text-lg text-gray-600 mb-12">Un accompagnement de bout en bout, sur l'habillage urbain comme sur les solutions d'ombrage</p>
           <div className="grid md:grid-cols-5 gap-6">
             <div className="text-center p-6 bg-slate-50 rounded-xl">
               <Wrench className="w-12 h-12 text-black mx-auto mb-4" />

@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/habillage-thermique",
+      "destination": "/solutions-ombrage",
+      "statusCode": 301
+    },
+    {
       "source": "/realisations/totem-sign-iz-salon-professionnel",
       "destination": "/realisations",
       "statusCode": 301
@@ -22,6 +27,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

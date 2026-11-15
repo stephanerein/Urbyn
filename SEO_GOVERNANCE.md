@@ -9,14 +9,14 @@
 Le site a été restructuré autour d'**Atelier Urbanize**, organisé en deux domaines, chacun
 avec sa page de présentation dédiée et son entrée dans le menu principal :
 - **Habillage Urbain** (`/habillage-urbain`) — totems, palissades, massifs béton, échafaudages...
-- **Habillage Thermique** (`/habillage-thermique`) — toiles de protection façades/patios,
+- **Solutions d'ombrage** (`/solutions-ombrage`) — toiles d'ombrage façades/patios, Ciel de Rue,
   films solaires vitrages. Catalogue produit à venir, contenu descriptif uniquement pour l'instant.
 
-Menu principal : Expertise (Urbain · Thermique) · Configurateur (`/definir-besoin`) ·
+Menu principal : Expertise (Urbaine · Ombrage) · Configurateur (`/definir-besoin`) ·
 Réalisations (`/realisations`) · Contact (`/contact`). `/a-propos` reste accessible depuis le footer.
 
 `/urbyn` a été supprimée le 25 août 2026 (page orpheline, plus aucun lien interne ni contenu
-propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urbain/Thermique).
+propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urbain / Solutions d'ombrage).
 Retirée des routes, du sitemap et du script de pré-rendu.
 
 **Réalisations** (`/realisations` + `/realisations/:slug`) : portfolio de projets, données dans
@@ -70,7 +70,8 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 |---|---|---|---|
 | Accueil (Atelier Urbanize) | `/` | Excellence en Consulting Urbain | Organization, Breadcrumb |
 | Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
-| Habillage Thermique | `/habillage-thermique` | Habillage Thermique — Protection solaire & performance énergétique | Breadcrumb |
+| Solutions d'ombrage | `/solutions-ombrage` | Solutions d'ombrage — Protection solaire & confort urbain | Breadcrumb |
+| Couverture de patio — repliable ou fixe | `/solutions-ombrage/patio/solutions` | Couverture de patio : repliable ou fixe ? | Breadcrumb |
 | Réalisations (liste) | `/realisations` | Réalisations | Breadcrumb |
 | Réalisations (détail, ×2 réelles) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
@@ -106,6 +107,8 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | `/palissade/resultats` | Résultat dynamique de session |
 
 ### Pages non-couvertes (flow intermédiaire, pas nécessaires au référencement)
+
+`PatioConfigPage` et `PatioEstimationPage` (`/solutions-ombrage/patio`, `…/estimation`) : saisie et chiffrage, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
 
 `TotemConfigPage`, `TotemFormatPage`, `TotemComparePage`, `TotemModelPage`, `TotemSignIzPage`, `TotemCompliancePage`, `PalissadeHabillagePage`, `PalissadeMontagePage`, `MassifCalculatorPage`, `ServicesAdditionnelsPage`, `ServicesSpecifiquesPage`, `SelectServicePage`, `ChiffrageFinalPage`, `SitemapPage`
 

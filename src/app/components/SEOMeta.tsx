@@ -90,7 +90,7 @@ export const ORG_SCHEMA = {
     addressCountry: 'FR',
   },
   sameAs: ['https://www.urbanize.site'],
-  description: 'Atelier Urbanize, expert en habillage urbain (totems, palissades, massifs béton, échafaudages) et en habillage thermique (protection solaire de façades, films solaires pour vitrages). Urbyn est sa plateforme d\'estimation instantanée en ligne.',
+  description: 'Atelier Urbanize, expert en habillage urbain (totems, palissades, massifs béton, échafaudages) et en solutions d\'ombrage (toiles d\'ombrage pour façades et patios, Ciel de Rue, films solaires pour vitrages). Urbyn est sa plateforme d\'estimation instantanée en ligne.',
 };
 
 export function productSchema(opts: {

@@ -1,18 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 import { Button } from '../components/ui/button';
-import { Sun, PanelTop, Umbrella, Sparkles, ArrowLeft, Mail } from 'lucide-react';
+import { Sun, PanelTop, Umbrella, CloudSun, Sparkles, ArrowLeft, Mail } from 'lucide-react';
 
 const EXPERTISES = [
   {
     icon: PanelTop,
-    title: 'Toiles de protection pour façades',
+    title: "Toiles d'ombrage pour façades",
     description: 'Des toiles conçues pour réduire la chaleur reçue par le bâti et offrir des performances énergétiques spectaculaires.',
   },
   {
     icon: Umbrella,
-    title: 'Toiles de protection pour patios',
+    title: "Toiles d'ombrage pour patios",
     description: 'Des toiles conçues pour réduire la chaleur reçue par les patios et offrir des performances énergétiques spectaculaires.',
+  },
+  {
+    icon: CloudSun,
+    title: 'Ciel de Rue',
+    description: "Un ombrage déployé dans l'espace urbain pour rendre un passage de rue agréable.",
   },
   {
     icon: Sparkles,
@@ -21,17 +26,17 @@ const EXPERTISES = [
   },
 ];
 
-export function HabillageThermiquePage() {
+export function SolutionsOmbragePage() {
   const navigate = useNavigate();
 
   return (
     <>
       <SEOMeta
-        title="Habillage Thermique — Protection solaire & performance énergétique"
-        description="Atelier Urbanize propose des solutions d'habillage thermique contre les îlots de chaleur urbains : toiles de protection pour façades, toiles de protection pour patios, films solaires pour vitrages, alliant performance énergétique et confort."
-        keywords="habillage thermique, protection solaire façade, protection solaire patio, toile patio, film solaire vitrage, îlot de chaleur urbain, performance énergétique, toile ombrage façade, Atelier Urbanize"
-        url="/habillage-thermique"
-        jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Habillage Thermique', url: '/habillage-thermique' }])}
+        title="Solutions d'ombrage — Protection solaire & confort urbain"
+        description="Atelier Urbanize déploie des solutions d'ombrage contre les îlots de chaleur urbains : toiles d'ombrage pour façades et patios, Ciel de Rue, films solaires pour vitrages, alliant performance énergétique et confort."
+        keywords="solution d'ombrage, toile d'ombrage façade, toile d'ombrage patio, ciel de rue, ombrage urbain, film solaire vitrage, îlot de chaleur urbain, protection solaire, Atelier Urbanize"
+        url="/solutions-ombrage"
+        jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: "Solutions d'ombrage", url: '/solutions-ombrage' }])}
       />
       <div className="max-w-6xl mx-auto pt-[var(--header-height)] px-4 pb-16">
         <div className="mb-8">
@@ -44,7 +49,7 @@ export function HabillageThermiquePage() {
         <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center mb-6">
           <Sun className="w-7 h-7 text-black" strokeWidth={2.5} />
         </div>
-        <h1 className="text-4xl font-bold mb-4 text-black">Habillage Thermique</h1>
+        <h1 className="text-4xl font-bold mb-4 text-black">Solutions d'ombrage</h1>
         <p className="text-xl text-black mb-12 max-w-3xl">
           Des solutions pour protéger vos bâtiments de la chaleur et optimiser leur performance énergétique,
           face aux îlots de chaleur urbains.
