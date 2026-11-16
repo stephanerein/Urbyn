@@ -99,10 +99,6 @@ const SERVICE_LABELS: Record<string, string> = {
   dechargement: 'Déchargement',
   installation: 'Installation',
   'note-calcul': 'Note de calcul',
-  'conception-graphique': 'Conception graphique',
-  'production-graphique': 'Production graphique',
-  'reportage-photo': 'Reportage Photo',
-  survey: 'Survey',
 };
 
 const TYPE_TO_PRODUCT_PARAM: Record<string, string> = {

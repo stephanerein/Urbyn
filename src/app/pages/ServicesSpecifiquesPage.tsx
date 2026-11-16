@@ -3,7 +3,15 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { ProgressSteps } from '../components/ProgressSteps';
-import { HardHat, Calculator, Palette, Image, Camera, MapPin, Truck, Forklift, PackageOpen, ShoppingCart, CalendarClock, Check, ChevronDown, ChevronUp, Wrench, Users, Lightbulb, ClipboardList, Shield, Scale, FileCheck, FileText, AlertTriangle } from 'lucide-react';
+import { PeriodeLocationPicker } from '../components/PeriodeLocationPicker';
+import { toast } from 'sonner';
+import {
+  ecrirePeriodeLocation,
+  lirePeriodeLocation,
+  periodeComplete,
+  type PeriodeLocation,
+} from '../lib/periodeLocation';
+import { HardHat, Calculator, Palette, Image, Truck, Forklift, PackageOpen, ShoppingCart, CalendarClock, Check, ChevronDown, ChevronUp, Wrench, Users, Lightbulb, ClipboardList, Shield, Scale, FileCheck, FileText, AlertTriangle } from 'lucide-react';
 
 const productTitles: Record<string, string> = {
   'totem': 'Totem',
@@ -61,42 +69,6 @@ const servicesParProduit: Record<string, Service[]> = {
       ]
     },
     {
-      id: 'conception-graphique',
-      name: 'Conception graphique',
-      icon: Palette,
-      hasExpand: true,
-      details: [
-        {
-          label: 'Services inclus',
-          items: [
-            'Définition du projet créatif',
-            'Conception design et/ou graphique'
-          ]
-        }
-      ]
-    },
-    {
-      id: 'production-graphique',
-      name: 'Production graphique',
-      icon: Image,
-      hasExpand: true,
-      details: [
-        {
-          label: 'Services inclus',
-          items: [
-            '3 Aller/Retour'
-          ]
-        },
-        {
-          label: 'Documents fournis par le client',
-          items: [
-            'Logo',
-            'Perspectives 3D'
-          ]
-        }
-      ]
-    },
-    {
       id: 'note-calcul',
       name: 'Note de calcul',
       icon: Calculator,
@@ -111,26 +83,6 @@ const servicesParProduit: Record<string, Service[]> = {
         }
       ]
     },
-    {
-      id: 'reportage-photo',
-      name: 'Reportage Photo',
-      icon: Camera,
-      hasExpand: false
-    },
-    {
-      id: 'survey',
-      name: 'Survey',
-      icon: MapPin,
-      hasExpand: true,
-      details: [
-        {
-          label: 'Services inclus',
-          items: [
-            'Repérage sur site'
-          ]
-        }
-      ]
-    },
   ],
   palissade: [
     {
@@ -138,12 +90,6 @@ const servicesParProduit: Record<string, Service[]> = {
       name: 'Installation',
       icon: HardHat,
       description: 'Installation complète de votre palissade'
-    },
-    {
-      id: 'conception-graphique',
-      name: 'Conception graphique',
-      icon: Palette,
-      description: 'Création des visuels pour votre palissade'
     }
   ],
   'panneau-chantier': [],
@@ -215,7 +161,10 @@ export function ServicesSpecifiquesPage() {
       const parsed = JSON.parse(saved);
       // Ancien format tableau plat → ignoré (les services ne sont pas associés à un produit)
       if (Array.isArray(parsed)) return productDefaults();
-      return parsed[product!] ?? productDefaults();
+      const memorises: string[] | undefined = parsed[product!];
+      // Un service retiré du catalogue ne doit pas rester sélectionné.
+      const existants = new Set((servicesParProduit[product!] ?? []).map(service => service.id));
+      return memorises ? memorises.filter(id => existants.has(id)) : productDefaults();
     }
     return productDefaults();
   };
@@ -224,6 +173,21 @@ export function ServicesSpecifiquesPage() {
   const [totemMode, setTotemMode] = useState<'acquisition' | 'location'>(
     () => (sessionStorage.getItem('totemMode') as 'acquisition' | 'location') ?? 'acquisition'
   );
+
+  // Période de location : demandée dès que le client choisit « Location ».
+  const [periodeLocation, setPeriodeLocation] = useState<PeriodeLocation>(() =>
+    product ? lirePeriodeLocation(product) : {},
+  );
+  const [periodeManquante, setPeriodeManquante] = useState(false);
+  const enLocation =
+    (product === 'totem' && totemMode === 'location') ||
+    (product === 'massif-beton' && selectedServices.includes('location'));
+
+  const changerPeriodeLocation = (periode: PeriodeLocation) => {
+    setPeriodeLocation(periode);
+    if (product) ecrirePeriodeLocation(product, periode);
+    if (periodeComplete(periode)) setPeriodeManquante(false);
+  };
 
   // État spécifique Panneau de chantier (Livraison + DÉPLOIEMENT)
   const [pcToolkit, setPcToolkit] = useState(false);
@@ -301,6 +265,12 @@ export function ServicesSpecifiquesPage() {
   };
 
   const handleContinue = () => {
+    if (enLocation && !periodeComplete(periodeLocation)) {
+      setPeriodeManquante(true);
+      toast.error('Choisissez la date de livraison et la date d\'enlèvement de votre location.');
+      document.getElementById('periode-location')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     if (selectedServices.length > 0) {
       saveServices(selectedServices);
     }
@@ -399,6 +369,15 @@ export function ServicesSpecifiquesPage() {
                   })}
                 </div>
 
+                {enLocation && (
+                  <PeriodeLocationPicker
+                    periode={periodeLocation}
+                    onChange={changerPeriodeLocation}
+                    manquante={periodeManquante}
+                    objet="totems"
+                  />
+                )}
+
                 <hr className="border-slate-200 mb-8" />
 
                 {/* Groupe 1 : Installation + Transport */}
@@ -476,68 +455,11 @@ export function ServicesSpecifiquesPage() {
                 {/* Séparateur */}
                 <hr className="border-slate-200 my-8" />
 
-                {/* Groupe 2 : 2 colonnes — Col 1 : Conception, Production, Reportage / Col 2 : Note de calcul, Survey */}
+                {/* Groupe 2 : Note de calcul */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  {/* Colonne 1 */}
+                  
                   <div className="flex flex-col gap-6">
-                    {services.filter(s => ['conception-graphique', 'production-graphique', 'reportage-photo'].includes(s.id))
-                      .sort((a, b) => ['conception-graphique', 'production-graphique', 'reportage-photo'].indexOf(a.id) - ['conception-graphique', 'production-graphique', 'reportage-photo'].indexOf(b.id))
-                      .map((service) => {
-                        const Icon = service.icon;
-                        const isSelected = selectedServices.includes(service.id);
-                        const isExpanded = expandedServices.includes(service.id);
-                        return (
-                          <Card
-                            key={service.id}
-                            className={`cursor-pointer transition-all ${isSelected ? 'border-2 border-black bg-slate-50 shadow-xl' : 'border-2 border-slate-200 hover:border-black hover:shadow-xl'}`}
-                          >
-                            <CardContent className="p-6 relative">
-                              {isSelected && (
-                                <div className="absolute top-4 right-4 w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                                  <Check className="w-5 h-5 text-white" />
-                                </div>
-                              )}
-                              <div onClick={() => toggleService(service.id)}>
-                                <div className="flex items-start gap-4">
-                                  <div className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-black' : 'bg-slate-100'}`}>
-                                    <Icon className={`w-7 h-7 transition-colors ${isSelected ? 'text-white' : 'text-slate-700'}`} strokeWidth={2} />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h3 className="text-lg font-bold mb-2 text-black">{service.name}</h3>
-                                  </div>
-                                </div>
-                              </div>
-                              {service.hasExpand && service.details && (
-                                <div className="mt-4">
-                                  <button onClick={() => toggleExpand(service.id)} className="flex items-center gap-2 text-sm font-bold text-black hover:text-gray-700 transition-colors">
-                                    {isExpanded ? <><ChevronUp className="w-4 h-4" /> Masquer les détails</> : <><ChevronDown className="w-4 h-4" /> Voir les détails</>}
-                                  </button>
-                                  {isExpanded && (
-                                    <div className="mt-4 pl-4 border-l-2 border-slate-200 space-y-4">
-                                      {service.details.map((detail, idx) => (
-                                        <div key={idx}>
-                                          <h4 className="text-sm font-bold text-black mb-2">{detail.label}</h4>
-                                          <ul className="space-y-1 text-sm text-gray-600">
-                                            {detail.items.map((item, itemIdx) => (
-                                              <li key={itemIdx} className="flex items-start gap-2"><span className="text-black">•</span><span>{item}</span></li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                  </div>
-
-                  {/* Colonne 2 */}
-                  <div className="flex flex-col gap-6">
-                    {services.filter(s => ['note-calcul', 'survey'].includes(s.id))
-                      .sort((a, b) => ['note-calcul', 'survey'].indexOf(a.id) - ['note-calcul', 'survey'].indexOf(b.id))
+                    {services.filter(s => s.id === 'note-calcul')
                       .map((service) => {
                         const Icon = service.icon;
                         const isSelected = selectedServices.includes(service.id);
@@ -638,6 +560,15 @@ export function ServicesSpecifiquesPage() {
                     );
                   })}
                 </div>
+
+                {enLocation && (
+                  <PeriodeLocationPicker
+                    periode={periodeLocation}
+                    onChange={changerPeriodeLocation}
+                    manquante={periodeManquante}
+                    objet="massifs"
+                  />
+                )}
 
                 {/* Séparateur */}
                 <hr className="border-slate-200 my-8" />

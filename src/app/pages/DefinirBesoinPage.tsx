@@ -42,8 +42,8 @@ export function DefinirBesoinPage() {
       image: totemImg
     },
     {
-      id: 'poteau',
-      title: 'Poteau',
+      id: 'mat',
+      title: 'Mât',
       description: "Support d'éclairage, de caméras de sécurité et de câbles aériens",
       icon: UtilityPole
     }
@@ -177,11 +177,11 @@ export function DefinirBesoinPage() {
   };
 
   const handleProductSelect = (productId: string) => {
-    if (productId === 'echafaudage' || productId === 'facade' || productId === 'poteau') {
+    if (productId === 'echafaudage' || productId === 'facade' || productId === 'mat') {
       const libelle =
         productId === 'echafaudage' ? "L'habillage d'échafaudage"
         : productId === 'facade' ? "L'habillage de façade"
-        : 'Le poteau';
+        : 'Le mât';
       toast.info("Service bientôt disponible", {
         description: `${libelle} est un service sur mesure. Contactez notre bureau d'étude via le chat pour plus d'informations.`
       });
