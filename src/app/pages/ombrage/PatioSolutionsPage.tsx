@@ -104,7 +104,7 @@ const MESURES: Array<[string, string, string]> = [
 
 export function PatioSolutionsPage() {
   const navigate = useNavigate();
-  const continuer = () => navigate('/solutions-ombrage/patio');
+  const continuer = () => navigate('/solutions-ombrage/patio/services');
 
   return (
     <>
@@ -124,10 +124,14 @@ export function PatioSolutionsPage() {
 
         <section className="pt-8 pb-20 px-6">
           <div className="max-w-5xl mx-auto">
-            <div className="mb-8">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={() => navigate('/definir-besoin')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour aux solutions
+              </Button>
+              <Button onClick={continuer} className="bg-black text-white hover:bg-gray-800">
+                Décrire mes patios
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
 

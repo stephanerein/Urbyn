@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Camera, Check, Minus, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Minus, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEOMeta } from '../../components/SEOMeta';
 import { ProgressSteps } from '../../components/ProgressSteps';
@@ -24,12 +24,6 @@ import {
   type OmbrageSaisie,
   type PatioSaisie,
 } from '../../lib/patioOmbrage';
-
-const PRESTATIONS_MISE_EN_PLACE = [
-  'Étude thermique',
-  "Étude de bureau d'études",
-  'Repérage et prise de mesure',
-];
 
 type CoteKey = 'largeur1' | 'largeur2' | 'longueur1' | 'longueur2';
 
@@ -165,53 +159,17 @@ export function PatioConfigPage() {
         <section className="pt-8 pb-20 px-6">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
-              <Button variant="outline" onClick={() => navigate('/solutions-ombrage/patio/solutions')}>
+              <Button variant="outline" onClick={() => navigate('/solutions-ombrage/patio/services')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Repliable ou fixe : les deux solutions
+                Mes services
               </Button>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-black">
-              Solution d'ombrage pour patio
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-black">Vos patios</h1>
             <p className="text-lg text-gray-600 mb-10 max-w-[65ch]">
-              Décrivez vos patios : nous chiffrons pour chacun une couverture repliable et une
-              couverture fixe, en acquisition ou en mise à disposition.
+              Indiquez le nombre de patios et leurs dimensions : nous chiffrons pour chacun une
+              couverture repliable et une couverture fixe, en acquisition ou en mise à disposition.
             </p>
-
-            {/* Mise en place — prestation forfaitaire, présélectionnée */}
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={saisie.miseEnPlace}
-              onClick={() => appliquer({ ...saisie, miseEnPlace: !saisie.miseEnPlace })}
-              className={`w-full text-left rounded-xl border-2 p-6 mb-10 transition-all ${
-                saisie.miseEnPlace
-                  ? 'border-black bg-slate-50 shadow-md'
-                  : 'border-slate-200 hover:border-black'
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <span
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                    saisie.miseEnPlace ? 'border-black bg-black' : 'border-slate-300 bg-white'
-                  }`}
-                >
-                  {saisie.miseEnPlace && <Check className="h-4 w-4 text-white" />}
-                </span>
-                <div>
-                  <h2 className="text-lg font-bold text-black">Mise en place</h2>
-                  <p className="text-sm text-gray-600 mt-1 mb-3">
-                    Prestation forfaitaire, réglée une seule fois quel que soit le nombre de patios.
-                  </p>
-                  <ul className="text-sm text-black space-y-1">
-                    {PRESTATIONS_MISE_EN_PLACE.map((prestation) => (
-                      <li key={prestation}>• {prestation}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </button>
 
             {/* Nombre de patios */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">

@@ -13,6 +13,7 @@ import {
   fetchPatioQuote,
   submitPatioDemande,
   type PatioContact,
+  type PatioOptions,
   type PatioQuote,
   type PatioQuoteLine,
   type PointPlan,
@@ -71,10 +72,12 @@ function CartePatio({
   patio,
   saisie,
   index,
+  options,
 }: {
   patio: PatioQuoteLine;
   saisie: PatioSaisie;
   index: number;
+  options: PatioQuote['options'];
 }) {
   const r = patio.retractable;
   const f = patio.fixe;
@@ -232,7 +235,19 @@ function CartePatio({
             <div className="rounded-md bg-white border border-slate-200 p-4 space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Acquisition</p>
               <Ligne label="Dispositif posé" valeur={`${euros(r.acquisition.prix_net)} HT`} fort />
-              <Ligne label="Vérification annuelle" valeur={`${euros(r.acquisition.verification_annuelle)} HT / an`} />
+              {options.verification_annuelle ? (
+                <Ligne
+                  label="Vérification annuelle (option retenue)"
+                  valeur={`${euros(r.acquisition.verification_annuelle)} HT / an`}
+                />
+              ) : (
+                <p className="text-xs text-gray-500">
+                  Vérification annuelle : option non retenue.{' '}
+                  <Link to="/solutions-ombrage/patio/services" className="font-bold underline underline-offset-2">
+                    La choisir
+                  </Link>
+                </p>
+              )}
             </div>
             <div className="rounded-md bg-white border border-slate-200 p-4 space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Mise à disposition</p>
@@ -272,13 +287,25 @@ function CartePatio({
             <div className="rounded-md bg-white border border-slate-200 p-4 space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Acquisition</p>
               <Ligne label="Dispositif posé" valeur={`${euros(f.acquisition.prix_net)} HT`} fort />
-              <Ligne
-                label="Dépose et repose saisonnières"
-                valeur={`${euros(f.acquisition.saisonnier_annees_suivantes)} HT / an`}
-              />
-              <p className="text-xs text-gray-600 pt-1">
-                Bâches déposées en octobre et reposées en avril par nos équipes ({euros(f.acquisition.saisonnier_premiere_annee)} HT la première année).
-              </p>
+              {options.intervention_saisonniere ? (
+                <>
+                  <Ligne
+                    label="Installation en avril, démontage en octobre"
+                    valeur={`${euros(f.acquisition.saisonnier_annees_suivantes)} HT / an`}
+                  />
+                  <p className="text-xs text-gray-600 pt-1">
+                    Option retenue : nos équipes installent les toiles en avril et les démontent en
+                    octobre ({euros(f.acquisition.saisonnier_premiere_annee)} HT la première année).
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  Intervention d'installation en avril et de démontage en octobre : option non retenue.{' '}
+                  <Link to="/solutions-ombrage/patio/services" className="font-bold underline underline-offset-2">
+                    La choisir
+                  </Link>
+                </p>
+              )}
             </div>
             <div className="rounded-md border border-dashed border-slate-300 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Mise à disposition</p>
@@ -305,6 +332,14 @@ export function PatioEstimationPage() {
   const saisie = useMemo(lireSaisie, []);
   const saisieValide = saisie.patios.every(patioComplet);
   const dimensions = useMemo(() => versDimensions(saisie.patios), [saisie]);
+  const options: PatioOptions = useMemo(
+    () => ({
+      miseEnPlace: saisie.miseEnPlace,
+      verificationAnnuelle: saisie.verificationAnnuelle,
+      interventionSaisonniere: saisie.interventionSaisonniere,
+    }),
+    [saisie],
+  );
 
   const [devis, setDevis] = useState<PatioQuote | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -315,7 +350,7 @@ export function PatioEstimationPage() {
   useEffect(() => {
     if (!saisieValide) return;
     let annule = false;
-    fetchPatioQuote(dimensions, saisie.miseEnPlace)
+    fetchPatioQuote(dimensions, options)
       .then((resultat) => {
         if (!annule) setDevis(resultat);
       })
@@ -325,7 +360,7 @@ export function PatioEstimationPage() {
     return () => {
       annule = true;
     };
-  }, [dimensions, saisie.miseEnPlace, saisieValide]);
+  }, [dimensions, options, saisieValide]);
 
   if (!saisieValide) {
     return <Navigate to="/solutions-ombrage/patio" replace />;
@@ -340,7 +375,7 @@ export function PatioEstimationPage() {
     try {
       await submitPatioDemande({
         patios: dimensions,
-        miseEnPlace: saisie.miseEnPlace,
+        options,
         contact,
         photos: lirePhotos(),
       });
@@ -413,7 +448,13 @@ export function PatioEstimationPage() {
 
                 <div className="space-y-8">
                   {devis.patios.map((patio, index) => (
-                    <CartePatio key={index} patio={patio} saisie={saisie.patios[index]} index={index} />
+                    <CartePatio
+                      key={index}
+                      patio={patio}
+                      saisie={saisie.patios[index]}
+                      index={index}
+                      options={devis.options}
+                    />
                   ))}
                 </div>
 
@@ -437,6 +478,22 @@ export function PatioEstimationPage() {
                         <p className="text-xl font-bold text-black mt-1">{euros(devis.totaux.fixe_acquisition)} HT</p>
                       </div>
                     </div>
+                    {(devis.options.verification_annuelle || devis.options.intervention_saisonniere) && (
+                      <div className="grid sm:grid-cols-3 gap-4 mt-5 pt-5 border-t border-slate-200">
+                        {devis.options.verification_annuelle && (
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Repliable — vérification annuelle</p>
+                            <p className="text-xl font-bold text-black mt-1">{euros(devis.totaux.retractable_verification_annuelle)} HT / an</p>
+                          </div>
+                        )}
+                        {devis.options.intervention_saisonniere && (
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Fixe — installation et démontage</p>
+                            <p className="text-xl font-bold text-black mt-1">{euros(devis.totaux.fixe_saisonnier_annees_suivantes)} HT / an</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500 mt-4">
                       Hors forfait de mise en place. Chaque patio peut être commandé seul, dans l'une ou l'autre solution.
                     </p>

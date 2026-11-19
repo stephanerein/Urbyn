@@ -108,7 +108,7 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 
 ### Pages non-couvertes (flow intermédiaire, pas nécessaires au référencement)
 
-`PatioConfigPage` et `PatioEstimationPage` (`/solutions-ombrage/patio`, `…/estimation`) : saisie et chiffrage, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
+`PatioServicesPage`, `PatioConfigPage` et `PatioEstimationPage` (`/solutions-ombrage/patio/services`, `/solutions-ombrage/patio`, `…/estimation`) : choix des services, saisie des patios et chiffrage, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
 
 `TotemConfigPage`, `TotemFormatPage`, `TotemComparePage`, `TotemModelPage`, `TotemSignIzPage`, `TotemCompliancePage`, `PalissadeHabillagePage`, `PalissadeMontagePage`, `MassifCalculatorPage`, `ServicesAdditionnelsPage`, `ServicesSpecifiquesPage`, `SelectServicePage`, `ChiffrageFinalPage`, `SitemapPage`
 

@@ -55,17 +55,28 @@ export interface PatioQuoteLine {
   }
 }
 
+/** Choix du client, transmis tels quels au chiffrage et à la demande. */
+export interface PatioOptions {
+  miseEnPlace: boolean
+  verificationAnnuelle: boolean
+  interventionSaisonniere: boolean
+}
+
 export interface PatioQuote {
   devise: string
   montants: string
   duree_mois: number
   mise_en_place: { incluse: boolean; forfait: number; prestations: string[] }
+  options: { verification_annuelle: boolean; intervention_saisonniere: boolean }
   patios: PatioQuoteLine[]
   totaux: {
     surface_m2: number
     retractable_acquisition: number
     retractable_loyer_mensuel: number
     fixe_acquisition: number
+    retractable_verification_annuelle: number
+    fixe_saisonnier_annees_suivantes: number
+    fixe_saisonnier_premiere_annee: number
   }
 }
 
@@ -78,20 +89,28 @@ export interface PatioContact {
   message: string
 }
 
+function optionsPourApi(options: PatioOptions) {
+  return {
+    mise_en_place: options.miseEnPlace,
+    verification_annuelle: options.verificationAnnuelle,
+    intervention_saisonniere: options.interventionSaisonniere,
+  }
+}
+
 export function fetchPatioQuote(
   patios: PatioDimensions[],
-  miseEnPlace: boolean,
+  options: PatioOptions,
 ): Promise<PatioQuote> {
   return apiFetch('/api/v1/ombrage/patios/quote', {
     method: 'POST',
-    body: JSON.stringify({ patios, mise_en_place: miseEnPlace }),
+    body: JSON.stringify({ patios, ...optionsPourApi(options) }),
   })
 }
 
 /** Envoie la demande et les photos de patio (une au plus par patio). */
 export async function submitPatioDemande(input: {
   patios: PatioDimensions[]
-  miseEnPlace: boolean
+  options: PatioOptions
   contact: PatioContact
   photos: Array<{ patioIndex: number; blob: Blob }>
 }): Promise<{ id: number; photos: number }> {
@@ -100,7 +119,7 @@ export async function submitPatioDemande(input: {
     'payload',
     JSON.stringify({
       patios: input.patios,
-      mise_en_place: input.miseEnPlace,
+      ...optionsPourApi(input.options),
       contact: input.contact,
     }),
   )

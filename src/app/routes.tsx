@@ -3,6 +3,7 @@ import { HomePage } from './pages/HomePage';
 import { HabillageUrbainPage } from './pages/HabillageUrbainPage';
 import { SolutionsOmbragePage } from './pages/SolutionsOmbragePage';
 import { PatioSolutionsPage } from './pages/ombrage/PatioSolutionsPage';
+import { PatioServicesPage } from './pages/ombrage/PatioServicesPage';
 import { PatioConfigPage } from './pages/ombrage/PatioConfigPage';
 import { PatioEstimationPage } from './pages/ombrage/PatioEstimationPage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
@@ -87,6 +88,7 @@ export function AppRoutes() {
       <Route path="/habillage-urbain" element={<HabillageUrbainPage />} />
       <Route path="/solutions-ombrage" element={<SolutionsOmbragePage />} />
       <Route path="/solutions-ombrage/patio/solutions" element={<PatioSolutionsPage />} />
+      <Route path="/solutions-ombrage/patio/services" element={<PatioServicesPage />} />
       <Route path="/solutions-ombrage/patio" element={<PatioConfigPage />} />
       <Route path="/solutions-ombrage/patio/estimation" element={<PatioEstimationPage />} />
       <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
