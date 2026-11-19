@@ -22,7 +22,6 @@ export interface PatioSaisie {
 }
 
 export interface OmbrageSaisie {
-  miseEnPlace: boolean
   /** Option de la couverture repliable (acquisition) : visite annuelle de vérification. */
   verificationAnnuelle: boolean
   /** Option de la couverture fixe : installation en avril, démontage en octobre. */
@@ -35,9 +34,7 @@ export function patioVide(): PatioSaisie {
 }
 
 export function saisieParDefaut(): OmbrageSaisie {
-  // « Mise en place » est présélectionnée.
   return {
-    miseEnPlace: true,
     verificationAnnuelle: false,
     interventionSaisonniere: false,
     patios: [patioVide()],
@@ -52,7 +49,6 @@ export function lireSaisie(): OmbrageSaisie {
     const parsed = JSON.parse(raw) as OmbrageSaisie
     if (!Array.isArray(parsed.patios) || parsed.patios.length === 0) return saisieParDefaut()
     return {
-      miseEnPlace: parsed.miseEnPlace !== false,
       verificationAnnuelle: parsed.verificationAnnuelle === true,
       interventionSaisonniere: parsed.interventionSaisonniere === true,
       patios: parsed.patios.slice(0, MAX_PATIOS).map((p) => ({ ...patioVide(), ...p })),

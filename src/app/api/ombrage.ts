@@ -57,7 +57,6 @@ export interface PatioQuoteLine {
 
 /** Choix du client, transmis tels quels au chiffrage et à la demande. */
 export interface PatioOptions {
-  miseEnPlace: boolean
   verificationAnnuelle: boolean
   interventionSaisonniere: boolean
 }
@@ -91,7 +90,6 @@ export interface PatioContact {
 
 function optionsPourApi(options: PatioOptions) {
   return {
-    mise_en_place: options.miseEnPlace,
     verification_annuelle: options.verificationAnnuelle,
     intervention_saisonniere: options.interventionSaisonniere,
   }

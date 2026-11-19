@@ -334,7 +334,6 @@ export function PatioEstimationPage() {
   const dimensions = useMemo(() => versDimensions(saisie.patios), [saisie]);
   const options: PatioOptions = useMemo(
     () => ({
-      miseEnPlace: saisie.miseEnPlace,
       verificationAnnuelle: saisie.verificationAnnuelle,
       interventionSaisonniere: saisie.interventionSaisonniere,
     }),

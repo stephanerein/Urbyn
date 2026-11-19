@@ -47,15 +47,17 @@ export function PatioServicesPage() {
               patios et leurs dimensions.
             </p>
 
-            {/* Mise en place — prestation forfaitaire, présélectionnée */}
+            {/* Mise en place — prestation forfaitaire, obligatoire */}
             <CarteChoix
-              coche={saisie.miseEnPlace}
-              onChange={(miseEnPlace) => appliquer({ ...saisie, miseEnPlace })}
+              coche
+              obligatoire
+              onChange={() => {}}
               titre="Mise en place"
               className="mb-4"
             >
               <p className="text-sm text-gray-600 mt-1 mb-3">
-                Prestation forfaitaire, réglée une seule fois quel que soit le nombre de patios.
+                Prestation forfaitaire obligatoire, réglée une seule fois quel que soit le nombre
+                de patios.
               </p>
               <ul className="text-sm text-black space-y-1">
                 {PRESTATIONS_MISE_EN_PLACE.map((prestation) => (
