@@ -160,24 +160,28 @@ export function PatioCoordonneesPage() {
                   </ul>
                 </div>
 
+                <p className="text-xs text-gray-500 mb-4">
+                  <span className="text-red-500" aria-hidden="true">*</span> Champs obligatoires
+                </p>
+
                 <form onSubmit={envoyer} className="space-y-8">
                   <fieldset className="space-y-4">
                     <legend className="text-xl font-bold text-black mb-1">Vos coordonnées</legend>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="contact-prenom" className="text-black font-bold">Prénom</Label>
+                        <Label htmlFor="contact-prenom" className="text-black font-bold">Prénom <span className="text-red-500" aria-hidden="true">*</span></Label>
                         <Input id="contact-prenom" autoComplete="given-name" required maxLength={80} className="border-gray-300 mt-1" {...champContact('prenom')} />
                       </div>
                       <div>
-                        <Label htmlFor="contact-nom" className="text-black font-bold">Nom</Label>
+                        <Label htmlFor="contact-nom" className="text-black font-bold">Nom <span className="text-red-500" aria-hidden="true">*</span></Label>
                         <Input id="contact-nom" autoComplete="family-name" required maxLength={80} className="border-gray-300 mt-1" {...champContact('nom')} />
                       </div>
                       <div>
-                        <Label htmlFor="contact-email" className="text-black font-bold">Email</Label>
+                        <Label htmlFor="contact-email" className="text-black font-bold">Email <span className="text-red-500" aria-hidden="true">*</span></Label>
                         <Input id="contact-email" type="email" autoComplete="email" required className="border-gray-300 mt-1" {...champContact('email')} />
                       </div>
                       <div>
-                        <Label htmlFor="contact-telephone" className="text-black font-bold">Téléphone</Label>
+                        <Label htmlFor="contact-telephone" className="text-black font-bold">Téléphone <span className="text-red-500" aria-hidden="true">*</span></Label>
                         <Input id="contact-telephone" type="tel" autoComplete="tel" required minLength={6} maxLength={30} className="border-gray-300 mt-1" {...champContact('telephone')} />
                       </div>
                       <div className="sm:col-span-2">
@@ -198,7 +202,7 @@ export function PatioCoordonneesPage() {
                     </p>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="chantier-adresse" className="text-black font-bold">Adresse</Label>
+                        <Label htmlFor="chantier-adresse" className="text-black font-bold">Adresse <span className="text-red-500" aria-hidden="true">*</span></Label>
                         <Input id="chantier-adresse" autoComplete="address-line1" required minLength={3} maxLength={200} className="border-gray-300 mt-1" {...champChantier('adresse')} />
                       </div>
                       <div>
@@ -216,7 +220,7 @@ export function PatioCoordonneesPage() {
                       </div>
                       <div className="grid sm:grid-cols-[1fr_1fr_2fr] gap-4">
                         <div>
-                          <Label htmlFor="chantier-pays" className="text-black font-bold">Pays</Label>
+                          <Label htmlFor="chantier-pays" className="text-black font-bold">Pays <span className="text-red-500" aria-hidden="true">*</span></Label>
                           <Select
                             value={chantier.pays}
                             onValueChange={(pays) => setChantier({ ...chantier, pays, code_postal: '', ville: '' })}
@@ -234,7 +238,7 @@ export function PatioCoordonneesPage() {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="chantier-code-postal" className="text-black font-bold">Code postal</Label>
+                          <Label htmlFor="chantier-code-postal" className="text-black font-bold">Code postal <span className="text-red-500" aria-hidden="true">*</span></Label>
                           <Input
                             id="chantier-code-postal"
                             autoComplete="postal-code"
@@ -248,7 +252,7 @@ export function PatioCoordonneesPage() {
                         </div>
                         <div className="relative">
                           <Label htmlFor="chantier-ville" className="text-black font-bold">
-                            Ville
+                            Ville <span className="text-red-500" aria-hidden="true">*</span>
                             {chargement && <Loader2 className="w-3 h-3 ml-2 inline animate-spin text-gray-400" aria-label="Recherche de la ville" />}
                           </Label>
                           <Input id="chantier-ville" autoComplete="address-level2" required maxLength={80} className="border-gray-300 mt-1" {...champChantier('ville')} />
