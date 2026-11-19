@@ -166,15 +166,15 @@ export function TotemSignIzAcquisitionPage() {
         title="Totem Sign-IZ — Acquisition"
         description="Totem Sign-IZ : structure acier laqué, autolesté, montage rapide, support adhésif renouvelable. Fabriqué en France. À partir de 1 870 € HT. Modèle déposé INPI réf. 20213357-3."
         keywords="Totem Sign-IZ, totem autolesté, totem chantier, totem événementiel, achat totem, Atelier Urbanize"
-        url="/totem/sign-iz/acquisition"
+        url="/habillage-urbain/totems/sign-iz/acquisition"
         type="product"
         jsonLd={[
-          productSchema({ name: 'Totem Sign-IZ', description: 'Totem autolesté à cadre aluminium et coffrage acier laqué galvanisé. Résistance vent 85 km/h. Fabriqué en France.', price: 1980, url: '/totem/sign-iz/acquisition' }),
-          breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Totems', url: '/totem/acquisition' }, { name: 'Sign-IZ', url: '/totem/sign-iz/acquisition' }]),
+          productSchema({ name: 'Totem Sign-IZ', description: 'Totem autolesté à cadre aluminium et coffrage acier laqué galvanisé. Résistance vent 85 km/h. Fabriqué en France.', price: 1980, url: '/habillage-urbain/totems/sign-iz/acquisition' }),
+          breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Habillage urbain', url: '/habillage-urbain' }, { name: 'Totems — acquisition', url: '/habillage-urbain/totems/acquisition' }, { name: 'Sign-IZ', url: '/habillage-urbain/totems/sign-iz/acquisition' }]),
         ]}
       />
       <div className="mb-8">
-        <Button variant="outline" onClick={() => navigate('/totem/acquisition')} className="border border-black">
+        <Button variant="outline" onClick={() => navigate('/habillage-urbain/totems/acquisition')} className="border border-black">
           ← Retour aux modèles
         </Button>
       </div>

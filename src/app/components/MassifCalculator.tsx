@@ -934,7 +934,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
   return (
     <div className="max-w-6xl mx-auto pt-20 px-4">
       <div className="mb-8">
-        <Button variant="outline" onClick={() => navigate('/massif/selection')} className="border border-gray-300">
+        <Button variant="outline" onClick={() => navigate('/habillage-urbain/massifs-beton')} className="border border-gray-300">
           ← Retour à la sélection
         </Button>
       </div>
@@ -1139,7 +1139,7 @@ export function MassifCalculator({ initialConfig, onCalculate }: MassifCalculato
                           <div className="space-y-4">
                             <button
                               type="button"
-                              onClick={() => navigate('/massif/selection')}
+                              onClick={() => navigate('/habillage-urbain/massifs-beton')}
                               className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
                             >
                               <ChevronLeft className="w-3 h-3" /> Changer de produit

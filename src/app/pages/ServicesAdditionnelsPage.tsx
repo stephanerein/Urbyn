@@ -70,12 +70,12 @@ export function ServicesAdditionnelsPage() {
       sessionStorage.setItem('servicesAccompagnement', JSON.stringify(servicesAccompagnement));
     }
 
-    navigate(`/select-service/${product}`);
+    navigate(`/configurateur/${product}/choix-service`);
   };
 
   const handleSkip = () => {
     sessionStorage.removeItem('servicesAccompagnement');
-    navigate(`/select-service/${product}`);
+    navigate(`/configurateur/${product}/choix-service`);
   };
 
   const totalSelected = (selectedToolkit ? 1 : 0) + (selectedTransport ? 1 : 0) + (selectedEnlevement ? 1 : 0) + (selectedConseil ? 1 : 0) + selectedExpertises.length;
@@ -89,7 +89,7 @@ export function ServicesAdditionnelsPage() {
           <div className="mb-8">
             <Button
               variant="outline"
-              onClick={() => navigate(product === 'palissade' ? '/definir-besoin' : `/services-specifiques/${product}`)}
+              onClick={() => navigate(product === 'palissade' ? '/configurateur' : `/configurateur/${product}/services-specifiques`)}
               className="border-2 border-black"
             >
               ← Retour

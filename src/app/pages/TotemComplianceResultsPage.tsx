@@ -172,7 +172,7 @@ export function TotemComplianceResultsPage() {
               <p className="text-gray-600 mb-8 text-lg">
                 Veuillez d'abord effectuer l'analyse de conformité vent.
               </p>
-              <Button onClick={() => navigate('/totem/conformite')} className="bg-black hover:bg-gray-800 text-white px-8 py-6 text-lg rounded-xl shadow-lg">
+              <Button onClick={() => navigate('/habillage-urbain/totems/conformite')} className="bg-black hover:bg-gray-800 text-white px-8 py-6 text-lg rounded-xl shadow-lg">
                 Effectuer l'analyse
               </Button>
             </CardContent>
@@ -186,7 +186,7 @@ export function TotemComplianceResultsPage() {
     <div className="min-h-screen pt-[var(--header-height)] bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 pb-16">
         <div className="mb-8">
-          <Button variant="outline" onClick={() => navigate('/totem/conformite')} className="border border-gray-300 hover:bg-gray-100">
+          <Button variant="outline" onClick={() => navigate('/habillage-urbain/totems/conformite')} className="border border-gray-300 hover:bg-gray-100">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour à l'analyse
           </Button>

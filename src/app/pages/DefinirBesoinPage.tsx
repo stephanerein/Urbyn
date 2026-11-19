@@ -1,4 +1,4 @@
-import { SEOMeta } from '../components/SEOMeta';
+import { SEOMeta, breadcrumbSchema } from '../components/SEOMeta';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ProgressSteps } from '../components/ProgressSteps';
@@ -134,7 +134,7 @@ export function DefinirBesoinPage() {
     // Le patio dispose d'un parcours de chiffrage en ligne, qui s'ouvre sur la
     // présentation des deux solutions.
     if (solutionId === 'ombrage-patio') {
-      navigate('/solutions-ombrage/patio/solutions');
+      navigate('/solutions-ombrage/patio');
       return;
     }
     toast.info('Chiffrage sur mesure', {
@@ -190,10 +190,10 @@ export function DefinirBesoinPage() {
 
     // Palissade va directement aux services d'accompagnement
     if (productId === 'palissade') {
-      navigate(`/services-additionnels/${productId}`);
+      navigate(`/configurateur/${productId}/services-additionnels`);
     } else {
       // Totem et autres vont aux services spécifiques
-      navigate(`/services-specifiques/${productId}`);
+      navigate(`/configurateur/${productId}/services-specifiques`);
     }
   };
 
@@ -204,7 +204,8 @@ export function DefinirBesoinPage() {
       });
       return;
     }
-    navigate(`/${serviceId}`);
+    // Seules les études (BET) mènent à une page propre ; le cahier des charges est traité plus haut.
+    navigate(serviceId === 'bet' ? '/bureau-d-etudes' : `/${serviceId}`);
   };
 
   return (
@@ -212,7 +213,8 @@ export function DefinirBesoinPage() {
       <SEOMeta
         title="Configurez votre projet"
         description="Définissez votre besoin en mobilier urbain temporaire : totem, palissade, massif béton ou étude BET. Obtenez une estimation en quelques clics."
-        url="/definir-besoin"
+        url="/configurateur"
+        jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'Configurateur', url: '/configurateur' }])}
       />
     <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={1} />

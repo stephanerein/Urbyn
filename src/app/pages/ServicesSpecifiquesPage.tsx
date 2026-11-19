@@ -283,21 +283,21 @@ export function ServicesSpecifiquesPage() {
     }
     if (product === 'totem') {
       sessionStorage.setItem('totemMode', totemMode);
-      navigate(totemMode === 'location' ? '/totem/location' : '/totem/acquisition');
+      navigate(totemMode === 'location' ? '/habillage-urbain/totems/location' : '/habillage-urbain/totems/acquisition');
     } else if (product === 'panneau-chantier') {
-      navigate(`/services-additionnels/${product}`);
+      navigate(`/configurateur/${product}/services-additionnels`);
     } else if (product === 'massif-beton') {
       const mode = selectedServices.includes('location') ? 'location' : 'acquisition';
       sessionStorage.setItem('massifMode', mode);
-      navigate(`/massif/selection?offer=${mode}`);
+      navigate(`/habillage-urbain/massifs-beton?offer=${mode}`);
     } else {
-      navigate(`/services-additionnels/${product}`);
+      navigate(`/configurateur/${product}/services-additionnels`);
     }
   };
 
   useEffect(() => {
     if (services.length === 0) {
-      navigate(`/services-additionnels/${product}`);
+      navigate(`/configurateur/${product}/services-additionnels`);
     }
   }, [services.length, product, navigate]);
 
@@ -314,7 +314,7 @@ export function ServicesSpecifiquesPage() {
           <div className="mb-8">
             <Button
               variant="outline"
-              onClick={() => navigate('/definir-besoin')}
+              onClick={() => navigate('/configurateur')}
               className="border-2 border-black"
             >
               ← Retour

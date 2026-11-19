@@ -13,7 +13,7 @@ const steps = [
 
 export function ProgressSteps({ currentStep }: ProgressStepsProps) {
   return (
-    <div className="sticky top-[73px] left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-40 shadow-sm">
+    <div data-progress-steps className="sticky top-[73px] left-0 right-0 bg-white/95 backdrop-blur-sm border-b-2 border-slate-200 z-40 shadow-sm">
       <div className="w-full max-w-4xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
           {steps.map((step, index) => (

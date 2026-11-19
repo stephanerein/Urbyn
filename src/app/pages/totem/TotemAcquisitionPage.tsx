@@ -55,16 +55,17 @@ export function TotemAcquisitionPage() {
           title="Totems — Acquisition"
           description="Choisissez votre totem urbain à l'achat. Fabriqués en France, livrés montés."
           keywords="totem acquisition, totem achat, Urbyn"
-          url="/totem/acquisition"
+          url="/habillage-urbain/totems/acquisition"
           jsonLd={breadcrumbSchema([
             { name: 'Accueil', url: '/' },
-            { name: 'Totems', url: '/totem/acquisition' },
+            { name: 'Habillage urbain', url: '/habillage-urbain' },
+            { name: 'Totems — acquisition', url: '/habillage-urbain/totems/acquisition' },
           ])}
         />
         <div className="mb-8">
           <Button
             variant="outline"
-            onClick={() => navigate('/services-specifiques/totem')}
+            onClick={() => navigate('/configurateur/totem/services-specifiques')}
             className="border-2 border-black"
           >
             ← Retour
@@ -92,7 +93,7 @@ export function TotemAcquisitionPage() {
                 key={family.family_catalog_id}
                 className="cursor-pointer hover:shadow-2xl transition-all group overflow-hidden"
                 onClick={() =>
-                  navigate(`/totem/acquisition/family/${family.family_catalog_id}`)
+                  navigate(`/habillage-urbain/totems/acquisition/famille/${family.family_catalog_id}`)
                 }
               >
                 <CardContent className="p-0">

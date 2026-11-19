@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sun, Wind } from 'lucide-react';
 import { SEOMeta } from '../../components/SEOMeta';
 import { ProgressSteps } from '../../components/ProgressSteps';
 import { Button } from '../../components/ui/button';
@@ -32,10 +32,17 @@ export function PatioServicesPage() {
 
         <section className="pt-8 pb-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <Button variant="outline" onClick={() => navigate('/solutions-ombrage/patio/solutions')}>
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+              <Button variant="outline" onClick={() => navigate('/solutions-ombrage/patio')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Repliable ou fixe : les deux solutions
+              </Button>
+              <Button
+                onClick={() => navigate('/solutions-ombrage/patio/dimensions')}
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                Spécifiez vos patios
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
 
@@ -67,39 +74,57 @@ export function PatioServicesPage() {
             </CarteChoix>
 
             {/* Options propres à chaque solution, chiffrées par patio à l'étape d'estimation */}
-            <CarteChoix
-              coche={saisie.verificationAnnuelle}
-              onChange={(verificationAnnuelle) => appliquer({ ...saisie, verificationAnnuelle })}
-              titre="Vérification annuelle"
-              etiquette="Couverture repliable"
-              className="mb-4"
-            >
-              <p className="text-sm text-gray-600 mt-1">
-                Une visite chaque année pour contrôler votre couverture repliable. Proposée en
-                acquisition uniquement : elle est déjà comprise en mise à disposition.
-              </p>
-            </CarteChoix>
+            <p className="text-sm text-gray-600 mt-8 mb-4 max-w-[65ch]">
+              Deux interventions annuelles, selon la solution que vous retiendrez : chacune ne
+              concerne qu'une des deux couvertures.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2 mb-10">
+              <div className="flex flex-col gap-3">
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <Wind className="h-4 w-4" aria-hidden="true" />
+                  Si vous choisissez la couverture repliable
+                </p>
+                <CarteChoix
+                  coche={saisie.verificationAnnuelle}
+                  onChange={(verificationAnnuelle) => appliquer({ ...saisie, verificationAnnuelle })}
+                  titre="Vérification annuelle"
+                  className="flex-1"
+                >
+                  <p className="text-sm text-gray-600 mt-1">
+                    Une visite chaque année pour contrôler votre couverture repliable. Proposée en
+                    acquisition uniquement : elle est déjà comprise en mise à disposition.
+                  </p>
+                </CarteChoix>
+              </div>
 
-            <CarteChoix
-              coche={saisie.interventionSaisonniere}
-              onChange={(interventionSaisonniere) => appliquer({ ...saisie, interventionSaisonniere })}
-              titre="Installation en avril et démontage en octobre"
-              etiquette="Couverture fixe"
-              className="mb-10"
-            >
-              <p className="text-sm text-gray-600 mt-1">
-                Souhaitez-vous que nos équipes interviennent chaque année pour installer vos
-                toiles en avril, puis les démonter en octobre ?
-              </p>
-            </CarteChoix>
+              <div className="flex flex-col gap-3">
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <Sun className="h-4 w-4" aria-hidden="true" />
+                  Si vous choisissez la couverture fixe
+                </p>
+                <CarteChoix
+                  coche={saisie.interventionSaisonniere}
+                  onChange={(interventionSaisonniere) =>
+                    appliquer({ ...saisie, interventionSaisonniere })
+                  }
+                  titre="Installation en avril et démontage en octobre"
+                  className="flex-1"
+                >
+                  <p className="text-sm text-gray-600 mt-1">
+                    Nos équipes interviennent chaque année pour installer vos toiles en avril, puis
+                    les démonter en octobre.
+                  </p>
+                </CarteChoix>
+              </div>
+            </div>
 
             <div className="flex justify-end">
               <Button
-                onClick={() => navigate('/solutions-ombrage/patio')}
+                onClick={() => navigate('/solutions-ombrage/patio/dimensions')}
                 className="bg-black text-white hover:bg-gray-800"
                 size="lg"
               >
-                Continuer : mes patios
+                Spécifiez vos patios
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

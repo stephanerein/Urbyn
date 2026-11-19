@@ -22,35 +22,59 @@ permet d'obtenir une estimation instantanée et de commander en ligne.
 Site web principal : https://www.urbanize.site
 Habillage Urbain : https://plateform.urbanize.site/habillage-urbain
 Solutions d'ombrage : https://plateform.urbanize.site/solutions-ombrage
-Configurateur / estimation en ligne : https://plateform.urbanize.site/definir-besoin
+Configurateur / estimation en ligne : https://plateform.urbanize.site/configurateur
 Contact : info@urbanize.site
 
 ## Produits et services — Habillage Urbain
 
 ### Totems de communication
+Pages : acquisition https://plateform.urbanize.site/habillage-urbain/totems/acquisition · location https://plateform.urbanize.site/habillage-urbain/totems/location
 - **Totem Caisson Bois** (formats 80, 120, 160, 200 cm) — acquisition à partir de 2 650 € HT
 - **Totem Caisson Bois 120** — location à partir de 320 € HT
+  - Pages : https://plateform.urbanize.site/habillage-urbain/totems/caisson-bois/format · https://plateform.urbanize.site/habillage-urbain/totems/caisson-bois-120/location
 - **Totem Sign-IZ** — acquisition à partir de 1 980 € HT / location à partir de 290 € HT
   - Dimensions : L 811 mm × H 2 000 mm × P 811 mm · Poids : 153 kg · Résistance vent : 85 km/h
   - Modèle déposé INPI réf. 20213357-3 · Fabriqué en France
+  - Pages : https://plateform.urbanize.site/habillage-urbain/totems/sign-iz/acquisition · https://plateform.urbanize.site/habillage-urbain/totems/sign-iz/location
 - **Totem Gabion** — acquisition à partir de 1 800 € HT
 - **Totem LIZ** — acquisition à partir de 2 600 € HT
 
 ### Palissades de chantier
 Conception, habillage graphique et montage de palissades urbaines.
+Page : https://plateform.urbanize.site/habillage-urbain/palissades
 
 ### Massifs béton
 Massifs temporaires (cubique, lego, cylindrique) pour lestage et sécurisation.
+Page : https://plateform.urbanize.site/habillage-urbain/massifs-beton
 
 ### Services associés
 Installation, transport, note de calcul, conformité vent (Eurocode EN 1991-1-4).
+Étude BET (résistance au vent des installations) : https://plateform.urbanize.site/bureau-d-etudes
 
 ## Produits et services — Solutions d'ombrage
 
 - **Toiles d'ombrage pour façades** — réduction de la chaleur reçue par le bâti,
   performances énergétiques élevées.
 - **Toiles d'ombrage pour patios** — réduction de la chaleur reçue par les patios,
-  performances énergétiques élevées.
+  performances énergétiques élevées. Deux solutions, couverture repliable ou couverture fixe :
+  https://plateform.urbanize.site/solutions-ombrage/patio
+  - Couverture repliable : store sur câbles, déployé à la demande et replié par vent fort ou hors
+    saison, sans dépose. Motorisable et connectable au système d'information du bâtiment : déployé
+    au-dessus de 25 °C, replié en dessous ou en cas de vent fort et de rafales. Disponible en
+    acquisition ou en mise à disposition de 5 à 10 ans (vérification annuelle, assurance du
+    dispositif, pièces d'usure et toile incluses ; ombrage garanti à 98 %).
+  - Couverture fixe : toile microperforée tendue, posée en avril et déposée en octobre par une
+    équipe de cordistes (une demi-journée à une journée selon la taille du patio, une fois le
+    dispositif de filins installé, ce qui demande 1 à 3 jours). Renouvellement généralement tous
+    les 5 ans : davantage un consommable qu'un investissement. Rapidement déployable.
+  - Vocabulaire : une couverture de patio est aussi appelée voile d'ombrage, toile d'ombrage,
+    vélum, voilage, voile solaire, toile tendue, store (repliable ou banne), ombrière, bâche
+    microperforée ; shade sail en anglais, toldo en espagnol, Sonnensegel en allemand. Glossaire
+    complet sur la page.
+  - Approche économique (cas d'école, patio de 10 m × 10 m, mise en place comprise, HT) : la
+    couverture fixe coûte moins cher à l'acquisition ; la couverture repliable devient moins
+    coûteuse à partir de la cinquième année (40 147 € contre 42 068 € sur 5 ans, 49 351 € contre
+    61 742 € sur 10 ans).
 - **Ciel de Rue** — ombrage déployé dans l'espace urbain pour rendre un passage de rue
   agréable.
 - **Films solaires pour vitrages** — amélioration de la performance énergétique tout en

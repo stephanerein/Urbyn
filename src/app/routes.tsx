@@ -1,11 +1,14 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, matchPath, useLocation } from 'react-router-dom';
+import vercelConfig from '../../vercel.json';
 import { HomePage } from './pages/HomePage';
 import { HabillageUrbainPage } from './pages/HabillageUrbainPage';
 import { SolutionsOmbragePage } from './pages/SolutionsOmbragePage';
 import { PatioSolutionsPage } from './pages/ombrage/PatioSolutionsPage';
 import { PatioServicesPage } from './pages/ombrage/PatioServicesPage';
 import { PatioConfigPage } from './pages/ombrage/PatioConfigPage';
-import { PatioEstimationPage } from './pages/ombrage/PatioEstimationPage';
+import { PatioCalibragePage } from './pages/ombrage/PatioCalibragePage';
+import { PatioChiffragePage } from './pages/ombrage/PatioChiffragePage';
+import { PatioCoordonneesPage } from './pages/ombrage/PatioCoordonneesPage';
 import { DefinirBesoinPage } from './pages/DefinirBesoinPage';
 import { ServicesAdditionnelsPage } from './pages/ServicesAdditionnelsPage';
 import { ServicesSpecifiquesPage } from './pages/ServicesSpecifiquesPage';
@@ -81,59 +84,84 @@ import { AdminUserDetailPage } from './pages/admin/AdminUserDetailPage';
 import { AdminCompaniesPage } from './pages/admin/AdminCompaniesPage';
 import { AdminCompanyDetailPage } from './pages/admin/AdminCompanyDetailPage';
 
+// Anciennes URL : la source de vérité est `vercel.json` (redirections 301 servies
+// aux moteurs de recherche). Ce composant rejoue les mêmes règles côté navigateur,
+// pour le développement local et les liens internes qui n'auraient pas été migrés.
+// Syntaxe Vercel : « :param » pour un segment, « :reste* » pour la fin du chemin.
+const REDIRECTIONS_HERITEES = vercelConfig.redirects.map(({ source, destination }) => ({
+  motif: source.replace(/\/:\w+\*$/, '/*'),
+  destination,
+}));
+
+function RedirectionHeritee() {
+  const { pathname, search, hash } = useLocation();
+  for (const { motif, destination } of REDIRECTIONS_HERITEES) {
+    const correspondance = matchPath({ path: motif, end: true }, pathname);
+    if (!correspondance) continue;
+    const params = correspondance.params;
+    const cible = destination
+      .replace(/:\w+\*/, (params['*'] ?? '').replace(/\/$/, ''))
+      .replace(/:(\w+)/g, (_, nom: string) => params[nom] ?? '')
+      .replace(/\/$/, '');
+    return <Navigate to={`${cible || '/'}${search}${hash}`} replace />;
+  }
+  return null;
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/habillage-urbain" element={<HabillageUrbainPage />} />
       <Route path="/solutions-ombrage" element={<SolutionsOmbragePage />} />
-      <Route path="/solutions-ombrage/patio/solutions" element={<PatioSolutionsPage />} />
+      <Route path="/solutions-ombrage/patio" element={<PatioSolutionsPage />} />
       <Route path="/solutions-ombrage/patio/services" element={<PatioServicesPage />} />
-      <Route path="/solutions-ombrage/patio" element={<PatioConfigPage />} />
-      <Route path="/solutions-ombrage/patio/estimation" element={<PatioEstimationPage />} />
-      <Route path="/definir-besoin" element={<DefinirBesoinPage />} />
-      <Route path="/services-additionnels/:product" element={<ServicesAdditionnelsPage />} />
-      <Route path="/services-specifiques/:product" element={<ServicesSpecifiquesPage />} />
-      <Route path="/select-service/:product" element={<SelectServicePage />} />
+      <Route path="/solutions-ombrage/patio/dimensions" element={<PatioConfigPage />} />
+      <Route path="/solutions-ombrage/patio/calibrage" element={<PatioCalibragePage />} />
+      <Route path="/solutions-ombrage/patio/chiffrage" element={<PatioChiffragePage />} />
+      <Route path="/solutions-ombrage/patio/coordonnees" element={<PatioCoordonneesPage />} />
+      <Route path="/configurateur" element={<DefinirBesoinPage />} />
+      <Route path="/configurateur/:product/services-additionnels" element={<ServicesAdditionnelsPage />} />
+      <Route path="/configurateur/:product/services-specifiques" element={<ServicesSpecifiquesPage />} />
+      <Route path="/configurateur/:product/choix-service" element={<SelectServicePage />} />
 
       {/* Palissade Routes */}
-      <Route path="/palissade" element={<PalissadeSubTypePage />} />
-      <Route path="/palissade/habillage" element={<PalissadeHabillagePage />} />
-      <Route path="/palissade/montage" element={<PalissadeMontagePage />} />
-      <Route path="/palissade/resultats" element={<PalissadeResultsPage />} />
+      <Route path="/habillage-urbain/palissades" element={<PalissadeSubTypePage />} />
+      <Route path="/habillage-urbain/palissades/habillage" element={<PalissadeHabillagePage />} />
+      <Route path="/habillage-urbain/palissades/montage" element={<PalissadeMontagePage />} />
+      <Route path="/habillage-urbain/palissades/resultats" element={<PalissadeResultsPage />} />
 
       {/* Totem Routes */}
-      <Route path="/totem" element={<TotemModelPage />} />
-      <Route path="/totem/acquisition" element={<TotemAcquisitionPage />} />
-      <Route path="/totem/location" element={<TotemLocationPage />} />
-      <Route path="/totem/:offer/family/:familyId" element={<TotemFamilyProductsPage />} />
-      <Route path="/totem/:offer/compare" element={<TotemComparePage />} />
-      <Route path="/totem/:offer/product/:productId" element={<TotemProductDetailPage />} />
-      <Route path="/totem/caisson-bois/format" element={<TotemFormatPage />} />
-      <Route path="/totem/caisson-bois/compare" element={<TotemComparePage />} />
-      <Route path="/totem/caisson-bois/:format" element={<TotemConfigPage />} />
-      <Route path="/totem/sign-iz" element={<TotemSignIzPage />} />
-      <Route path="/totem/sign-iz/acquisition" element={<TotemSignIzAcquisitionPage />} />
-      <Route path="/totem/sign-iz/location" element={<TotemSignIzLocationPage />} />
-      <Route path="/totem/caisson-bois-120/location" element={<TotemCaissonBoisLocationPage />} />
-      <Route path="/totem/gabion/config" element={<TotemConfigPage />} />
-      <Route path="/totem/liz/config" element={<TotemConfigPage />} />
-      <Route path="/totem/resultats" element={<TotemResultsPage />} />
-      <Route path="/totem/conformite" element={<TotemCompliancePage />} />
-      <Route path="/totem/conformite/resultats" element={<TotemComplianceResultsPage />} />
+      <Route path="/habillage-urbain/totems" element={<TotemModelPage />} />
+      <Route path="/habillage-urbain/totems/acquisition" element={<TotemAcquisitionPage />} />
+      <Route path="/habillage-urbain/totems/location" element={<TotemLocationPage />} />
+      <Route path="/habillage-urbain/totems/:offer/famille/:familyId" element={<TotemFamilyProductsPage />} />
+      <Route path="/habillage-urbain/totems/:offer/comparer" element={<TotemComparePage />} />
+      <Route path="/habillage-urbain/totems/:offer/produit/:productId" element={<TotemProductDetailPage />} />
+      <Route path="/habillage-urbain/totems/caisson-bois/format" element={<TotemFormatPage />} />
+      <Route path="/habillage-urbain/totems/caisson-bois/comparer" element={<TotemComparePage />} />
+      <Route path="/habillage-urbain/totems/caisson-bois/:format" element={<TotemConfigPage />} />
+      <Route path="/habillage-urbain/totems/sign-iz" element={<TotemSignIzPage />} />
+      <Route path="/habillage-urbain/totems/sign-iz/acquisition" element={<TotemSignIzAcquisitionPage />} />
+      <Route path="/habillage-urbain/totems/sign-iz/location" element={<TotemSignIzLocationPage />} />
+      <Route path="/habillage-urbain/totems/caisson-bois-120/location" element={<TotemCaissonBoisLocationPage />} />
+      <Route path="/habillage-urbain/totems/gabion/configuration" element={<TotemConfigPage />} />
+      <Route path="/habillage-urbain/totems/liz/configuration" element={<TotemConfigPage />} />
+      <Route path="/habillage-urbain/totems/resultats" element={<TotemResultsPage />} />
+      <Route path="/habillage-urbain/totems/conformite" element={<TotemCompliancePage />} />
+      <Route path="/habillage-urbain/totems/conformite/resultats" element={<TotemComplianceResultsPage />} />
 
       {/* Massif Routes */}
-      <Route path="/massif/selection" element={<MassifSelectionPage />} />
-      <Route path="/massif" element={<MassifCalculatorPage />} />
-      <Route path="/massif/resultats" element={<MassifResultsPage />} />
+      <Route path="/habillage-urbain/massifs-beton" element={<MassifSelectionPage />} />
+      <Route path="/habillage-urbain/massifs-beton/calcul" element={<MassifCalculatorPage />} />
+      <Route path="/habillage-urbain/massifs-beton/resultats" element={<MassifResultsPage />} />
 
       {/* BET Routes */}
-      <Route path="/bet" element={<BETCalculatorPage />} />
-      <Route path="/bet/resultats" element={<BETResultsPage />} />
+      <Route path="/bureau-d-etudes" element={<BETCalculatorPage />} />
+      <Route path="/bureau-d-etudes/resultats" element={<BETResultsPage />} />
 
       {/* Cart */}
       <Route path="/panier" element={<CartPage />} />
-      <Route path="/cart" element={<CartPage />} />
 
       {/* Delivery and Payment (client) */}
       <Route path="/livraison" element={<DeliveryPage />} />
@@ -199,6 +227,9 @@ export function AppRoutes() {
       <Route path="/realisations/:slug" element={<RealisationDetailPage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
+
+      {/* Anciennes URL (voir vercel.json) */}
+      <Route path="*" element={<RedirectionHeritee />} />
     </Routes>
   );
 }

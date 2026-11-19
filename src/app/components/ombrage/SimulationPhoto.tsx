@@ -12,6 +12,12 @@ import {
 // la photo ; les vélums implantés sur le plan sont alors reportés sur l'image,
 // en perspective. Avec `onCoinsChange`, les coins deviennent des poignées à
 // faire glisser ; sans, la photo est une simple vue du résultat.
+//
+// Avec `rehaussement` (en mètres), les vélums sont dessinés surélevés au-dessus
+// du patio, portés par des supports : c'est la couverture repliable, dont la
+// toile se tient à environ 1,10 m du toit, par opposition à la couverture fixe
+// tendue au niveau du toit. La photo ne donne pas l'échelle verticale : le
+// décalage est estimé d'après l'échelle locale du plan et reste indicatif.
 
 const LARGEUR = 1000;
 
@@ -36,6 +42,7 @@ export function SimulationPhoto({
   coins,
   onCoinsChange,
   velums,
+  rehaussement,
   description,
 }: {
   photo: string;
@@ -43,6 +50,8 @@ export function SimulationPhoto({
   coins: Point[];
   onCoinsChange?: (coins: Point[]) => void;
   velums?: Point[][];
+  /** Hauteur de la toile au-dessus du toit, en mètres. */
+  rehaussement?: number;
   description: string;
 }) {
   const idHachures = useId();
@@ -63,6 +72,35 @@ export function SimulationPhoto({
     return (projetes as Point[]).map((pt) => `${pt.x},${pt.y}`).join(' ');
   };
   const contour = points.map((pt) => `${pt.x},${pt.y}`).join(' ');
+
+  // Point du plan relevé de `rehaussement` mètres, dans l'image : on le décale
+  // vers le haut de la photo, de la hauteur multipliée par l'échelle locale
+  // (pixels par mètre) mesurée le long du côté A.
+  const relever = (pt: Point): Point | null => {
+    if (!projeter || !rehaussement) return null;
+    const base = projeter(pt);
+    const gauche = projeter({ x: pt.x - 0.5, y: pt.y });
+    const droite = projeter({ x: pt.x + 0.5, y: pt.y });
+    if (!base || !gauche || !droite) return null;
+    const echelle = Math.hypot(droite.x - gauche.x, droite.y - gauche.y);
+    return { x: base.x, y: base.y - rehaussement * echelle };
+  };
+  const velumsReleves = rehaussement
+    ? (velums ?? []).map((velum) => ({
+        base: velum.map((pt) => projeter?.(pt) ?? null),
+        haut: velum.map(relever),
+      }))
+    : [];
+  const eleve = velumsReleves.length > 0 && velumsReleves.every(
+    (v) => v.base.every(Boolean) && v.haut.every(Boolean),
+  );
+  // Support le plus proche de l'objectif (le plus bas dans l'image) : on y
+  // porte la cote.
+  const pied = eleve
+    ? velumsReleves
+        .flatMap((v) => v.base.map((b, i) => ({ b: b as Point, h: v.haut[i] as Point })))
+        .reduce((a, c) => (c.b.y > a.b.y ? c : a))
+    : null;
 
   const deplacer = (index: number, x: number, y: number) => {
     if (!onCoinsChange) return;
@@ -124,19 +162,91 @@ export function SimulationPhoto({
           </pattern>
         </defs>
 
-        {velums?.map((velum, i) => {
-          const trace = tracer(velum);
-          return trace ? (
-            <polygon
-              key={i}
-              points={trace}
-              fill={`url(#${idHachures})`}
-              stroke="#db2777"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-          ) : null;
-        })}
+        {!eleve &&
+          velums?.map((velum, i) => {
+            const trace = tracer(velum);
+            return trace ? (
+              <polygon
+                key={i}
+                points={trace}
+                fill={`url(#${idHachures})`}
+                stroke="#db2777"
+                strokeWidth="3"
+                strokeLinejoin="round"
+              />
+            ) : null;
+          })}
+
+        {eleve && (
+          <>
+            {velumsReleves.map((v, i) => (
+              <polygon
+                key={i}
+                points={v.haut.map((pt) => `${(pt as Point).x},${(pt as Point).y}`).join(' ')}
+                fill={`url(#${idHachures})`}
+                stroke="#db2777"
+                strokeWidth="3"
+                strokeLinejoin="round"
+              />
+            ))}
+            {/* Supports : du toit jusqu'à la toile relevée. */}
+            {velumsReleves.map((v, i) =>
+              v.base.map((b, k) => (
+                <line
+                  key={`h${i}-${k}`}
+                  x1={(b as Point).x}
+                  y1={(b as Point).y}
+                  x2={(v.haut[k] as Point).x}
+                  y2={(v.haut[k] as Point).y}
+                  stroke="#ffffff"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                />
+              )),
+            )}
+            
+            {velumsReleves.map((v, i) =>
+              v.base.map((b, k) => (
+                <line
+                  key={`${i}-${k}`}
+                  x1={(b as Point).x}
+                  y1={(b as Point).y}
+                  x2={(v.haut[k] as Point).x}
+                  y2={(v.haut[k] as Point).y}
+                  stroke="#0f172a"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              )),
+            )}
+            {pied && (() => {
+              // La cote se place à droite du support, ou à gauche s'il touche le bord.
+              const sens = pied.b.x > LARGEUR - 230 ? -1 : 1;
+              const xCote = pied.b.x + 22 * sens;
+              const yMilieu = (pied.b.y + pied.h.y) / 2;
+              const xPastille = sens === 1 ? pied.b.x + 40 : pied.b.x - 190;
+              return (
+                <g pointerEvents="none">
+                  <line x1={xCote} y1={pied.b.y} x2={xCote} y2={pied.h.y} stroke="#ffffff" strokeWidth="3" />
+                  <line x1={xCote - 10} y1={pied.b.y} x2={xCote + 10} y2={pied.b.y} stroke="#ffffff" strokeWidth="3" />
+                  <line x1={xCote - 10} y1={pied.h.y} x2={xCote + 10} y2={pied.h.y} stroke="#ffffff" strokeWidth="3" />
+                  <rect x={xPastille} y={yMilieu - 20} width="150" height="40" rx="20" fill="#0f172a" fillOpacity="0.85" />
+                  <text
+                    x={xPastille + 75}
+                    y={yMilieu}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="24"
+                    fontWeight="700"
+                    fill="#ffffff"
+                  >
+                    {`≈ ${(rehaussement as number).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} m`}
+                  </text>
+                </g>
+              );
+            })()}
+          </>
+        )}
 
         {/* Contour du patio : liseré sombre puis clair, lisible sur toute photo. */}
         <polygon points={contour} fill="none" stroke="#0f172a" strokeOpacity="0.55" strokeWidth="7" strokeLinejoin="round" />

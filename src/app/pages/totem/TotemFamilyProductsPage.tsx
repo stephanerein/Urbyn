@@ -46,7 +46,7 @@ export function TotemFamilyProductsPage() {
   const offerLabel: TotemOffer =
     offer.toLowerCase() === 'location' ? 'Location' : 'Acquisition'
   const backPath =
-    offerLabel === 'Location' ? '/totem/location' : '/totem/acquisition'
+    offerLabel === 'Location' ? '/habillage-urbain/totems/location' : '/habillage-urbain/totems/acquisition'
 
   const [familyName, setFamilyName] = useState('Totem')
   const [products, setProducts] = useState<TotemProduct[]>([])
@@ -99,13 +99,13 @@ export function TotemFamilyProductsPage() {
       return
     }
     navigate(
-      `/totem/${offerLabel.toLowerCase()}/product/${productId}?family=${familyId}`,
+      `/habillage-urbain/totems/${offerLabel.toLowerCase()}/produit/${productId}?family=${familyId}`,
     )
   }
 
   const handleCompare = () => {
     navigate(
-      `/totem/${offerLabel.toLowerCase()}/compare?products=${selectedForCompare.join(',')}&family=${familyId}`,
+      `/habillage-urbain/totems/${offerLabel.toLowerCase()}/comparer?products=${selectedForCompare.join(',')}&family=${familyId}`,
     )
   }
 

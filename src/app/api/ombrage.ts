@@ -1,4 +1,4 @@
-import { getApiBase } from './apiBase'
+import { getApiBase, resolveApiBase } from './apiBase'
 import { ApiError, apiFetch } from './client'
 
 // Chiffrage « solution d'ombrage pour patio ». Le calcul est fait côté serveur :
@@ -14,6 +14,11 @@ export interface PatioDimensions {
 
 /** Point du plan du patio, en mètres : [x, y]. */
 export type PointPlan = [number, number]
+
+export interface MensualiteDuree {
+  duree_annees: number
+  loyer_mensuel: number
+}
 
 export interface PatioQuoteLine {
   nom: string
@@ -39,6 +44,8 @@ export interface PatioQuoteLine {
       loyer_mensuel: number
       duree_mois: number
       total_loyers: number
+      /** Mensualité du patio pour chaque durée proposée, en années entières. */
+      mensualites: MensualiteDuree[]
     }
   }
   fixe: {
@@ -65,6 +72,12 @@ export interface PatioQuote {
   devise: string
   montants: string
   duree_mois: number
+  /** Durée retenue pour les montants « principaux », en années. */
+  duree_annees: number
+  /** Durées de mise à disposition proposées, de la plus courte à la plus longue. */
+  durees_annees: number[]
+  /** Taux de financement retenu dans la mensualité, en fraction annuelle (0,05 = 5 %). */
+  taux_financement: number
   mise_en_place: { incluse: boolean; forfait: number; prestations: string[] }
   options: { verification_annuelle: boolean; intervention_saisonniere: boolean }
   patios: PatioQuoteLine[]
@@ -72,6 +85,8 @@ export interface PatioQuote {
     surface_m2: number
     retractable_acquisition: number
     retractable_loyer_mensuel: number
+    /** Mensualité de l'ensemble des patios, pour chaque durée proposée. */
+    retractable_loyers_mensuels: MensualiteDuree[]
     fixe_acquisition: number
     retractable_verification_annuelle: number
     fixe_saisonnier_annees_suivantes: number
@@ -86,6 +101,16 @@ export interface PatioContact {
   telephone: string
   societe: string
   message: string
+}
+
+/** Adresse où le dispositif sera installé. */
+export interface PatioChantier {
+  adresse: string
+  /** Seconde ligne : bâtiment, étage, accès… */
+  complement: string
+  code_postal: string
+  ville: string
+  pays: string
 }
 
 function optionsPourApi(options: PatioOptions) {
@@ -110,6 +135,9 @@ export async function submitPatioDemande(input: {
   patios: PatioDimensions[]
   options: PatioOptions
   contact: PatioContact
+  chantier: PatioChantier
+  /** Durée de mise à disposition retenue, en années (couverture repliable). */
+  dureeAnnees: number
   photos: Array<{ patioIndex: number; blob: Blob }>
 }): Promise<{ id: number; photos: number }> {
   const form = new FormData()
@@ -118,7 +146,9 @@ export async function submitPatioDemande(input: {
     JSON.stringify({
       patios: input.patios,
       ...optionsPourApi(input.options),
+      duree_annees: input.dureeAnnees,
       contact: input.contact,
+      chantier: input.chantier,
     }),
   )
   for (const photo of input.photos) {
@@ -128,6 +158,7 @@ export async function submitPatioDemande(input: {
 
   // Pas de Content-Type explicite : le navigateur pose lui-même la frontière
   // multipart, ce que apiFetch (JSON) empêcherait.
+  await resolveApiBase()
   const response = await fetch(`${getApiBase()}/api/v1/ombrage/patios/demandes`, {
     method: 'POST',
     body: form,

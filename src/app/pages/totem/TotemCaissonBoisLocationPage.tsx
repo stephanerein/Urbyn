@@ -98,16 +98,16 @@ export function TotemCaissonBoisLocationPage() {
         title="Totem Caisson Bois 120 — Location"
         description="Louez le Totem Caisson Bois 120 cm pour vos événements et chantiers. À partir de 320 € HT. Livraison + reprise incluses."
         keywords="location totem Caisson Bois, totem bois chantier, location totem 120, Urbyn location"
-        url="/totem/caisson-bois-120/location"
+        url="/habillage-urbain/totems/caisson-bois-120/location"
         type="product"
-        jsonLd={[productSchema({ name: "Totem Caisson Bois 120 (Location)", description: "Location de totem caisson bois format 120 cm avec impression visuel. Livraison et reprise incluses.", price: 320, url: "/totem/caisson-bois-120/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Totems location", url: "/totem/location" }, { name: "Caisson Bois 120", url: "/totem/caisson-bois-120/location" }])]}
+        jsonLd={[productSchema({ name: "Totem Caisson Bois 120 (Location)", description: "Location de totem caisson bois format 120 cm avec impression visuel. Livraison et reprise incluses.", price: 320, url: "/habillage-urbain/totems/caisson-bois-120/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Habillage urbain", url: "/habillage-urbain" }, { name: "Totems — location", url: "/habillage-urbain/totems/location" }, { name: "Caisson Bois 120", url: "/habillage-urbain/totems/caisson-bois-120/location" }])]}
       />
     <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-4xl mx-auto pt-8 px-4 pb-20">
         <div className="mb-6">
-          <Button variant="outline" onClick={() => navigate('/totem/location')} className="border-2 border-black">
+          <Button variant="outline" onClick={() => navigate('/habillage-urbain/totems/location')} className="border-2 border-black">
             ← Retour aux modèles
           </Button>
         </div>

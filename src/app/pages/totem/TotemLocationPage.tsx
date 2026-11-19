@@ -48,16 +48,17 @@ export function TotemLocationPage() {
           title="Totems — Location"
           description="Louez vos totems urbains pour vos chantiers et événements."
           keywords="location totem, Urbyn"
-          url="/totem/location"
+          url="/habillage-urbain/totems/location"
           jsonLd={breadcrumbSchema([
             { name: 'Accueil', url: '/' },
-            { name: 'Totems location', url: '/totem/location' },
+            { name: 'Habillage urbain', url: '/habillage-urbain' },
+            { name: 'Totems — location', url: '/habillage-urbain/totems/location' },
           ])}
         />
         <div className="mb-8">
           <Button
             variant="outline"
-            onClick={() => navigate('/services-specifiques/totem')}
+            onClick={() => navigate('/configurateur/totem/services-specifiques')}
             className="border-2 border-black"
           >
             ← Retour
@@ -85,7 +86,7 @@ export function TotemLocationPage() {
                 key={family.family_catalog_id}
                 className="cursor-pointer hover:shadow-2xl transition-all group overflow-hidden"
                 onClick={() =>
-                  navigate(`/totem/location/family/${family.family_catalog_id}`)
+                  navigate(`/habillage-urbain/totems/location/famille/${family.family_catalog_id}`)
                 }
               >
                 <CardContent className="p-0">

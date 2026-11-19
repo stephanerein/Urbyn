@@ -48,7 +48,7 @@ export function RealisationsPage() {
             l'international.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button onClick={() => navigate('/definir-besoin')} className="bg-black text-white hover:bg-gray-800">
+            <Button onClick={() => navigate('/configurateur')} className="bg-black text-white hover:bg-gray-800">
               Estimez votre projet
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

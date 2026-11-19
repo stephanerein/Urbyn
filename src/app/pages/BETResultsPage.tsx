@@ -12,12 +12,12 @@ export function BETResultsPage() {
     if (storedConfig) {
       setConfig(JSON.parse(storedConfig));
     } else {
-      navigate('/bet');
+      navigate('/bureau-d-etudes');
     }
   }, [navigate]);
 
   const handleReset = () => {
-    navigate('/bet');
+    navigate('/bureau-d-etudes');
   };
 
   if (!config) {

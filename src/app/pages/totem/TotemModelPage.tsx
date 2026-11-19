@@ -54,13 +54,13 @@ export function TotemModelPage() {
 
   const handleModelSelect = (modelId: string) => {
     if (modelId === 'caisson-bois-120') {
-      navigate('/totem/caisson-bois-120/location');
+      navigate('/habillage-urbain/totems/caisson-bois-120/location');
     } else if (modelId === 'caisson-bois') {
-      navigate('/totem/caisson-bois/format');
+      navigate('/habillage-urbain/totems/caisson-bois/format');
     } else if (modelId === 'sign-iz') {
-      navigate(totemMode === 'location' ? '/totem/sign-iz/location' : '/totem/sign-iz/acquisition');
+      navigate(totemMode === 'location' ? '/habillage-urbain/totems/sign-iz/location' : '/habillage-urbain/totems/sign-iz/acquisition');
     } else {
-      navigate(`/totem/${modelId}/config`);
+      navigate(`/habillage-urbain/totems/${modelId}/configuration`);
     }
   };
 
@@ -72,7 +72,7 @@ export function TotemModelPage() {
         <div className="mb-8">
           <Button
             variant="outline"
-            onClick={() => navigate('/services-specifiques/totem')}
+            onClick={() => navigate('/configurateur/totem/services-specifiques')}
             className="border-2 border-black"
           >
             ← Retour

@@ -294,7 +294,7 @@ export function Calculator({ projectType, onCalculate }: CalculatorProps) {
         <div className="mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate('/services-additionnels/palissade')}
+            onClick={() => navigate('/configurateur/palissade/services-additionnels')}
             className="border-2 border-primary text-primary"
           >
             ← Retour aux services

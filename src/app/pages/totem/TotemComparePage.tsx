@@ -57,10 +57,10 @@ export function TotemComparePage() {
   const [error, setError] = useState<string | null>(null)
 
   const backPath = familyId
-    ? `/totem/${offer}/family/${familyId}`
+    ? `/habillage-urbain/totems/${offer}/famille/${familyId}`
     : legacyFormats.length
-      ? '/totem/caisson-bois/format'
-      : `/totem/${offer}`
+      ? '/habillage-urbain/totems/caisson-bois/format'
+      : `/habillage-urbain/totems/${offer}`
 
   useEffect(() => {
     if (productIds.length < 2 && legacyFormats.length < 2) {
@@ -105,7 +105,7 @@ export function TotemComparePage() {
               Utilisez le parcours Acquisition dynamique pour comparer les formats.
             </p>
             <Button
-              onClick={() => navigate('/totem/acquisition')}
+              onClick={() => navigate('/habillage-urbain/totems/acquisition')}
               className="bg-black hover:bg-gray-800 text-white"
             >
               Voir les modèles
@@ -240,7 +240,7 @@ export function TotemComparePage() {
                       <Button
                         onClick={() =>
                           navigate(
-                            `/totem/${offer}/product/${product.product_id}${
+                            `/habillage-urbain/totems/${offer}/produit/${product.product_id}${
                               familyId ? `?family=${familyId}` : ''
                             }`,
                           )

@@ -93,7 +93,7 @@ export function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Link
-                  to="/definir-besoin"
+                  to="/configurateur"
                   className="px-3 py-2 text-sm font-medium text-black hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   Configurateur

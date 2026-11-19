@@ -147,7 +147,7 @@ export function TotemConfigPage() {
     return (
       <div className="max-w-4xl mx-auto pt-[var(--header-height)] px-4">
         <p>Format non trouvé</p>
-        <Button onClick={() => navigate('/totem/caisson-bois/format')}>
+        <Button onClick={() => navigate('/habillage-urbain/totems/caisson-bois/format')}>
           Retour aux formats
         </Button>
       </div>
@@ -225,7 +225,7 @@ export function TotemConfigPage() {
       <div className="mb-8">
         <Button
           variant="outline"
-          onClick={() => navigate('/totem/caisson-bois/format')}
+          onClick={() => navigate('/habillage-urbain/totems/caisson-bois/format')}
           className="border border-gray-300"
         >
           ← Retour aux formats

@@ -19,7 +19,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   const handleCheckCompliance = () => {
     onClose();
-    navigate('/totem/conformite');
+    navigate('/habillage-urbain/totems/conformite');
   };
 
   const count = lastAddedItems.length;

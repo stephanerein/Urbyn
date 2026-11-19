@@ -460,7 +460,7 @@ export function CartPage() {
                         ) : (
                           <div className="mt-3 pt-3 border-t border-gray-200">
                             <Button
-                              onClick={() => navigate('/totem/conformite')}
+                              onClick={() => navigate('/habillage-urbain/totems/conformite')}
                               variant="outline"
                               className="w-full border border-orange-400 text-orange-700 hover:bg-orange-50 text-sm"
                               size="sm"

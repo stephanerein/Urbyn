@@ -28,7 +28,7 @@ export function HomePage() {
 
           <div className="mb-12">
             <button
-              onClick={() => navigate('/definir-besoin')}
+              onClick={() => navigate('/configurateur')}
               className="px-8 py-4 bg-black hover:bg-gray-800 text-white font-bold text-lg rounded-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2 group"
             >
               <Calculator className="w-5 h-5" />

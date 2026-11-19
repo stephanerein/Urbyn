@@ -293,7 +293,7 @@ export function TotemCompliancePage() {
 
     localStorage.setItem('complianceResults', JSON.stringify(results));
     setIsCalculating(false);
-    navigate('/totem/conformite/resultats');
+    navigate('/habillage-urbain/totems/conformite/resultats');
   };
 
   if (!deliveryAddress) {
@@ -307,7 +307,7 @@ export function TotemCompliancePage() {
               <p className="text-gray-600 mb-8 text-lg">
                 Veuillez d'abord renseigner votre code postal et pays de livraison pour calculer la conformité.
               </p>
-              <Button onClick={() => navigate('/totem')} className="bg-black hover:bg-gray-800 text-white px-8 py-6 text-lg rounded-xl shadow-lg">
+              <Button onClick={() => navigate('/habillage-urbain/totems')} className="bg-black hover:bg-gray-800 text-white px-8 py-6 text-lg rounded-xl shadow-lg">
                 Retour aux totems
               </Button>
             </CardContent>

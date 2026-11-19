@@ -12,13 +12,13 @@ export function MassifResultsPage() {
     if (storedConfig) {
       setConfig(JSON.parse(storedConfig));
     } else {
-      navigate('/massif');
+      navigate('/habillage-urbain/massifs-beton/calcul');
     }
   }, [navigate]);
 
   const handleReset = () => {
     // On garde la config en session pour pouvoir la modifier
-    navigate('/massif');
+    navigate('/habillage-urbain/massifs-beton/calcul');
   };
 
   if (!config) {

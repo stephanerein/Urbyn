@@ -79,7 +79,7 @@ export function SelectServicePage() {
     return (
       <div className="pt-[var(--header-height)] px-6 text-center">
         <h1 className="text-2xl font-bold mb-4">Produit non trouvé</h1>
-        <Button onClick={() => navigate('/definir-besoin')}>Retour</Button>
+        <Button onClick={() => navigate('/configurateur')}>Retour</Button>
       </div>
     );
   }
@@ -87,17 +87,17 @@ export function SelectServicePage() {
   const handleServiceSelect = (serviceId: string) => {
     if (product === 'totem') {
       if (serviceId === 'caisson-bois') {
-        navigate('/totem/caisson-bois/format');
+        navigate('/habillage-urbain/totems/caisson-bois/format');
       } else {
-        navigate(`/totem/${serviceId}/config`);
+        navigate(`/habillage-urbain/totems/${serviceId}/configuration`);
       }
     } else if (product === 'palissade') {
-      navigate(`/palissade/${serviceId}`);
+      navigate(`/habillage-urbain/palissades/${serviceId}`);
     } else if (product === 'massif-beton') {
-      navigate('/massif');
+      navigate('/habillage-urbain/massifs-beton/calcul');
     } else if (product === 'facade-echafaudage') {
       // Service bientôt disponible
-      navigate('/definir-besoin');
+      navigate('/configurateur');
     }
   };
 
@@ -110,7 +110,7 @@ export function SelectServicePage() {
           <div className="mb-8">
             <Button
               variant="outline"
-              onClick={() => navigate(`/services-additionnels/${product}`)}
+              onClick={() => navigate(`/configurateur/${product}/services-additionnels`)}
               className="border-2 border-black"
             >
               ← Retour

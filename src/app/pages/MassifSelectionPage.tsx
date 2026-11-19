@@ -549,7 +549,7 @@ export function MassifSelectionPage() {
       ],
     };
     sessionStorage.setItem('massifConfig', JSON.stringify(config));
-    navigate('/massif');
+    navigate('/habillage-urbain/massifs-beton/calcul');
   };
 
   const StepBreadcrumb = () => (
@@ -586,10 +586,11 @@ export function MassifSelectionPage() {
         title="Massif béton — Sélection"
         description="Configurez vos massifs béton temporaires : cubique, lego, cylindrique. Calcul du poids et dimensions adapté à votre chantier."
         keywords="massif béton, massif temporaire, lestage chantier, massif cubique, massif lego"
-        url="/massif/selection"
+        url="/habillage-urbain/massifs-beton"
         jsonLd={breadcrumbSchema([
           { name: 'Accueil', url: '/' },
-          { name: 'Massif béton', url: '/massif/selection' },
+          { name: 'Habillage urbain', url: '/habillage-urbain' },
+          { name: 'Massifs béton', url: '/habillage-urbain/massifs-beton' },
         ])}
       />
       <div className="bg-white min-h-screen pt-[var(--header-height)]">
@@ -599,7 +600,7 @@ export function MassifSelectionPage() {
           <div className="mb-6">
             <Button
               variant="outline"
-              onClick={() => navigate('/services-specifiques/massif-beton')}
+              onClick={() => navigate('/configurateur/massif-beton/services-specifiques')}
               className="border border-gray-300 hover:bg-gray-100"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />

@@ -120,7 +120,7 @@ export function PalissadeResultsPage() {
         totalCost
       });
     } else {
-      navigate('/palissade');
+      navigate('/habillage-urbain/palissades');
     }
   }, [navigate]);
 

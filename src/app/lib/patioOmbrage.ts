@@ -9,6 +9,9 @@ import type { PatioDimensions } from '../api/ombrage'
 export const MAX_PATIOS = 10
 export const COTE_MIN_M = 1
 export const COTE_MAX_M = 50
+/** Durée de la mise à disposition proposée au client, en années. */
+export const DUREE_ANNEES_MIN = 5
+export const DUREE_ANNEES_MAX = 10
 
 const STORAGE_KEY = 'ombragePatioSaisie'
 
@@ -26,6 +29,8 @@ export interface OmbrageSaisie {
   verificationAnnuelle: boolean
   /** Option de la couverture fixe : installation en avril, démontage en octobre. */
   interventionSaisonniere: boolean
+  /** Durée de la mise à disposition de la couverture repliable, en années. */
+  dureeAnnees: number
   patios: PatioSaisie[]
 }
 
@@ -37,8 +42,16 @@ export function saisieParDefaut(): OmbrageSaisie {
   return {
     verificationAnnuelle: false,
     interventionSaisonniere: false,
+    dureeAnnees: DUREE_ANNEES_MIN,
     patios: [patioVide()],
   }
+}
+
+function dureeValide(valeur: unknown): number {
+  const annees = Math.round(Number(valeur))
+  return Number.isFinite(annees) && annees >= DUREE_ANNEES_MIN && annees <= DUREE_ANNEES_MAX
+    ? annees
+    : DUREE_ANNEES_MIN
 }
 
 export function lireSaisie(): OmbrageSaisie {
@@ -51,6 +64,7 @@ export function lireSaisie(): OmbrageSaisie {
     return {
       verificationAnnuelle: parsed.verificationAnnuelle === true,
       interventionSaisonniere: parsed.interventionSaisonniere === true,
+      dureeAnnees: dureeValide(parsed.dureeAnnees),
       patios: parsed.patios.slice(0, MAX_PATIOS).map((p) => ({ ...patioVide(), ...p })),
     }
   } catch {

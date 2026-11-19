@@ -70,12 +70,12 @@ export function TotemFormatPage() {
       }
     } else {
       // Mode normal : naviguer vers la config
-      navigate(`/totem/caisson-bois/${formatId}`);
+      navigate(`/habillage-urbain/totems/caisson-bois/${formatId}`);
     }
   };
 
   const handleCompare = () => {
-    navigate(`/totem/caisson-bois/compare?formats=${selectedForCompare.join(',')}`);
+    navigate(`/habillage-urbain/totems/caisson-bois/comparer?formats=${selectedForCompare.join(',')}`);
   };
 
   return (
@@ -83,7 +83,7 @@ export function TotemFormatPage() {
       <div className="mb-8 flex gap-4 items-center">
         <Button
           variant="outline"
-          onClick={() => navigate('/totem/acquisition')}
+          onClick={() => navigate('/habillage-urbain/totems/acquisition')}
           className="border border-black"
         >
           ← Changer de modèle

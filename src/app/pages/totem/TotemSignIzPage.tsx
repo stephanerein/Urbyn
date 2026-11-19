@@ -77,7 +77,7 @@ export function TotemSignIzPage() {
       },
     }]);
 
-    navigate('/totem/resultats');
+    navigate('/habillage-urbain/totems/resultats');
   };
 
   return (
@@ -88,7 +88,7 @@ export function TotemSignIzPage() {
         <div className="mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate('/totem')}
+            onClick={() => navigate('/habillage-urbain/totems')}
             className="border-2 border-black"
           >
             ← Retour aux modèles

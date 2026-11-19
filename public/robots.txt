@@ -13,8 +13,16 @@ Disallow: /livraison
 Disallow: /paiement
 Disallow: /login
 Disallow: /partner/
-Disallow: /totem/resultats
-Disallow: /totem/conformite/resultats
-Disallow: /massif/resultats
-Disallow: /bet/resultats
-Disallow: /palissade/resultats
+Disallow: /habillage-urbain/totems/resultats
+Disallow: /habillage-urbain/totems/conformite/resultats
+Disallow: /habillage-urbain/massifs-beton/resultats
+Disallow: /habillage-urbain/palissades/resultats
+Disallow: /bureau-d-etudes/resultats
+
+# Étapes intermédiaires du configurateur et du parcours patio (la page /configurateur reste indexable)
+Disallow: /configurateur/
+Disallow: /solutions-ombrage/patio/services
+Disallow: /solutions-ombrage/patio/dimensions
+Disallow: /solutions-ombrage/patio/calibrage
+Disallow: /solutions-ombrage/patio/chiffrage
+Disallow: /solutions-ombrage/patio/coordonnees

@@ -17,7 +17,7 @@ const SECTIONS: SiteSection[] = [
     title: 'Pages principales',
     links: [
       { label: 'Accueil', to: '/' },
-      { label: 'Configurateur — Définir votre besoin', to: '/definir-besoin' },
+      { label: 'Configurateur — Définir votre besoin', to: '/configurateur' },
       { label: 'Contact', to: '/contact' },
       { label: 'À propos', to: '/a-propos' },
     ],
@@ -32,13 +32,13 @@ const SECTIONS: SiteSection[] = [
   {
     title: 'Habillage Urbain — Produits',
     links: [
-      { label: 'Totem de communication urbain', to: '/totem' },
-      { label: 'Totem — Acquisition', to: '/totem/acquisition' },
-      { label: 'Totem — Location', to: '/totem/location' },
-      { label: 'Totem Sign-IZ', to: '/totem/sign-iz' },
-      { label: 'Palissade de chantier', to: '/palissade' },
-      { label: 'Massif béton', to: '/massif/selection' },
-      { label: "Bureau d'études techniques (BET)", to: '/bet' },
+      { label: 'Totem de communication urbain', to: '/habillage-urbain/totems' },
+      { label: 'Totem — Acquisition', to: '/habillage-urbain/totems/acquisition' },
+      { label: 'Totem — Location', to: '/habillage-urbain/totems/location' },
+      { label: 'Totem Sign-IZ', to: '/habillage-urbain/totems/sign-iz' },
+      { label: 'Palissade de chantier', to: '/habillage-urbain/palissades' },
+      { label: 'Massif béton', to: '/habillage-urbain/massifs-beton' },
+      { label: "Bureau d'études techniques (BET)", to: '/bureau-d-etudes' },
     ],
   },
   {

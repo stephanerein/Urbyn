@@ -2,7 +2,7 @@
 
 > **URL de production** : https://plateform.urbanize.site  
 > **Site principal** : https://www.urbanize.site  
-> **Dernière mise à jour** : 25 août 2026
+> **Dernière mise à jour** : 19 novembre 2026
 
 ## 0. Positionnement (25 août 2026)
 
@@ -12,11 +12,11 @@ avec sa page de présentation dédiée et son entrée dans le menu principal :
 - **Solutions d'ombrage** (`/solutions-ombrage`) — toiles d'ombrage façades/patios, Ciel de Rue,
   films solaires vitrages. Catalogue produit à venir, contenu descriptif uniquement pour l'instant.
 
-Menu principal : Expertise (Urbaine · Ombrage) · Configurateur (`/definir-besoin`) ·
+Menu principal : Expertise (Urbaine · Ombrage) · Configurateur (`/configurateur`) ·
 Réalisations (`/realisations`) · Contact (`/contact`). `/a-propos` reste accessible depuis le footer.
 
 `/urbyn` a été supprimée le 25 août 2026 (page orpheline, plus aucun lien interne ni contenu
-propre — son rôle est repris par `/definir-besoin` et les pages Habillage Urbain / Solutions d'ombrage).
+propre — son rôle est repris par `/configurateur` et les pages Habillage Urbain / Solutions d'ombrage).
 Retirée des routes, du sitemap et du script de pré-rendu.
 
 **Réalisations** (`/realisations` + `/realisations/:slug`) : portfolio de projets, données dans
@@ -39,6 +39,47 @@ publié tel quel.
 fichiers images (ils apparaissent dans les URL servies en production). Vérification :
 `grep -ri celize --exclude-dir=node_modules --exclude-dir=dist . | grep -v SEO_GOVERNANCE`
 doit ne rien retourner (seul ce document cite la marque, pour énoncer la règle).
+
+---
+
+## 0 bis. Arborescence des URL (19 novembre 2026)
+
+Les URL suivent la hiérarchie du site : **domaine → famille de produits → variante**. Chaque page
+indexable a une URL qui se lit seule (un moteur ou une IA comprend de quoi parle la page sans la
+charger) et qui reprend les mots que l'on tape dans une recherche.
+
+```
+/                                       Accueil
+├── /habillage-urbain                   Domaine Habillage Urbain
+│   ├── /totems/acquisition · /totems/location
+│   ├── /totems/sign-iz/(acquisition|location)
+│   ├── /totems/caisson-bois/format · /totems/caisson-bois-120/location
+│   ├── /palissades
+│   └── /massifs-beton
+├── /solutions-ombrage                  Domaine Solutions d'ombrage
+│   └── /patio                          Couverture de patio : repliable ou fixe
+│       └── /services · /dimensions · /estimation   (parcours, noindex)
+├── /bureau-d-etudes                    Étude BET (conseil)
+├── /configurateur                      Définir son besoin
+│   └── /:produit/(choix-service|services-additionnels|services-specifiques)   (parcours, noindex)
+├── /realisations/:slug · /a-propos · /contact · /plan-du-site
+└── /panier · /livraison · /paiement    Tunnel de commande (noindex)
+```
+
+Conventions :
+- français, minuscules, **kebab-case sans accent**, pluriel pour une famille (`totems`, `palissades`) ;
+- le segment de tête désigne le domaine (`habillage-urbain`, `solutions-ombrage`) : une page produit
+  n'est jamais à la racine ;
+- trois niveaux au plus pour une page indexable ; les étapes de parcours (noindex) peuvent aller plus loin ;
+- une URL = une page : pas de doublon (`/cart` redirige vers `/panier`).
+
+**Anciennes URL.** Toutes les anciennes adresses (`/totem/*`, `/palissade/*`, `/massif*`, `/bet*`,
+`/definir-besoin`, `/services-additionnels/*`, `/services-specifiques/*`, `/select-service/*`,
+`/cart`, `/solutions-ombrage/patio/solutions`) redirigent en **301** vers la nouvelle. Les règles
+sont dans `vercel.json` (source de vérité) ; `src/app/routes.tsx` les rejoue côté navigateur pour les
+liens internes et le développement local. **Ne jamais supprimer ces règles** : des liens externes et
+l'index des moteurs y renvoient encore. Pour déplacer une page : changer la route, ajouter la
+redirection de l'ancienne adresse dans `vercel.json`, puis suivre la checklist « renommage » (§4).
 
 ---
 
@@ -71,20 +112,20 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | Accueil (Atelier Urbanize) | `/` | Excellence en Consulting Urbain | Organization, Breadcrumb |
 | Habillage Urbain | `/habillage-urbain` | Habillage Urbain — Totems, palissades, massifs béton, échafaudages | Breadcrumb |
 | Solutions d'ombrage | `/solutions-ombrage` | Solutions d'ombrage — Protection solaire & confort urbain | Breadcrumb |
-| Couverture de patio — repliable ou fixe | `/solutions-ombrage/patio/solutions` | Couverture de patio : repliable ou fixe ? | Breadcrumb |
+| Couverture de patio — repliable ou fixe | `/solutions-ombrage/patio` | Couverture de patio repliable ou fixe : ombrage, motorisation, coût sur 5 et 10 ans | Breadcrumb, Service, FAQPage (page de référencement SEO et GEO de la solution) |
 | Réalisations (liste) | `/realisations` | Réalisations | Breadcrumb |
 | Réalisations (détail, ×2 réelles) | `/realisations/:slug` | Titre de la réalisation | Breadcrumb |
 | À propos | `/a-propos` | À propos d'Atelier Urbanize | Breadcrumb |
 | Contact | `/contact` | Contact | Breadcrumb |
-| Configurateur | `/definir-besoin` | Configurez votre projet | — |
-| Totems acquisition | `/totem/acquisition` | Totems — Acquisition | Product, Breadcrumb |
-| Totems location | `/totem/location` | Totems — Location | Breadcrumb |
-| Totem Sign-IZ acquisition | `/totem/sign-iz/acquisition` | Totem Sign-IZ — Acquisition | Product, Breadcrumb |
-| Totem Sign-IZ location | `/totem/sign-iz/location` | Totem Sign-IZ — Location | Product, Breadcrumb |
-| Totem Caisson Bois 120 location | `/totem/caisson-bois-120/location` | Totem Caisson Bois 120 — Location | Product, Breadcrumb |
-| Palissade | `/palissade` | Palissade de chantier — Configuration | Breadcrumb |
-| Massif béton | `/massif/selection` | Massif béton — Sélection | Breadcrumb |
-| BET | `/bet` | Bureau d'études techniques | Breadcrumb |
+| Configurateur | `/configurateur` | Configurez votre projet | — |
+| Totems acquisition | `/habillage-urbain/totems/acquisition` | Totems — Acquisition | Product, Breadcrumb |
+| Totems location | `/habillage-urbain/totems/location` | Totems — Location | Breadcrumb |
+| Totem Sign-IZ acquisition | `/habillage-urbain/totems/sign-iz/acquisition` | Totem Sign-IZ — Acquisition | Product, Breadcrumb |
+| Totem Sign-IZ location | `/habillage-urbain/totems/sign-iz/location` | Totem Sign-IZ — Location | Product, Breadcrumb |
+| Totem Caisson Bois 120 location | `/habillage-urbain/totems/caisson-bois-120/location` | Totem Caisson Bois 120 — Location | Product, Breadcrumb |
+| Palissade | `/habillage-urbain/palissades` | Palissade de chantier — Configuration | Breadcrumb |
+| Massif béton | `/habillage-urbain/massifs-beton` | Massif béton — Sélection | Breadcrumb |
+| BET | `/bureau-d-etudes` | Bureau d'études techniques | Breadcrumb |
 | Plan du site | `/plan-du-site` | Plan du site | Breadcrumb |
 
 ### Pages exclues de l'index (`noIndex`) ❌
@@ -100,15 +141,15 @@ Ce document est la checklist obligatoire à consulter avant tout déploiement.
 | `/paiement` | Tunnel transactionnel |
 | `/login` | Accès privé |
 | `/partner/*` | Espace partenaire privé |
-| `/totem/resultats` | Résultat dynamique de session |
-| `/totem/conformite/resultats` | Résultat dynamique de session |
-| `/massif/resultats` | Résultat dynamique de session |
-| `/bet/resultats` | Résultat dynamique de session |
-| `/palissade/resultats` | Résultat dynamique de session |
+| `/habillage-urbain/totems/resultats` | Résultat dynamique de session |
+| `/habillage-urbain/totems/conformite/resultats` | Résultat dynamique de session |
+| `/habillage-urbain/massifs-beton/resultats` | Résultat dynamique de session |
+| `/bureau-d-etudes/resultats` | Résultat dynamique de session |
+| `/habillage-urbain/palissades/resultats` | Résultat dynamique de session |
 
 ### Pages non-couvertes (flow intermédiaire, pas nécessaires au référencement)
 
-`PatioServicesPage`, `PatioConfigPage` et `PatioEstimationPage` (`/solutions-ombrage/patio/services`, `/solutions-ombrage/patio`, `…/estimation`) : choix des services, saisie des patios et chiffrage, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
+`PatioServicesPage`, `PatioConfigPage`, `PatioCalibragePage`, `PatioChiffragePage` et `PatioCoordonneesPage` (`/solutions-ombrage/patio/services`, `…/dimensions`, `…/calibrage`, `…/chiffrage`, `…/coordonnees`) : choix des services, saisie des patios, calibrage technique, chiffrage financier et demande de devis, en `noIndex`. Leurs arguments commerciaux viennent du catalogue « Solutions d'ombrage 2027 ».
 
 `TotemConfigPage`, `TotemFormatPage`, `TotemComparePage`, `TotemModelPage`, `TotemSignIzPage`, `TotemCompliancePage`, `PalissadeHabillagePage`, `PalissadeMontagePage`, `MassifCalculatorPage`, `ServicesAdditionnelsPage`, `ServicesSpecifiquesPage`, `SelectServicePage`, `ChiffrageFinalPage`, `SitemapPage`
 

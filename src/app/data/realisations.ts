@@ -75,7 +75,7 @@ export const REALISATIONS: Realisation[] = [
       "renom [JR](https://www.jr-art.net/fr/), sur l'esplanade Daniel Cordier." +
       "\n\n" +
       "Dans le cadre de ce projet participatif, nous avons conçu et installé une " +
-      "[palissade](/palissade) sur mesure de 29 mètres linéaires. Réalisée en recto-verso " +
+      "[palissade](/habillage-urbain/palissades) sur mesure de 29 mètres linéaires. Réalisée en recto-verso " +
       "et haute de 2,5 mètres, cette structure a offert un support idéal pour la création " +
       "de la fresque. Elle répondait à la fois aux contraintes techniques et aux exigences " +
       "esthétiques du projet.",
@@ -179,7 +179,7 @@ export const REALISATIONS: Realisation[] = [
       "(https://luminiscence.com), une expérience " +
       "immersive unique à la basilique Saint-Bonaventure de Lyon. Ce spectacle mêlant " +
       "vidéo-mapping à 360°, sonorisation et jeux de lumières nécessitait une " +
-      "signalétique raffinée. Le [totem Arty](/definir-besoin) en bois s'est imposé comme " +
+      "signalétique raffinée. Le [totem Arty](/configurateur) en bois s'est imposé comme " +
       "la solution idéale grâce à son esthétique élégante, parfaitement adaptée à la " +
       "communication événementielle.",
     facts: [
@@ -202,7 +202,7 @@ export const REALISATIONS: Realisation[] = [
         title: 'Un dispositif technique conçu sur mesure',
         body:
           "Grâce à ses visuels interchangeables sans perçage, le [totem Arty]" +
-          "(/definir-besoin) a offert une " +
+          "(/configurateur) a offert une " +
           "communication simple et évolutive pendant l'événement. Son montage facile et sa " +
           "robustesse en font une solution idéale pour les exigences techniques et " +
           "esthétiques. Ce dispositif s'adapte parfaitement aux projets événementiels qui " +

@@ -143,11 +143,11 @@ export function PatioConfigPage() {
   const continuer = () => {
     setTentative(true);
     if (!saisie.patios.every(patioComplet)) {
-      toast.error('Renseignez le nom et les quatre côtés de chaque patio pour obtenir votre estimation.');
+      toast.error('Renseignez le nom et les quatre côtés de chaque patio pour calibrer vos patios.');
       return;
     }
     ecrireSaisie(saisie);
-    navigate('/solutions-ombrage/patio/estimation');
+    navigate('/solutions-ombrage/patio/calibrage');
   };
 
   return (
@@ -158,10 +158,14 @@ export function PatioConfigPage() {
 
         <section className="pt-8 pb-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={() => navigate('/solutions-ombrage/patio/services')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Mes services
+              </Button>
+              <Button onClick={continuer} className="bg-black text-white hover:bg-gray-800">
+                Calibrez vos patios
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
 
@@ -358,7 +362,7 @@ export function PatioConfigPage() {
 
             <div className="mt-10 flex justify-end">
               <Button onClick={continuer} className="bg-black text-white hover:bg-gray-800" size="lg">
-                Obtenir mon estimation
+                Calibrez vos patios
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

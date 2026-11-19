@@ -8,7 +8,7 @@ export function BETCalculatorPage() {
 
   const handleCalculate = (config: BETConfig) => {
     sessionStorage.setItem('betConfig', JSON.stringify(config));
-    navigate('/bet/resultats');
+    navigate('/bureau-d-etudes/resultats');
   };
 
   return (
@@ -17,8 +17,8 @@ export function BETCalculatorPage() {
         title="Bureau d'études techniques — Calcul de conformité"
         description="Calculez la conformité de vos structures selon Eurocode EN 1991-1-4. Note de calcul vent, glissement et renversement pour totems et palissades."
         keywords="bureau d'études, note de calcul, Eurocode, conformité vent, BET chantier"
-        url="/bet"
-        jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: 'BET', url: '/bet' }])}
+        url="/bureau-d-etudes"
+        jsonLd={breadcrumbSchema([{ name: 'Accueil', url: '/' }, { name: "Bureau d'études techniques", url: '/bureau-d-etudes' }])}
       />
       <BETCalculator onCalculate={handleCalculate} />
     </>

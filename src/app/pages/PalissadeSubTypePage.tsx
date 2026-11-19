@@ -10,7 +10,7 @@ export function PalissadeSubTypePage() {
   const navigate = useNavigate();
 
   const handleSelect = (type: 'habillage' | 'montage') => {
-    navigate(`/palissade/${type}`);
+    navigate(`/habillage-urbain/palissades/${type}`);
   };
 
   const handleBack = () => {
@@ -23,8 +23,8 @@ export function PalissadeSubTypePage() {
         title="Palissade de chantier — Configuration"
         description="Configurez votre palissade de chantier : habillage graphique ou montage complet. Matériaux, dimensions et services associés disponibles en ligne."
         keywords="palissade chantier, palissade habillage, palissade montage, clôture chantier, Urbyn"
-        url="/palissade"
-        jsonLd={breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Palissade", url: "/palissade" }])}
+        url="/habillage-urbain/palissades"
+        jsonLd={breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Habillage urbain", url: "/habillage-urbain" }, { name: "Palissades", url: "/habillage-urbain/palissades" }])}
       />
     <div className="bg-white">
       {/* Hero Header for Palissade Section */}

@@ -24,6 +24,106 @@
       "source": "/urbyn",
       "destination": "/",
       "statusCode": 301
+    },
+    {
+      "source": "/solutions-ombrage/patio/solutions",
+      "destination": "/solutions-ombrage/patio",
+      "statusCode": 301
+    },
+    {
+      "source": "/definir-besoin",
+      "destination": "/configurateur",
+      "statusCode": 301
+    },
+    {
+      "source": "/services-additionnels/:product",
+      "destination": "/configurateur/:product/services-additionnels",
+      "statusCode": 301
+    },
+    {
+      "source": "/services-specifiques/:product",
+      "destination": "/configurateur/:product/services-specifiques",
+      "statusCode": 301
+    },
+    {
+      "source": "/select-service/:product",
+      "destination": "/configurateur/:product/choix-service",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem/:offer/family/:familyId",
+      "destination": "/habillage-urbain/totems/:offer/famille/:familyId",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem/:offer/product/:productId",
+      "destination": "/habillage-urbain/totems/:offer/produit/:productId",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem/:offer/compare",
+      "destination": "/habillage-urbain/totems/:offer/comparer",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem/:model/config",
+      "destination": "/habillage-urbain/totems/:model/configuration",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem",
+      "destination": "/habillage-urbain/totems",
+      "statusCode": 301
+    },
+    {
+      "source": "/totem/:path*",
+      "destination": "/habillage-urbain/totems/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/palissade",
+      "destination": "/habillage-urbain/palissades",
+      "statusCode": 301
+    },
+    {
+      "source": "/palissade/:path*",
+      "destination": "/habillage-urbain/palissades/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/massif/selection",
+      "destination": "/habillage-urbain/massifs-beton",
+      "statusCode": 301
+    },
+    {
+      "source": "/massif/resultats",
+      "destination": "/habillage-urbain/massifs-beton/resultats",
+      "statusCode": 301
+    },
+    {
+      "source": "/massif",
+      "destination": "/habillage-urbain/massifs-beton/calcul",
+      "statusCode": 301
+    },
+    {
+      "source": "/bet/resultats",
+      "destination": "/bureau-d-etudes/resultats",
+      "statusCode": 301
+    },
+    {
+      "source": "/bet",
+      "destination": "/bureau-d-etudes",
+      "statusCode": 301
+    },
+    {
+      "source": "/cart",
+      "destination": "/panier",
+      "statusCode": 301
+    },
+    {
+      "source": "/solutions-ombrage/patio/estimation",
+      "destination": "/solutions-ombrage/patio/calibrage",
+      "statusCode": 301
     }
   ],
   "rewrites": [

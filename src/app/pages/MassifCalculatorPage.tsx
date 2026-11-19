@@ -11,7 +11,7 @@ export function MassifCalculatorPage() {
 
   const handleCalculate = (config: MassifConfig) => {
     sessionStorage.setItem('massifConfig', JSON.stringify(config));
-    navigate('/massif/resultats');
+    navigate('/habillage-urbain/massifs-beton/resultats');
   };
 
   return (

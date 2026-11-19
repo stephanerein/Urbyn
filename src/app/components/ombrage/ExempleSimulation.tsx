@@ -21,14 +21,14 @@ const VUES = [
     titre: 'Couverture fixe',
     alt: 'Simulation du même patio couvert par une toile fixe tendue',
     texte:
-      'Deux toiles microperforées blanches tendues sur un filin périphérique, posées en avril et déposées en octobre.',
+      'Toiles microperforées blanches tendues sur un filin périphérique, posées en avril et déposées en octobre.',
   },
   {
     image: storeRepliable,
     titre: 'Couverture repliable',
     alt: 'Simulation du même patio couvert par un store repliable déployé',
     texte:
-      'Toile portée par des supports métalliques fixés sur les acrotères, déployée ou repliée à la demande, sans dépose saisonnière.',
+      'Toile portée par des supports métalliques, déployée ou repliée à la demande, sans dépose saisonnière.',
   },
 ] as const;
 

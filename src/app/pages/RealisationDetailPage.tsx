@@ -183,7 +183,7 @@ export function RealisationDetailPage() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button
-                onClick={() => navigate('/definir-besoin')}
+                onClick={() => navigate('/configurateur')}
                 className="bg-black text-white hover:bg-gray-800"
               >
                 Estimez votre projet

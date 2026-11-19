@@ -7,7 +7,7 @@ export function PalissadeHabillagePage() {
 
   const handleCalculate = (config: HoardingConfig) => {
     sessionStorage.setItem('palissadeConfig', JSON.stringify(config));
-    navigate('/palissade/resultats');
+    navigate('/habillage-urbain/palissades/resultats');
   };
 
   return (

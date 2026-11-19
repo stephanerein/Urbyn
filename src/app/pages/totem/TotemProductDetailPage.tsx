@@ -212,9 +212,9 @@ export function TotemProductDetailPage() {
 
   const backToFamily = () => {
     if (familyId) {
-      navigate(`/totem/${offer}/family/${familyId}`)
+      navigate(`/habillage-urbain/totems/${offer}/famille/${familyId}`)
     } else {
-      navigate(`/totem/${offer}`)
+      navigate(`/habillage-urbain/totems/${offer}`)
     }
   }
 

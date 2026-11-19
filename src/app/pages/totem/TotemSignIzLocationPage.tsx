@@ -99,16 +99,16 @@ export function TotemSignIzLocationPage() {
         title="Totem Sign-IZ — Location"
         description="Louez le Totem Sign-IZ pour vos événements et chantiers. À partir de 290 € HT. Livraison + reprise incluses. Visuel fourni par le client."
         keywords="location totem Sign-IZ, totem événementiel, totem chantier location, Urbyn location"
-        url="/totem/sign-iz/location"
+        url="/habillage-urbain/totems/sign-iz/location"
         type="product"
-        jsonLd={[productSchema({ name: "Totem Sign-IZ (Location)", description: "Location de totem autolesté avec impression visuel. Livraison et reprise incluses.", price: 290, url: "/totem/sign-iz/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Totems location", url: "/totem/location" }, { name: "Sign-IZ", url: "/totem/sign-iz/location" }])]}
+        jsonLd={[productSchema({ name: "Totem Sign-IZ (Location)", description: "Location de totem autolesté avec impression visuel. Livraison et reprise incluses.", price: 290, url: "/habillage-urbain/totems/sign-iz/location" }), breadcrumbSchema([{ name: "Accueil", url: "/" }, { name: "Habillage urbain", url: "/habillage-urbain" }, { name: "Totems — location", url: "/habillage-urbain/totems/location" }, { name: "Sign-IZ", url: "/habillage-urbain/totems/sign-iz/location" }])]}
       />
     <div className="bg-white min-h-screen pt-[var(--header-height)]">
       <ProgressSteps currentStep={3} />
 
       <div className="max-w-4xl mx-auto pt-8 px-4 pb-20">
         <div className="mb-6">
-          <Button variant="outline" onClick={() => navigate('/totem/location')} className="border-2 border-black">
+          <Button variant="outline" onClick={() => navigate('/habillage-urbain/totems/location')} className="border-2 border-black">
             ← Retour aux modèles
           </Button>
         </div>

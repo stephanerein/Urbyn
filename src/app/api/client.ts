@@ -1,4 +1,4 @@
-import { getApiBase } from './apiBase'
+import { getApiBase, resolveApiBase } from './apiBase'
 
 export class ApiError extends Error {
   status: number
@@ -16,6 +16,10 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  // Sur un chargement direct (lien externe, moteur de recherche), la page peut
+  // appeler l'API avant que ApiBootstrap ait terminé son test de connexion :
+  // on attend ici que l'URL de l'API soit résolue.
+  await resolveApiBase()
   const url = `${getApiBase()}${path}`
   const response = await fetch(url, {
     ...options,

@@ -13,7 +13,7 @@ export function TotemResultsPage() {
       setConfig(JSON.parse(storedConfig));
     } else {
       // Si pas de configuration, rediriger vers le calculateur
-      navigate('/totem');
+      navigate('/habillage-urbain/totems');
     }
   }, [navigate]);
 

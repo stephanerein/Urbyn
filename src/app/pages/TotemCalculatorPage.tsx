@@ -8,7 +8,7 @@ export function TotemCalculatorPage() {
   const handleCalculate = (config: TotemConfig) => {
     // Stocker la configuration dans sessionStorage pour la page de résultats
     sessionStorage.setItem('totemConfig', JSON.stringify(config));
-    navigate('/totem/resultats');
+    navigate('/habillage-urbain/totems/resultats');
   };
 
   return (
